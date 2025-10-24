@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Canvas } from "@/components/Customizer/Canvas"
+import { Canvas3D } from "@/components/Customizer/Canvas3D"
 import { ColorPicker } from "@/components/Customizer/ColorPicker"
 import { TemplatePicker } from "@/components/Customizer/TemplatePicker"
 import { AccessoryBoard } from "@/components/Customizer/AccessoryBoard"
@@ -16,7 +17,7 @@ import { useUser } from "@/store/useUser"
 import { useToast } from "@/hooks/use-toast"
 import { Product, Template, Accessory } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
-import { Save, ShoppingCart, ArrowLeft } from "lucide-react"
+import { Save, ShoppingCart, ArrowLeft, Box, Image as ImageIcon } from "lucide-react"
 import Link from "next/link"
 import { Separator } from "@/components/ui/separator"
 
@@ -29,6 +30,7 @@ export default function ProductDetailPage() {
   const [templates, setTemplates] = useState<Template[]>([])
   const [accessories, setAccessories] = useState<Accessory[]>([])
   const [loading, setLoading] = useState(true)
+  const [view3D, setView3D] = useState(true) // Toggle between 2D and 3D
 
   const { setProduct: setCustomizerProduct, getDesign, templateId } =
     useCustomizer()
@@ -160,7 +162,45 @@ export default function ProductDetailPage() {
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Canvas Preview */}
             <div className="space-y-4">
-              <Canvas accessories={accessories} />
+              {/* 2D/3D Toggle */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Badge variant={view3D ? "default" : "outline"}>
+                    {view3D ? "3D" : "2D"} Preview
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {view3D ? "Trải nghiệm 3D tương tác" : "Xem thiết kế 2D"}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant={!view3D ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setView3D(false)}
+                    className="gap-2"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    2D
+                  </Button>
+                  <Button
+                    variant={view3D ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setView3D(true)}
+                    className="gap-2"
+                  >
+                    <Box className="h-4 w-4" />
+                    3D
+                  </Button>
+                </div>
+              </div>
+
+              {/* Canvas Display */}
+              {view3D ? (
+                <Canvas3D accessories={accessories} />
+              ) : (
+                <Canvas accessories={accessories} />
+              )}
+              
               <PriceBar accessories={accessories} />
               
               <div className="flex gap-3">
