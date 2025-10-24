@@ -174,7 +174,7 @@ export function EngraveForm() {
                   : "ui-sans-serif",
             }}
           >
-            "{engrave.text}"
+            &quot;{engrave.text}&quot;
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Vị trí: {engrave.position === "inside" ? "Mặt trong" : "Dây đeo"}

@@ -27,7 +27,7 @@ export default function AccountPage() {
             Vui lòng đăng nhập để xem thiết kế đã lưu
           </p>
           <p className="text-sm text-muted-foreground">
-            (Nhấn nút "Đăng nhập" ở góc trên phải)
+            (Nhấn nút &quot;Đăng nhập&quot; ở góc trên phải)
           </p>
         </div>
       </div>
@@ -129,7 +129,7 @@ export default function AccountPage() {
                       )}
                       {design.engrave && (
                         <p className="text-sm text-muted-foreground">
-                          "{design.engrave.text}"
+                          &quot;{design.engrave.text}&quot;
                         </p>
                       )}
                     </div>

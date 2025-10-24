@@ -71,7 +71,7 @@ export default function CartPage() {
 
                     {item.design.engrave && (
                       <p className="text-sm text-muted-foreground">
-                        Khắc: "{item.design.engrave.text}" ({item.design.engrave.font} -{" "}
+                        Khắc: &quot;{item.design.engrave.text}&quot; ({item.design.engrave.font} -{" "}
                         {item.design.engrave.position === "inside"
                           ? "Mặt trong"
                           : "Dây đeo"}

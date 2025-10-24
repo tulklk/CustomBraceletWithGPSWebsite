@@ -74,7 +74,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
 
                     {item.design.engrave && (
                       <p className="text-sm text-muted-foreground">
-                        Khắc: "{item.design.engrave.text}"
+                        Khắc: &quot;{item.design.engrave.text}&quot;
                       </p>
                     )}
 
