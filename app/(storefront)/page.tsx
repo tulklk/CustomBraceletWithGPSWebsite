@@ -426,6 +426,113 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* 3D Experience Section - Emotional Connection */}
+      <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="container px-4">
+          <div className="text-center mb-8 md:mb-12">
+            <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white">
+              ❤️ Trải nghiệm đặc biệt
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
+              Hiểu nỗi sợ hãi của con bạn
+            </h2>
+            <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+              Một trải nghiệm 3D cảm động giúp ba mẹ đồng cảm với cảm xúc của con 
+              khi bị lạc - và hiểu tại sao vòng tay GPS là cần thiết.
+            </p>
+          </div>
+
+          <div className="max-w-5xl mx-auto mb-8">
+            <Card className="p-4 md:p-6 bg-gradient-to-br from-white to-pink-50 dark:from-gray-800 dark:to-gray-900 border-pink-200 dark:border-pink-900">
+              <div className="grid md:grid-cols-3 gap-6 mb-6">
+                <div className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                  <p className="text-3xl md:text-4xl font-bold text-red-500 mb-1">8 triệu</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    trẻ em bị lạc mỗi năm
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                  <p className="text-3xl md:text-4xl font-bold text-orange-500 mb-1">90 phút</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    thời gian trung bình tìm lại
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                  <p className="text-3xl md:text-4xl font-bold text-green-500 mb-1">99.9%</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    tìm thấy nhanh với GPS
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <Button asChild size="lg" className="gap-2">
+                  <Link href="/experience">
+                    <Sparkles className="h-5 w-5" />
+                    Trải nghiệm 3D ngay
+                  </Link>
+                </Button>
+                <p className="text-xs text-muted-foreground mt-3">
+                  ⏱️ Chỉ mất 2 phút • 🎧 Nên dùng tai nghe để trải nghiệm tốt nhất
+                </p>
+              </div>
+            </Card>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <Card className="p-6">
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <Heart className="h-5 w-5 text-red-500" />
+                Không có GPS
+              </h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 mt-0.5">✗</span>
+                  <span>Hoảng loạn không biết con ở đâu</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 mt-0.5">✗</span>
+                  <span>Mất 1-2 tiếng mới tìm thấy (nếu may mắn)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 mt-0.5">✗</span>
+                  <span>Con hoảng sợ, khóc lóc, stress tâm lý</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 mt-0.5">✗</span>
+                  <span>Nguy cơ mất mát vĩnh viễn</span>
+                </li>
+              </ul>
+            </Card>
+
+            <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-900">
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <Shield className="h-5 w-5 text-green-500" />
+                Với ARTEMIS GPS
+              </h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span>Biết chính xác vị trí con mọi lúc</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span>Tìm thấy con trong vài phút</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span>Con bấm SOS, ba mẹ nhận cảnh báo ngay</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span>An tâm, yên tâm, hạnh phúc mỗi ngày</span>
+                </li>
+              </ul>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Benefits */}
       <section className="py-12 md:py-16 lg:py-20 bg-muted/40">
         <div className="container px-4">
@@ -542,113 +649,6 @@ export default function HomePage() {
                 Xem tất cả {products.length} sản phẩm
               </Link>
             </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* 3D Experience Section - Emotional Connection */}
-      <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        <div className="container px-4">
-          <div className="text-center mb-8 md:mb-12">
-            <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white">
-              ❤️ Trải nghiệm đặc biệt
-            </Badge>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
-              Hiểu nỗi sợ hãi của con bạn
-            </h2>
-            <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
-              Một trải nghiệm 3D cảm động giúp ba mẹ đồng cảm với cảm xúc của con 
-              khi bị lạc - và hiểu tại sao vòng tay GPS là cần thiết.
-            </p>
-          </div>
-
-          <div className="max-w-5xl mx-auto mb-8">
-            <Card className="p-4 md:p-6 bg-gradient-to-br from-white to-pink-50 dark:from-gray-800 dark:to-gray-900 border-pink-200 dark:border-pink-900">
-              <div className="grid md:grid-cols-3 gap-6 mb-6">
-                <div className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-                  <p className="text-3xl md:text-4xl font-bold text-red-500 mb-1">8 triệu</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    trẻ em bị lạc mỗi năm
-                  </p>
-                </div>
-                <div className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-                  <p className="text-3xl md:text-4xl font-bold text-orange-500 mb-1">90 phút</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    thời gian trung bình tìm lại
-                  </p>
-                </div>
-                <div className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-                  <p className="text-3xl md:text-4xl font-bold text-green-500 mb-1">99.9%</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    tìm thấy nhanh với GPS
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <Button asChild size="lg" className="gap-2">
-                  <Link href="/experience">
-                    <Sparkles className="h-5 w-5" />
-                    Trải nghiệm 3D ngay
-                  </Link>
-                </Button>
-                <p className="text-xs text-muted-foreground mt-3">
-                  ⏱️ Chỉ mất 2 phút • 🎧 Nên dùng tai nghe để trải nghiệm tốt nhất
-                </p>
-              </div>
-            </Card>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <Card className="p-6">
-              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <Heart className="h-5 w-5 text-red-500" />
-                Không có GPS
-              </h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500 mt-0.5">✗</span>
-                  <span>Hoảng loạn không biết con ở đâu</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500 mt-0.5">✗</span>
-                  <span>Mất 1-2 tiếng mới tìm thấy (nếu may mắn)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500 mt-0.5">✗</span>
-                  <span>Con hoảng sợ, khóc lóc, stress tâm lý</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500 mt-0.5">✗</span>
-                  <span>Nguy cơ mất mát vĩnh viễn</span>
-                </li>
-              </ul>
-            </Card>
-
-            <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-900">
-              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <Shield className="h-5 w-5 text-green-500" />
-                Với ARTEMIS GPS
-              </h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">✓</span>
-                  <span>Biết chính xác vị trí con mọi lúc</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">✓</span>
-                  <span>Tìm thấy con trong vài phút</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">✓</span>
-                  <span>Con bấm SOS, ba mẹ nhận cảnh báo ngay</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">✓</span>
-                  <span>An tâm, yên tâm, hạnh phúc mỗi ngày</span>
-                </li>
-              </ul>
-            </Card>
           </div>
         </div>
       </section>

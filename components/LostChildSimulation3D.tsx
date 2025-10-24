@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera, Text, Box, Sphere, Environment } from "@react-three/drei"
 import { motion, AnimatePresence } from "framer-motion"
@@ -268,33 +268,141 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
   const [scene, setScene] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
+  
+  // Audio refs
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const currentSoundRef = useRef<OscillatorNode | null>(null)
 
-  const scenes = [
+  const scenes = useMemo(() => [
     {
       title: "Khoảnh khắc bình thường",
       description: "Con đang ở trong siêu thị/công viên đông người cùng ba mẹ...",
       emotion: "😊",
       duration: 4000,
+      sound: { frequency: 440, type: "sine" as OscillatorType }, // Âm nhẹ nhàng
     },
     {
       title: "Mất dấu ba mẹ",
       description: "Con quay lưng một chút... và không còn thấy ba mẹ đâu nữa.",
       emotion: "😰",
       duration: 5000,
+      sound: { frequency: 330, type: "triangle" as OscillatorType }, // Âm lo lắng
     },
     {
       title: "Nỗi sợ hãi",
       description: "Con hoảng sợ, khóc, không biết phải làm gì. Xung quanh toàn người lạ...",
       emotion: "😭",
       duration: 5000,
+      sound: { frequency: 220, type: "sawtooth" as OscillatorType }, // Âm căng thẳng
     },
     {
       title: "Giải pháp: Vòng tay GPS",
       description: "Nhờ vòng tay ARTEMIS, ba mẹ biết chính xác vị trí con và tìm thấy ngay!",
       emotion: "❤️",
       duration: 6000,
+      sound: { frequency: 523, type: "sine" as OscillatorType }, // Âm vui vẻ
     },
-  ]
+  ], [])
+
+  // Initialize Audio Context
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+    }
+    
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close()
+      }
+    }
+  }, [])
+
+  // Play sound for each scene
+  useEffect(() => {
+    if (!isPlaying || !soundEnabled || !audioContextRef.current) return
+
+    // Stop previous sound
+    if (currentSoundRef.current) {
+      currentSoundRef.current.stop()
+      currentSoundRef.current = null
+    }
+
+    const sceneData = scenes[scene]
+    const audioContext = audioContextRef.current
+
+    // Create oscillator for ambient sound
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+    
+    oscillator.type = sceneData.sound.type
+    oscillator.frequency.value = sceneData.sound.frequency
+    
+    // Fade in/out
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime)
+    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.5) // Fade in
+    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + (sceneData.duration / 1000) - 0.5) // Fade out
+    
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+    
+    oscillator.start()
+    oscillator.stop(audioContext.currentTime + (sceneData.duration / 1000))
+    
+    currentSoundRef.current = oscillator
+
+    // Heartbeat sound for fear scene
+    if (scene === 2) {
+      const playHeartbeat = () => {
+        const beat = audioContext.createOscillator()
+        const beatGain = audioContext.createGain()
+        
+        beat.type = "sine"
+        beat.frequency.value = 80
+        
+        beatGain.gain.setValueAtTime(0.3, audioContext.currentTime)
+        beatGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15)
+        
+        beat.connect(beatGain)
+        beatGain.connect(audioContext.destination)
+        
+        beat.start()
+        beat.stop(audioContext.currentTime + 0.15)
+      }
+      
+      const heartbeatInterval = setInterval(playHeartbeat, 800)
+      
+      return () => clearInterval(heartbeatInterval)
+    }
+
+    // Success chime for rescue scene
+    if (scene === 3) {
+      const playChime = (delay: number, freq: number) => {
+        setTimeout(() => {
+          if (!soundEnabled) return
+          const chime = audioContext.createOscillator()
+          const chimeGain = audioContext.createGain()
+          
+          chime.type = "sine"
+          chime.frequency.value = freq
+          
+          chimeGain.gain.setValueAtTime(0.2, audioContext.currentTime)
+          chimeGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5)
+          
+          chime.connect(chimeGain)
+          chimeGain.connect(audioContext.destination)
+          
+          chime.start()
+          chime.stop(audioContext.currentTime + 0.5)
+        }, delay)
+      }
+      
+      // Play success melody
+      playChime(500, 523)  // C
+      playChime(700, 659)  // E
+      playChime(900, 784)  // G
+    }
+
+  }, [scene, isPlaying, soundEnabled, scenes])
 
   useEffect(() => {
     if (!isPlaying) return
