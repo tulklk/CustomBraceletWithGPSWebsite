@@ -14,7 +14,7 @@ import { CheckCircle2, XCircle, Info, AlertCircle, Sparkles } from "lucide-react
 export function Toaster() {
   const { toasts } = useToast()
 
-  const getIcon = (variant?: string, title?: React.ReactNode) => {
+  const getIcon = (variant?: string | null, title?: React.ReactNode) => {
     // Check title for keywords
     const titleStr = typeof title === "string" ? title.toLowerCase() : ""
     
