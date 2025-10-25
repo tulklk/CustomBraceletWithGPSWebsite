@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useUser } from "@/store/useUser"
 import { useToast } from "@/hooks/use-toast"
-import { Mail, Lock, User, Chrome, Eye, EyeOff } from "lucide-react"
+import { Mail, Lock, User, Chrome, Eye, EyeOff, Facebook } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface AuthModalProps {
@@ -97,6 +97,22 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     resetForm()
   }
 
+  const handleFacebookLogin = async () => {
+    setIsLoading(true)
+    // Simulate Facebook OAuth
+    await new Promise((resolve) => setTimeout(resolve, 1200))
+    
+    // Mock Facebook login
+    login("user@facebook.com", "Facebook User")
+    toast({
+      title: "Đăng nhập thành công! 🎉",
+      description: "Đã đăng nhập qua Facebook",
+    })
+    setIsLoading(false)
+    onOpenChange(false)
+    resetForm()
+  }
+
   const resetForm = () => {
     setEmail("")
     setPassword("")
@@ -108,25 +124,40 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <div className="p-6">
-          {/* Google Login Button - Prominent */}
-          <Button
-            variant="outline"
-            className="w-full h-12 text-base font-semibold mb-6 hover:bg-accent hover:border-primary transition-all"
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <div className="h-5 w-5 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                Đang xử lý...
-              </>
-            ) : (
-              <>
-                <Chrome className="h-5 w-5 mr-2 text-red-500" />
-                Đăng nhập với Google
-              </>
-            )}
-          </Button>
+          {/* Social Login Buttons */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <Button
+              variant="outline"
+              className="h-12 text-base font-semibold hover:bg-accent hover:border-primary transition-all"
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="h-5 w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Chrome className="h-5 w-5 mr-2 text-red-500" />
+                  Google
+                </>
+              )}
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-12 text-base font-semibold hover:bg-accent hover:border-primary transition-all"
+              onClick={handleFacebookLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="h-5 w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Facebook className="h-5 w-5 mr-2 text-blue-600" />
+                  Facebook
+                </>
+              )}
+            </Button>
+          </div>
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">

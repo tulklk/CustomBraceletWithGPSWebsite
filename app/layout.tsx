@@ -1,11 +1,16 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Caprasimo } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 const inter = Inter({ subsets: ["latin", "vietnamese"] })
+const caprasimo = Caprasimo({ 
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-caprasimo"
+})
 
 export const metadata: Metadata = {
   title: "ARTEMIS - Vòng tay thông minh cho trẻ em | GPS Tracking",
@@ -24,7 +29,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${caprasimo.variable}`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
