@@ -1,251 +1,494 @@
 "use client"
 
-import { LostChildSimulation3D } from "@/components/LostChildSimulation3D"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Heart, Shield, MapPin, Clock } from "lucide-react"
+import { ArrowLeft, Heart, Shield, MapPin, Clock, Play, AlertCircle, CheckCircle2, Star, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import { Separator } from "@/components/ui/separator"
+import { motion } from "framer-motion"
+import { LostChildSimulation3D } from "@/components/LostChildSimulation3D"
 
 export default function ExperiencePage() {
+  const [activeStory, setActiveStory] = useState(0)
+
+  const stories = [
+    {
+      title: "Khoảnh khắc đáng sợ nhất",
+      subtitle: "Khi con bị lạc trong siêu thị",
+      description: "Chị Minh kể: 'Tôi chỉ quay lưng 30 giây để lấy hàng. Khi quay lại, con tôi đã biến mất trong đám đông...'",
+      image: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&q=80",
+      emotion: "fearful"
+    },
+    {
+      title: "3 phút hoảng loạn",
+      subtitle: "Tìm kiếm tuyệt vọng",
+      description: "Trái tim đập thình thịch. Tiếng kêu tên con vang khắp siêu thị. Mọi người xung quanh nhìn nhưng không ai biết con ở đâu.",
+      image: "https://images.unsplash.com/photo-1609220136736-443140cffec6?w=800&q=80",
+      emotion: "panic"
+    },
+    {
+      title: "Giải pháp an tâm",
+      subtitle: "Với vòng tay GPS ARTEMIS",
+      description: "'Giờ đây, tôi luôn biết con mình ở đâu qua app trên điện thoại. An tâm tuyệt đối!' - Chị Minh",
+      image: "https://images.unsplash.com/photo-1531983412531-1f49a365ffed?w=800&q=80",
+      emotion: "relieved"
+    }
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Header */}
-      <div className="container py-8">
-        <Button variant="ghost" asChild className="mb-4">
-          <Link href="/" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Về trang chủ
-          </Link>
-        </Button>
-
-        <div className="text-center mb-8">
-          <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-rose-500">
-            Trải nghiệm 3D Đặc biệt
-          </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Hiểu Con Bạn Hơn
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Một trải nghiệm 3D immersive giúp ba mẹ cảm nhận được 
-            <span className="font-semibold text-foreground"> nỗi hoảng sợ của con </span>
-            khi bị lạc - và hiểu tại sao vòng tay GPS là giải pháp quan trọng.
-          </p>
-        </div>
-      </div>
-
-      {/* Main 3D Experience */}
-      <div className="container mb-12">
-        <LostChildSimulation3D />
-      </div>
-
-      {/* Context & Statistics */}
-      <div className="container py-12">
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <Card className="p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Heart className="h-5 w-5 text-red-500" />
-              Sự thật đau lòng
-            </h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900">
-                <p className="text-4xl font-bold text-red-600 mb-1">8 triệu</p>
-                <p className="text-sm text-muted-foreground">
-                  trẻ em bị lạc mỗi năm trên toàn thế giới
-                </p>
-              </div>
-              <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-900">
-                <p className="text-4xl font-bold text-orange-600 mb-1">40%</p>
-                <p className="text-sm text-muted-foreground">
-                  trẻ em bị lạc trong các khu vui chơi công cộng
-                </p>
-              </div>
-              <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-900">
-                <p className="text-4xl font-bold text-yellow-600 mb-1">90 phút</p>
-                <p className="text-sm text-muted-foreground">
-                  thời gian trung bình để tìm lại trẻ bị lạc (không có GPS)
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Shield className="h-5 w-5 text-green-500" />
-              Với vòng tay GPS ARTEMIS
-            </h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
-                <p className="text-4xl font-bold text-green-600 mb-1">99.9%</p>
-                <p className="text-sm text-muted-foreground">
-                  độ chính xác định vị GPS/LBS
-                </p>
-              </div>
-              <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
-                <p className="text-4xl font-bold text-blue-600 mb-1">Tức thì</p>
-                <p className="text-sm text-muted-foreground">
-                  biết vị trí con qua ứng dụng điện thoại
-                </p>
-              </div>
-              <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-900">
-                <p className="text-4xl font-bold text-purple-600 mb-1">SOS</p>
-                <p className="text-sm text-muted-foreground">
-                  nút khẩn cấp gửi cảnh báo ngay cho ba mẹ
-                </p>
-              </div>
-            </div>
-          </Card>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section with Video Background */}
+      <section className="relative h-[90vh] overflow-hidden">
+        {/* Background with gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-blue-500/10" />
+        
+        {/* Animated background pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500 rounded-full blur-3xl animate-pulse delay-1000" />
         </div>
 
-        <Separator className="my-12" />
+        <div className="container relative h-full flex flex-col justify-center py-12">
+          <Button variant="ghost" asChild className="mb-6 w-fit">
+            <Link href="/" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Về trang chủ
+            </Link>
+          </Button>
 
-        {/* Parent Testimonials */}
-        <div className="mb-12">
-          <h2 className="text-3xl font-bold text-center mb-8">
-            Câu chuyện từ các bậc phụ huynh
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card className="p-6">
-              <div className="mb-4">
-                <div className="flex gap-1 text-yellow-400 mb-2">
-                  {"⭐".repeat(5)}
-                </div>
-                <p className="text-sm text-muted-foreground italic">
-                  &ldquo;Con tôi từng bị lạc 2 tiếng ở siêu thị. Khoảng thời gian đó 
-                  là địa ngục. Giờ có ARTEMIS, tôi luôn yên tâm.&rdquo;
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center text-white font-bold">
-                  N
-                </div>
-                <div>
-                  <p className="font-semibold">Chị Nguyễn Thảo</p>
-                  <p className="text-xs text-muted-foreground">Mẹ của bé Minh, 6 tuổi</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="mb-4">
-                <div className="flex gap-1 text-yellow-400 mb-2">
-                  {"⭐".repeat(5)}
-                </div>
-                <p className="text-sm text-muted-foreground italic">
-                  &ldquo;Lần đầu tiên con tôi đi chơi công viên, tôi hoảng loạn không 
-                  thấy con đâu. May có vòng tay GPS, tìm được con chỉ sau 3 phút!&rdquo;
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold">
-                  T
-                </div>
-                <div>
-                  <p className="font-semibold">Anh Trần Hoàng</p>
-                  <p className="text-xs text-muted-foreground">Bố của bé An, 5 tuổi</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="mb-4">
-                <div className="flex gap-1 text-yellow-400 mb-2">
-                  {"⭐".repeat(5)}
-                </div>
-                <p className="text-sm text-muted-foreground italic">
-                  &ldquo;Sản phẩm này không chỉ là công nghệ, mà là sự yên tâm cho 
-                  ba mẹ. Trẻ thích đeo vì đẹp, mình yên tâm vì an toàn.&rdquo;
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold">
-                  L
-                </div>
-                <div>
-                  <p className="font-semibold">Chị Lê Mai</p>
-                  <p className="text-xs text-muted-foreground">Mẹ của 2 bé</p>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-
-        {/* Key Features Grid */}
-        <div className="grid md:grid-cols-4 gap-6 mb-12">
-          <Card className="p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center mx-auto mb-3">
-              <MapPin className="h-6 w-6 text-blue-600" />
-            </div>
-            <h4 className="font-semibold mb-2">Định vị chính xác</h4>
-            <p className="text-sm text-muted-foreground">
-              GPS + LBS + WiFi 3 lớp bảo vệ
-            </p>
-          </Card>
-
-          <Card className="p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950 flex items-center justify-center mx-auto mb-3">
-              <Shield className="h-6 w-6 text-red-600" />
-            </div>
-            <h4 className="font-semibold mb-2">Nút SOS khẩn cấp</h4>
-            <p className="text-sm text-muted-foreground">
-              Gửi cảnh báo tức thì cho phụ huynh
-            </p>
-          </Card>
-
-          <Card className="p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center mx-auto mb-3">
-              <Clock className="h-6 w-6 text-green-600" />
-            </div>
-            <h4 className="font-semibold mb-2">Lịch sử di chuyển</h4>
-            <p className="text-sm text-muted-foreground">
-              Xem lại hành trình của con 30 ngày
-            </p>
-          </Card>
-
-          <Card className="p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center mx-auto mb-3">
-              <Heart className="h-6 w-6 text-purple-600" />
-            </div>
-            <h4 className="font-semibold mb-2">Thiết kế đáng yêu</h4>
-            <p className="text-sm text-muted-foreground">
-              Trẻ thích đeo, nhiều màu sắc
-            </p>
-          </Card>
-        </div>
-
-        {/* CTA Section */}
-        <Card className="p-8 md:p-12 bg-gradient-to-br from-primary/10 via-pink-500/10 to-purple-500/10 border-primary/20">
-          <div className="text-center max-w-2xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Bảo vệ con yêu ngay hôm nay
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8">
-              Đừng để nỗi lo lắng cướp đi những khoảnh khắc hạnh phúc bên con. 
-              Với ARTEMIS, bạn luôn biết con mình an toàn ở đâu.
-            </p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-4xl"
+          >
+            <Badge className="mb-6 bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 py-2 text-sm">
+              ✨ Trải nghiệm thực tế
+            </Badge>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild className="text-lg">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+              Đừng để nỗi sợ<br />trở thành hiện thực
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed max-w-2xl">
+              Mỗi năm, hàng triệu trẻ em bị lạc. Cảm giác hoảng loạn của ba mẹ và nỗi sợ hãi của con không thể tả.
+              <span className="block mt-2 text-foreground font-semibold">
+                Nhưng điều đó có thể ngăn chặn được.
+              </span>
+            </p>
+
+            <div className="flex flex-wrap gap-4">
+              <Button size="lg" className="text-lg h-14 px-8" asChild>
                 <Link href="/products">
-                  Xem sản phẩm
+                  <Shield className="mr-2 h-5 w-5" />
+                  Bảo vệ con ngay
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="text-lg">
-                <Link href="/guides">
-                  Tìm hiểu thêm
-                </Link>
+              <Button size="lg" variant="outline" className="text-lg h-14 px-8">
+                <Play className="mr-2 h-5 w-5" />
+                Xem video
               </Button>
             </div>
+          </motion.div>
+        </div>
 
-            <p className="text-sm text-muted-foreground mt-6">
-              ✨ Miễn phí giao hàng • Bảo hành 12 tháng • Hỗ trợ 24/7
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1, duration: 1 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="text-muted-foreground text-sm flex flex-col items-center gap-2"
+          >
+            <span>Cuộn xuống để tìm hiểu thêm</span>
+            <div className="w-6 h-10 border-2 border-current rounded-full p-1">
+              <div className="w-1 h-2 bg-current rounded-full mx-auto" />
+            </div>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* 3D Simulation */}
+      <section className="py-20 bg-gradient-to-b from-background to-red-50/30 dark:to-red-950/10">
+        <div className="container">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4 border-red-500 text-red-600">
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Nội dung nghiêm túc - Chỉ dành cho phụ huynh
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Mô phỏng 3D: Nguy hiểm khi trẻ bị lạc
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Trải nghiệm thực tế ảo về những tình huống nguy hiểm có thể xảy ra.
+              Đây là lý do tại sao ARTEMIS GPS là thiết yếu.
             </p>
           </div>
-        </Card>
-      </div>
+
+          <LostChildSimulation3D />
+        </div>
+      </section>
+
+      {/* Story Timeline */}
+      <section className="py-20 bg-gradient-to-b from-red-50/30 to-accent/20 dark:from-red-950/10 dark:to-accent/20">
+        <div className="container">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4">Câu chuyện có thật</Badge>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Một phút lơ là, một đời ân hận
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Đây là câu chuyện của hàng ngàn gia đình mỗi ngày
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8 mb-12">
+            {stories.map((story, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.2 }}
+                viewport={{ once: true }}
+              >
+                <Card 
+                  className={`overflow-hidden cursor-pointer transition-all hover:shadow-2xl ${
+                    activeStory === index ? 'ring-2 ring-primary' : ''
+                  }`}
+                  onClick={() => setActiveStory(index)}
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center transition-transform hover:scale-110 duration-500"
+                      style={{ 
+                        backgroundImage: `url(${story.image})`,
+                      }}
+                    />
+                    <div className={`absolute inset-0 ${
+                      story.emotion === 'fearful' ? 'bg-gradient-to-t from-red-900/90 to-red-900/30' :
+                      story.emotion === 'panic' ? 'bg-gradient-to-t from-orange-900/90 to-orange-900/30' :
+                      'bg-gradient-to-t from-green-900/90 to-green-900/30'
+                    }`} />
+                    
+                    <div className="absolute top-4 right-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${
+                        story.emotion === 'fearful' ? 'bg-red-500/20 backdrop-blur' :
+                        story.emotion === 'panic' ? 'bg-orange-500/20 backdrop-blur' :
+                        'bg-green-500/20 backdrop-blur'
+                      }`}>
+                        {story.emotion === 'fearful' ? '😰' : story.emotion === 'panic' ? '😭' : '❤️'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <CardContent className="p-6">
+                    <Badge className="mb-3">Phần {index + 1}</Badge>
+                    <h3 className="text-2xl font-bold mb-2">{story.title}</h3>
+                    <p className="text-sm text-primary font-semibold mb-3">{story.subtitle}</p>
+                    <p className="text-muted-foreground italic leading-relaxed">
+                      &ldquo;{story.description}&rdquo;
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Statistics with Images */}
+      <section className="py-20 bg-background">
+        <div className="container">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                Sự thật đau lòng
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                Những con số khiến mọi bậc phụ huynh phải suy ngẫm
+              </p>
+
+              <div className="space-y-6">
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
+                  <div className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                    <AlertCircle className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-red-600 mb-1">8 triệu</div>
+                    <p className="text-sm text-muted-foreground">
+                      trẻ em bị lạc mỗi năm trên toàn thế giới
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900">
+                  <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-orange-600 mb-1">40%</div>
+                    <p className="text-sm text-muted-foreground">
+                      trẻ em bị lạc trong các khu vui chơi công cộng
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900">
+                  <div className="w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
+                    <Clock className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-yellow-600 mb-1">90 phút</div>
+                    <p className="text-sm text-muted-foreground">
+                      thời gian trung bình để tìm lại trẻ bị lạc (không có GPS)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-2xl">
+                <div 
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{ 
+                    backgroundImage: "url(https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&q=80)"
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                <div className="absolute bottom-8 left-8 right-8 text-white">
+                  <p className="text-lg font-semibold mb-2">
+                    &ldquo;Tôi không bao giờ quên cảm giác hoảng loạn khi không thấy con...&rdquo;
+                  </p>
+                  <p className="text-sm opacity-80">- Một bậc phụ huynh</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Solution Section */}
+      <section className="py-20 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="container">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="lg:order-2"
+            >
+              <Badge className="mb-4 bg-green-500 text-white">Giải pháp</Badge>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                Với vòng tay GPS ARTEMIS
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                Công nghệ bảo vệ con bạn mọi lúc, mọi nơi
+              </p>
+
+              <div className="space-y-6">
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900">
+                  <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-green-600 mb-1">99.9%</div>
+                    <p className="text-sm text-muted-foreground">
+                      độ chính xác định vị GPS/LBS
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900">
+                  <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-blue-600 mb-1">Tức thì</div>
+                    <p className="text-sm text-muted-foreground">
+                      biết vị trí con qua ứng dụng điện thoại
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900">
+                  <div className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
+                    <Shield className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-purple-600 mb-1">SOS</div>
+                    <p className="text-sm text-muted-foreground">
+                      nút khẩn cấp gửi cảnh báo ngay cho ba mẹ
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="lg:order-1 relative"
+            >
+              <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-2xl">
+                <div 
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{ 
+                    backgroundImage: "url(https://images.unsplash.com/photo-1531983412531-1f49a365ffed?w=800&q=80)"
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-green-900/80 via-green-900/40 to-transparent" />
+                <div className="absolute bottom-8 left-8 right-8 text-white">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex">
+                      {[1,2,3,4,5].map(i => (
+                        <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-lg font-semibold mb-2">
+                    &ldquo;Giờ đây tôi luôn yên tâm khi cho con đi chơi!&rdquo;
+                  </p>
+                  <p className="text-sm opacity-80">- Chị Minh, mẹ của bé An</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-20 bg-background">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Câu chuyện từ các bậc phụ huynh
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Hàng ngàn gia đình đã tin tưởng ARTEMIS
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                name: "Chị Nguyễn Thảo",
+                role: "Mẹ của bé Minh, 6 tuổi",
+                image: "https://i.pravatar.cc/150?img=5",
+                text: "Con tôi từng bị lạc 2 tiếng ở siêu thị. Khoảng thời gian đó là địa ngục. Giờ có ARTEMIS, tôi luôn yên tâm."
+              },
+              {
+                name: "Anh Trần Hoàng",
+                role: "Bố của bé An, 5 tuổi",
+                image: "https://i.pravatar.cc/150?img=12",
+                text: "Lần đầu tiên con tôi đi chơi công viên, tôi hoảng loạn không thấy con đâu. May có vòng tay GPS, tìm được con chỉ sau 3 phút!"
+              },
+              {
+                name: "Chị Lê Mai",
+                role: "Mẹ của 2 bé",
+                image: "https://i.pravatar.cc/150?img=9",
+                text: "Sản phẩm này không chỉ là công nghệ, mà là sự yên tâm cho ba mẹ. Trẻ thích đeo vì đẹp, mình yên tâm vì an toàn."
+              }
+            ].map((testimonial, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <Card className="h-full p-6 hover:shadow-xl transition-shadow">
+                  <div className="flex gap-1 text-yellow-400 mb-4">
+                    {[1,2,3,4,5].map(i => (
+                      <Star key={i} className="w-5 h-5 fill-current" />
+                    ))}
+                  </div>
+                  <p className="text-muted-foreground italic mb-6 leading-relaxed">
+                    &ldquo;{testimonial.text}&rdquo;
+                  </p>
+                  <div className="flex items-center gap-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={testimonial.image}
+                      alt={testimonial.name}
+                      className="w-14 h-14 rounded-full object-cover ring-2 ring-primary/20"
+                    />
+                    <div>
+                      <p className="font-semibold">{testimonial.name}</p>
+                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/10 via-pink-500/10 to-purple-500/10">
+        <div className="container">
+          <Card className="p-8 md:p-16 bg-gradient-to-br from-primary via-pink-500 to-purple-500 border-0 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+            
+            <div className="relative text-center max-w-3xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                Bảo vệ con yêu ngay hôm nay
+              </h2>
+              <p className="text-xl mb-8 text-white/90 leading-relaxed">
+                Đừng để nỗi lo lắng cướp đi những khoảnh khắc hạnh phúc bên con. 
+                Với ARTEMIS, bạn luôn biết con mình an toàn ở đâu.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" variant="secondary" asChild className="text-lg h-14 px-8">
+                  <Link href="/products">
+                    <Shield className="mr-2 h-5 w-5" />
+                    Xem sản phẩm
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="text-lg h-14 px-8 border-white text-white hover:bg-white/20">
+                  <Link href="/guides">
+                    Tìm hiểu thêm
+                  </Link>
+                </Button>
+              </div>
+
+              <div className="mt-8 flex items-center justify-center gap-6 text-sm text-white/80">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Miễn phí giao hàng
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Bảo hành 12 tháng
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Hỗ trợ 24/7
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </section>
     </div>
   )
 }
-

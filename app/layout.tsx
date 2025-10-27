@@ -1,15 +1,16 @@
 import type { Metadata } from "next"
-import { Inter, Caprasimo } from "next/font/google"
+import { Inter } from "next/font/google"
+import localFont from "next/font/local"
 import "./globals.css"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 const inter = Inter({ subsets: ["latin", "vietnamese"] })
-const caprasimo = Caprasimo({ 
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-caprasimo"
+const akina = localFont({
+  src: "./fonts/1FTV-Akina.otf",
+  variable: "--font-akina",
+  display: "swap",
 })
 
 export const metadata: Metadata = {
@@ -29,7 +30,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body className={`${inter.className} ${caprasimo.variable}`}>
+      <body className={`${inter.className} ${akina.variable}`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
