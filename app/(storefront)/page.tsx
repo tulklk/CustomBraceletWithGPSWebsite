@@ -21,7 +21,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'bunny-baby-pink',
     name: 'ARTEMIS Bunny Baby Pink',
     slug: 'bunny-baby-pink',
-    priceFrom: 1200000,
+    priceFrom: 400000,
     images: ['/images/templates/bunny-baby-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -44,7 +44,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'bunny-lavender',
     name: 'ARTEMIS Bunny Lavender',
     slug: 'bunny-lavender',
-    priceFrom: 1200000,
+    priceFrom: 400000,
     images: ['/images/templates/bunny-lavender.png'],
     specs: {
       waterproof: 'IP67',
@@ -67,231 +67,276 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'bunny-yellow',
     name: 'ARTEMIS Bunny Yellow',
     slug: 'bunny-yellow',
-    priceFrom: 1200000,
+    priceFrom: 400000,
     images: ['/images/templates/bunny-yellow.png'],
     specs: {
-      waterproof: 'IP68',
-      battery: '600mAh - 7-10 ngày',
+      waterproof: 'IP67',
+      battery: '400mAh - 3-5 ngày',
       gps: true,
       simCard: true,
-      weight: '48g',
+      weight: '35g',
     },
-    description: 'Phiên bản cao cấp nhất với GPS 5G, video call, AI nhận dạng, và nhiều tính năng thông minh. Dành cho trẻ 8-15 tuổi.',
+    description: 'Thỏ vàng tươi với cà rốt và lá, năng lượng tích cực cho bé. Thiết kế tràn đầy sức sống và vui tươi.',
     features: [
-      'GPS 5G siêu chính xác',
-      'Video call HD 2-way',
-      'AI phát hiện ngã/va chạm',
-      'Màn hình AMOLED cảm ứng',
-      'Pin 7-10 ngày',
-      'Sạc không dây',
-      'Theo dõi sức khỏe nâng cao',
+      'Định vị GPS/LBS chính xác',
+      'Thiết kế Bunny năng động',
+      'Họa tiết cà rốt & lá cây',
+      'Chống nước IP67',
+      'Pin 3-5 ngày',
+      'Màu vàng cam tươi sáng',
     ],
   },
   {
-    id: 'artemis-lite',
-    name: 'ARTEMIS Lite',
-    slug: 'artemis-lite',
-    priceFrom: 899000,
-    images: ['/images/products/lite-1.svg', '/images/products/lite-2.svg'],
+    id: 'bunny-mint',
+    name: 'ARTEMIS Bunny Mint',
+    slug: 'bunny-mint',
+    priceFrom: 400000,
+    images: ['/images/templates/bunny-mint.png'],
     specs: {
-      waterproof: 'IP65',
-      battery: '350mAh - 2-4 ngày',
+      waterproof: 'IP67',
+      battery: '400mAh - 3-5 ngày',
       gps: true,
-      simCard: false,
-      weight: '28g',
+      simCard: true,
+      weight: '35g',
     },
-    description: 'Phiên bản giá rẻ, nhẹ nhàng cho trẻ nhỏ 3-6 tuổi. GPS cơ bản, SOS, không cần SIM card.',
+    description: 'Thỏ xanh mint tươi mát với họa tiết lá và hoa, thanh lịch và dịu dàng. Màu sắc dễ chịu cho mắt.',
     features: [
-      'GPS/LBS cơ bản',
-      'Nút SOS một chạm',
-      'Kết nối Bluetooth với điện thoại',
-      'Siêu nhẹ chỉ 28g',
+      'Định vị GPS/LBS chính xác',
+      'Thiết kế Bunny thanh lịch',
+      'Họa tiết lá & hoa tự nhiên',
+      'Chống nước IP67',
+      'Pin 3-5 ngày',
+      'Màu xanh mint dịu mắt',
+    ],
+  },
+  {
+    id: 'bunny-pink',
+    name: 'ARTEMIS Bunny Green',
+    slug: 'bunny-pink',
+    priceFrom: 400000,
+    images: ['/images/templates/bunny-pink.png'],
+    specs: {
+      waterproof: 'IP67',
+      battery: '400mAh - 3-5 ngày',
+      gps: true,
+      simCard: true,
+      weight: '35g',
+    },
+    description: 'Thỏ hồng pastel đơn giản, nhẹ nhàng và dễ thương nhất. Thiết kế tối giản cho bé yêu thích sự nhẹ nhàng.',
+    features: [
+      'Định vị GPS/LBS chính xác',
+      'Thiết kế Bunny tối giản',
+      'Màu sắc pastel nhẹ nhàng',
+      'Chống nước IP67',
+      'Pin 3-5 ngày',
+      'Giá ưu đãi nhất',
+    ],
+  },
+  {
+    id: 'necklace-baby-pink',
+    name: 'ARTEMIS Dây Chuyền Bunny Baby Pink',
+    slug: 'necklace-baby-pink',
+    priceFrom: 150000,
+    images: ['/images/necklaces/necklace-baby-pink.png'],
+    specs: {
+      waterproof: 'IP67',
+      battery: 'N/A',
+      gps: false,
+      simCard: false,
+      weight: '15g',
+    },
+    description: 'Dây chuyền thỏ hồng baby dễ thương với thiết kế tối giản, phù hợp làm quà tặng hoặc phụ kiện thời trang.',
+    features: [
+      'Thiết kế Bunny đáng yêu',
+      'Chất liệu an toàn cho trẻ',
+      'Màu hồng pastel nhẹ nhàng',
+      'Dây chuyền inox không gỉ',
+      'Mặt pendant chống nước',
       'Giá cả phải chăng',
-      'Dễ sử dụng',
     ],
   },
   {
-    id: 'artemis-sport',
-    name: 'ARTEMIS Sport',
-    slug: 'artemis-sport',
-    priceFrom: 1650000,
-    images: ['/images/products/sport-1.svg', '/images/products/sport-2.svg'],
-    specs: {
-      waterproof: 'IP68',
-      battery: '550mAh - 6-8 ngày',
-      gps: true,
-      simCard: true,
-      weight: '40g',
-    },
-    description: 'Thiết kế thể thao năng động, theo dõi hoạt động thể chất. Chống va đập, phù hợp trẻ 7-14 tuổi yêu thích vận động.',
-    features: [
-      'Theo dõi hoạt động thể thao',
-      'Đếm bước, calo, quãng đường',
-      'Chống va đập, chống nước IP68',
-      'Đo nhịp tim liên tục',
-      'Chế độ thể thao đa dạng',
-      'Khung viền siêu bền',
-    ],
-  },
-  {
-    id: 'artemis-princess',
-    name: 'ARTEMIS Princess',
-    slug: 'artemis-princess',
-    priceFrom: 1550000,
-    images: ['/images/products/princess-1.svg', '/images/products/princess-2.svg'],
+    id: 'necklace-pink',
+    name: 'ARTEMIS Dây Chuyền Bunny Pink',
+    slug: 'necklace-pink',
+    priceFrom: 150000,
+    images: ['/images/necklaces/necklace-pink.png'],
     specs: {
       waterproof: 'IP67',
-      battery: '450mAh - 4-6 ngày',
-      gps: true,
-      simCard: true,
-      weight: '36g',
-    },
-    description: 'Thiết kế đặc biệt cho bé gái với màu sắc pastel, họa tiết công chúa, unicorn. Đầy đủ tính năng an toàn. Độ tuổi 4-10.',
-    features: [
-      'Thiết kế công chúa độc quyền',
-      'Màu sắc pastel dịu nhẹ',
-      'GPS an toàn chính xác',
-      'Gọi thoại rõ ràng',
-      'Kèm charm unicorn & công chúa',
-      'Hộp quà sang trọng',
-    ],
-  },
-  {
-    id: 'artemis-explorer',
-    name: 'ARTEMIS Explorer',
-    slug: 'artemis-explorer',
-    priceFrom: 1950000,
-    images: ['/images/products/explorer-1.svg', '/images/products/explorer-2.svg'],
-    specs: {
-      waterproof: 'IP68',
-      battery: '580mAh - 6-9 ngày',
-      gps: true,
-      simCard: true,
-      weight: '44g',
-    },
-    description: 'Dành cho trẻ thích phiêu lưu và khám phá. Tích hợp la bàn, nhiệt kế, cao độ kế. Thiết kế bền bỉ. Độ tuổi 8-14.',
-    features: [
-      'La bàn điện tử tích hợp',
-      'Nhiệt kế & cao độ kế',
-      'GPS kép (GPS + GLONASS)',
-      'Chống sốc quân đội',
-      'Đèn pin LED tích hợp',
-      'Chế độ ngoài trời',
-    ],
-  },
-  {
-    id: 'artemis-teen',
-    name: 'ARTEMIS Teen',
-    slug: 'artemis-teen',
-    priceFrom: 2100000,
-    images: ['/images/products/teen-1.svg', '/images/products/teen-2.svg'],
-    specs: {
-      waterproof: 'IP68',
-      battery: '620mAh - 7-10 ngày',
-      gps: true,
-      simCard: true,
-      weight: '46g',
-    },
-    description: 'Thiết kế trưởng thành cho teen 13-18 tuổi. Màn hình lớn, nhiều ứng dụng, vẫn giữ tính năng an toàn cho phụ huynh.',
-    features: [
-      'Thiết kế trẻ trung, hiện đại',
-      'Màn hình 1.4 inch cảm ứng',
-      'Thông báo mạng xã hội',
-      'Thanh toán điện tử',
-      'Chế độ riêng tư cho teen',
-      'GPS bảo mật cao',
-    ],
-  },
-  {
-    id: 'artemis-baby',
-    name: 'ARTEMIS Baby',
-    slug: 'artemis-baby',
-    priceFrom: 799000,
-    images: ['/images/products/baby-1.svg', '/images/products/baby-2.svg'],
-    specs: {
-      waterproof: 'IP65',
-      battery: '300mAh - 2-3 ngày',
-      gps: true,
+      battery: 'N/A',
+      gps: false,
       simCard: false,
-      weight: '25g',
+      weight: '15g',
     },
-    description: 'Dành cho trẻ sơ sinh đến 3 tuổi. Siêu nhẹ, an toàn tuyệt đối, chất liệu y tế. Giám sát vị trí qua Bluetooth.',
+    description: 'Dây chuyền thỏ hồng fuchsia với họa tiết hoa đầy màu sắc, thiết kế vui tươi và năng động.',
     features: [
-      'Siêu nhẹ chỉ 25g',
-      'Chất liệu an toàn cho da trẻ',
-      'Bluetooth tracking',
-      'Cảm biến nhiệt độ',
-      'Thiết kế đáng yêu',
-      'Không cần SIM card',
+      'Thiết kế Bunny năng động',
+      'Họa tiết hoa đa màu sắc',
+      'Màu hồng fuchsia nổi bật',
+      'Dây chuyền inox không gỉ',
+      'Mặt pendant chống nước',
+      'Phù hợp mọi lứa tuổi',
     ],
   },
   {
-    id: 'artemis-smart',
-    name: 'ARTEMIS Smart',
-    slug: 'artemis-smart',
-    priceFrom: 1750000,
-    images: ['/images/products/smart-1.svg', '/images/products/smart-2.svg'],
+    id: 'necklace-lavender',
+    name: 'ARTEMIS Dây Chuyền Bunny Lavender',
+    slug: 'necklace-lavender',
+    priceFrom: 150000,
+    images: ['/images/necklaces/necklace-lavender.png'],
     specs: {
       waterproof: 'IP67',
-      battery: '500mAh - 5-7 ngày',
-      gps: true,
-      simCard: true,
-      weight: '42g',
+      battery: 'N/A',
+      gps: false,
+      simCard: false,
+      weight: '15g',
     },
-    description: 'Phiên bản thông minh với trợ lý AI, nhận diện giọng nói, dịch thuật tức thì. Độ tuổi 8-14.',
+    description: 'Dây chuyền thỏ tím lavender với họa tiết hoa và chấm tròn, phong cách dịu dàng và thanh lịch.',
     features: [
-      'Trợ lý AI tích hợp',
-      'Nhận diện giọng nói',
-      'Dịch thuật đa ngôn ngữ',
-      'Tính năng học tập',
-      'Nhắc nhở thông minh',
-      'GPS chính xác cao',
+      'Thiết kế Bunny thanh lịch',
+      'Họa tiết hoa & chấm tròn',
+      'Màu tím lavender trendy',
+      'Dây chuyền inox không gỉ',
+      'Mặt pendant chống nước',
+      'Thời trang và cá tính',
     ],
   },
   {
-    id: 'artemis-adventure',
-    name: 'ARTEMIS Adventure',
-    slug: 'artemis-adventure',
-    priceFrom: 1850000,
-    images: ['/images/products/adventure-1.svg', '/images/products/adventure-2.svg'],
-    specs: {
-      waterproof: 'IP68',
-      battery: '600mAh - 7-9 ngày',
-      gps: true,
-      simCard: true,
-      weight: '45g',
-    },
-    description: 'Dành cho trẻ năng động thích phiêu lưu. Chống sốc cực mạnh, nhiều cảm biến ngoài trời. Độ tuổi 9-15.',
-    features: [
-      'Khung nhôm chống sốc',
-      'Đèn LED 3 chế độ',
-      'Cảm biến nhiệt độ & độ cao',
-      'La bàn điện tử',
-      'SOS khẩn cấp nâng cao',
-      'Chế độ sinh tồn',
-    ],
-  },
-  {
-    id: 'artemis-fashion',
-    name: 'ARTEMIS Fashion',
-    slug: 'artemis-fashion',
-    priceFrom: 1650000,
-    images: ['/images/products/fashion-1.svg', '/images/products/fashion-2.svg'],
+    id: 'necklace-yellow',
+    name: 'ARTEMIS Dây Chuyền Bunny Yellow',
+    slug: 'necklace-yellow',
+    priceFrom: 150000,
+    images: ['/images/necklaces/necklace-yellow.png'],
     specs: {
       waterproof: 'IP67',
-      battery: '480mAh - 5-7 ngày',
-      gps: true,
-      simCard: true,
-      weight: '38g',
+      battery: 'N/A',
+      gps: false,
+      simCard: false,
+      weight: '15g',
     },
-    description: 'Thiết kế thời trang cao cấp, dây da cao cấp có thể thay đổi. Phù hợp cho cả trẻ và người lớn. Độ tuổi 10+.',
+    description: 'Dây chuyền thỏ vàng với họa tiết cà rốt, mang năng lượng tích cực và vui tươi.',
     features: [
-      'Thiết kế thời trang sang trọng',
-      'Dây da cao cấp thay được',
-      'Nhiều màu sắc trendy',
-      'Viền kim loại sang',
-      'Màn hình cảm ứng đẹp',
-      'Tính năng đầy đủ',
+      'Thiết kế Bunny vui tươi',
+      'Họa tiết cà rốt đáng yêu',
+      'Màu vàng cam tươi sáng',
+      'Dây chuyền inox không gỉ',
+      'Mặt pendant chống nước',
+      'Phong cách năng động',
+    ],
+  },
+  {
+    id: 'necklace-mint',
+    name: 'ARTEMIS Dây Chuyền Bunny Mint',
+    slug: 'necklace-mint',
+    priceFrom: 150000,
+    images: ['/images/necklaces/necklace-mint.png'],
+    specs: {
+      waterproof: 'IP67',
+      battery: 'N/A',
+      gps: false,
+      simCard: false,
+      weight: '15g',
+    },
+    description: 'Dây chuyền thỏ xanh mint với họa tiết hoa và lá tự nhiên, tươi mát và dễ chịu.',
+    features: [
+      'Thiết kế Bunny tự nhiên',
+      'Họa tiết hoa & lá cây',
+      'Màu xanh mint dịu mắt',
+      'Dây chuyền inox không gỉ',
+      'Mặt pendant chống nước',
+      'Phong cách thanh lịch',
+    ],
+  },
+  {
+    id: 'clip-baby-pink',
+    name: 'ARTEMIS Pin Kẹp Bunny Baby Pink',
+    slug: 'clip-baby-pink',
+    priceFrom: 100000,
+    images: ['/images/clips/clip-baby-pink.png'],
+    specs: {
+      waterproof: 'IP67',
+      battery: 'N/A',
+      gps: false,
+      simCard: false,
+      weight: '12g',
+    },
+    description: 'Pin kẹp thỏ hồng baby dễ thương, kẹp lên quần áo, ba lô hoặc mũ. Thiết kế an toàn cho trẻ.',
+    features: [
+      'Thiết kế Bunny đáng yêu',
+      'Kẹp chắc chắn, an toàn',
+      'Màu hồng pastel nhẹ nhàng',
+      'Chất liệu không độc hại',
+      'Dễ dàng tháo lắp',
+      'Phù hợp làm phụ kiện',
+    ],
+  },
+  {
+    id: 'clip-pink',
+    name: 'ARTEMIS Pin Kẹp Bunny Pink',
+    slug: 'clip-pink',
+    priceFrom: 100000,
+    images: ['/images/clips/clip-pink.png'],
+    specs: {
+      waterproof: 'IP67',
+      battery: 'N/A',
+      gps: false,
+      simCard: false,
+      weight: '12g',
+    },
+    description: 'Pin kẹp thỏ hồng fuchsia với họa tiết hoa và tim đầy màu sắc, vui tươi và năng động.',
+    features: [
+      'Thiết kế Bunny năng động',
+      'Họa tiết hoa & tim đáng yêu',
+      'Màu hồng fuchsia nổi bật',
+      'Kẹp chắc chắn, an toàn',
+      'Chất liệu không độc hại',
+      'Phù hợp làm phụ kiện',
+    ],
+  },
+  {
+    id: 'clip-lavender',
+    name: 'ARTEMIS Pin Kẹp Bunny Lavender',
+    slug: 'clip-lavender',
+    priceFrom: 100000,
+    images: ['/images/clips/clip-lavender.png'],
+    specs: {
+      waterproof: 'IP67',
+      battery: 'N/A',
+      gps: false,
+      simCard: false,
+      weight: '12g',
+    },
+    description: 'Pin kẹp thỏ tím lavender với họa tiết hoa đa màu, phong cách dịu dàng và thanh lịch.',
+    features: [
+      'Thiết kế Bunny thanh lịch',
+      'Họa tiết hoa đa màu sắc',
+      'Màu tím lavender trendy',
+      'Kẹp chắc chắn, an toàn',
+      'Chất liệu không độc hại',
+      'Thời trang và cá tính',
+    ],
+  },
+  {
+    id: 'clip-yellow',
+    name: 'ARTEMIS Pin Kẹp Bunny Yellow',
+    slug: 'clip-yellow',
+    priceFrom: 100000,
+    images: ['/images/clips/clip-yellow.png'],
+    specs: {
+      waterproof: 'IP67',
+      battery: 'N/A',
+      gps: false,
+      simCard: false,
+      weight: '12g',
+    },
+    description: 'Pin kẹp thỏ vàng với họa tiết cà rốt, mang năng lượng tích cực và vui tươi.',
+    features: [
+      'Thiết kế Bunny vui tươi',
+      'Họa tiết cà rốt đáng yêu',
+      'Màu vàng cam tươi sáng',
+      'Kẹp chắc chắn, an toàn',
+      'Chất liệu không độc hại',
+      'Phong cách năng động',
     ],
   },
 ]
@@ -300,7 +345,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'bunny-baby-pink',
     name: 'Bunny Baby Pink',
-    basePrice: 1200000,
+    basePrice: 400000,
     defaultColors: {
       band: 'pink',
       face: 'white',
@@ -313,7 +358,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'bunny-lavender',
     name: 'Bunny Lavender',
-    basePrice: 1200000,
+    basePrice: 400000,
     defaultColors: {
       band: 'purple',
       face: 'white',
@@ -326,7 +371,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'bunny-yellow',
     name: 'Bunny Yellow',
-    basePrice: 1200000,
+    basePrice: 400000,
     defaultColors: {
       band: 'yellow',
       face: 'white',
@@ -339,7 +384,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'bunny-mint',
     name: 'Bunny Mint',
-    basePrice: 1200000,
+    basePrice: 400000,
     defaultColors: {
       band: 'green',
       face: 'white',
@@ -351,8 +396,8 @@ const MOCK_TEMPLATES: Template[] = [
   },
   {
     id: 'bunny-pink',
-    name: 'Bunny Pink',
-    basePrice: 1150000,
+    name: 'Bunny Green',
+    basePrice: 400000,
     defaultColors: {
       band: 'pink',
       face: 'white',
@@ -367,6 +412,14 @@ const MOCK_TEMPLATES: Template[] = [
 export default function HomePage() {
   const products = MOCK_PRODUCTS
   const templates = MOCK_TEMPLATES
+  
+  // Chọn 4 sản phẩm đại diện: 2 vòng tay, 1 dây chuyền, 1 pin kẹp
+  const featuredProducts = [
+    products.find(p => p.id === 'bunny-baby-pink'),
+    products.find(p => p.id === 'bunny-lavender'),
+    products.find(p => p.id === 'necklace-baby-pink'),
+    products.find(p => p.id === 'clip-baby-pink'),
+  ].filter(Boolean)
 
   return (
     <div className="flex flex-col">
@@ -376,7 +429,7 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
             <div className="space-y-4 md:space-y-6">
               <Badge className="w-fit text-xs md:text-sm">✨ Tùy biến theo cá tính</Badge>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-pink-500">
                 An tâm theo dõi con yêu mọi lúc mọi nơi
               </h1>
               <p className="text-base md:text-lg lg:text-xl text-muted-foreground">
@@ -393,8 +446,14 @@ export default function HomePage() {
               </div>
             </div>
             <div className="relative order-first lg:order-last">
-              <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl flex items-center justify-center p-8 md:p-12">
-                <BraceletImage theme="bunny-baby-pink" size={400} />
+              <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl flex items-center justify-center p-8 md:p-12 relative overflow-hidden">
+                <Image
+                  src="/images/templates/bunny-baby-pink.png"
+                  alt="ARTEMIS Bunny Baby Pink"
+                  fill
+                  className="object-contain"
+                  priority
+                />
               </div>
             </div>
           </div>
@@ -408,7 +467,7 @@ export default function HomePage() {
             <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white">
               ❤️ Trải nghiệm đặc biệt
             </Badge>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">
               Hiểu nỗi sợ hãi của con bạn
             </h2>
             <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
@@ -512,7 +571,7 @@ export default function HomePage() {
       <section className="py-12 md:py-16 lg:py-20 bg-muted/40">
         <div className="container px-4">
           <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">
               Tại sao chọn ARTEMIS?
             </h2>
             <p className="text-muted-foreground text-base md:text-lg">
@@ -526,7 +585,7 @@ export default function HomePage() {
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                   <MapPin className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg">Định vị GPS/4G chính xác</h3>
+                <h3 className="font-semibold text-lg text-pink-500">Định vị GPS/4G chính xác</h3>
                 <p className="text-muted-foreground">
                   Theo dõi vị trí thời gian thực, lịch sử di chuyển, vùng an toàn
                 </p>
@@ -538,7 +597,7 @@ export default function HomePage() {
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Droplet className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg">Chống nước IP67/IP68</h3>
+                <h3 className="font-semibold text-lg text-pink-500">Chống nước IP67/IP68</h3>
                 <p className="text-muted-foreground">
                   Thoải mái rửa tay, đi mưa, thậm chí bơi lội (IP68)
                 </p>
@@ -550,7 +609,7 @@ export default function HomePage() {
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Battery className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg">Pin bền 3-7 ngày</h3>
+                <h3 className="font-semibold text-lg text-pink-500">Pin bền 3-7 ngày</h3>
                 <p className="text-muted-foreground">
                   Không lo hết pin giữa chừng, sạc nhanh chỉ 2 giờ
                 </p>
@@ -562,7 +621,7 @@ export default function HomePage() {
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Shield className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg">SOS khẩn cấp</h3>
+                <h3 className="font-semibold text-lg text-pink-500">SOS khẩn cấp</h3>
                 <p className="text-muted-foreground">
                   Nút cứu hộ 1 chạm, gọi ngay cho phụ huynh
                 </p>
@@ -574,7 +633,7 @@ export default function HomePage() {
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Sparkles className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg">Tùy biến không giới hạn</h3>
+                <h3 className="font-semibold text-lg text-pink-500">Tùy biến không giới hạn</h3>
                 <p className="text-muted-foreground">
                   Hàng trăm tùy chọn màu, phụ kiện, khắc tên theo sở thích
                 </p>
@@ -586,7 +645,7 @@ export default function HomePage() {
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Heart className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg">Bảo hành 12 tháng</h3>
+                <h3 className="font-semibold text-lg text-pink-500">Bảo hành 12 tháng</h3>
                 <p className="text-muted-foreground">
                   Hỗ trợ kỹ thuật trọn đời, đổi trả miễn phí trong 7 ngày
                 </p>
@@ -600,7 +659,7 @@ export default function HomePage() {
       <section className="py-12 md:py-16 lg:py-20">
         <div className="container px-4">
           <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">
               Sản phẩm của chúng tôi
             </h2>
             <p className="text-muted-foreground text-base md:text-lg">
@@ -608,12 +667,12 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {products.map((product: any, index: number) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-5xl mx-auto">
+            {featuredProducts.map((product: any, index: number) => (
               <ProductCard
                 key={product.id}
                 product={product}
-                featured={index === 0 || index === 2}
+                featured={index === 0}
               />
             ))}
           </div>
@@ -632,7 +691,7 @@ export default function HomePage() {
       <section className="py-12 md:py-16 lg:py-20 bg-muted/40">
         <div className="container px-4">
           <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">
               Mẫu thiết kế nổi bật
             </h2>
             <p className="text-muted-foreground text-base md:text-lg">
@@ -656,7 +715,7 @@ export default function HomePage() {
                     />
                   </div>
                   <CardContent className="p-4">
-                    <h3 className="font-semibold mb-1">{template.name}</h3>
+                    <h3 className="font-semibold mb-1 text-pink-500">{template.name}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {template.description}
                     </p>
@@ -674,116 +733,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Product Comparison */}
-      <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-blue-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
-        <div className="container px-4">
-          <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
-              So sánh nhanh sản phẩm
-            </h2>
-            <p className="text-muted-foreground text-sm md:text-base lg:text-lg">
-              Tìm sản phẩm phù hợp với nhu cầu của bạn
-            </p>
-          </div>
-
-          <div className="overflow-x-auto -mx-4 px-4">
-            <div className="inline-block min-w-full align-middle">
-              <div className="overflow-hidden rounded-lg border bg-background shadow-lg">
-                <table className="min-w-full divide-y divide-border text-sm md:text-base">
-                  <thead className="bg-muted">
-                    <tr>
-                      <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold whitespace-nowrap">Sản phẩm</th>
-                      <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold whitespace-nowrap">Độ tuổi</th>
-                      <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold">Tính năng nổi bật</th>
-                      <th className="px-3 md:px-6 py-3 md:py-4 text-left text-xs md:text-sm font-semibold whitespace-nowrap">Giá</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Lite 💚</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">3-6 tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">Nhẹ nhất, giá tốt nhất</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-primary">899.000₫</td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Mini ⭐</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">3-8 tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">Bán chạy, cân bằng giá & tính năng</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-primary">1.200.000₫</td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Princess 👑</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">4-10 tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">Dành cho bé gái, thiết kế công chúa</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-primary">1.550.000₫</td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Sport 🏃</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">7-14 tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">Theo dõi thể thao, chống va đập</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-primary">1.650.000₫</td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Active ⭐</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">6-12 tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">Camera, chống nước IP68</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-primary">1.800.000₫</td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Explorer 🧭</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">8-14 tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">La bàn, nhiệt kế, ngoài trời</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-primary">1.950.000₫</td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Teen 📱</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">13-18 tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">Thiết kế teen, thanh toán điện tử</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-primary">2.100.000₫</td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Pro 🔥</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">8-15 tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">Cao cấp nhất, GPS 5G, Video call</td>
-                      <td className="px-6 py-4 text-sm font-bold text-primary">2.400.000₫</td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Baby 🍼</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">0-3 tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">Siêu nhẹ 25g, Bluetooth tracking</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-primary">799.000₫</td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Smart 🤖</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">8-14 tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">Trợ lý AI, nhận diện giọng nói</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-primary">1.750.000₫</td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Adventure 🏔️</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">9-15 tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">Chống sốc, đèn LED, la bàn</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-primary">1.850.000₫</td>
-                    </tr>
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-3 md:px-6 py-2 md:py-4 font-medium text-xs md:text-sm whitespace-nowrap">ARTEMIS Fashion 👗</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">10+ tuổi</td>
-                      <td className="px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">Thiết kế thời trang, dây da cao cấp</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-primary">1.650.000₫</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Testimonials */}
       <section className="py-12 md:py-16 lg:py-20">
         <div className="container px-4">
           <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">
               Phụ huynh nói gì về chúng tôi
             </h2>
           </div>
@@ -830,7 +784,7 @@ export default function HomePage() {
       {/* CTA */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-pink-500">
             Sẵn sàng bảo vệ con yêu?
           </h2>
           <p className="text-lg mb-8 opacity-90">

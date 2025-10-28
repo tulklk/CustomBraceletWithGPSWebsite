@@ -25,14 +25,9 @@ export function Logo({ className = "", showText = true }: LogoProps) {
 
       {/* Logo Text */}
       {showText && (
-        <div className="flex flex-col">
-          <span className="text-2xl font-bold leading-tight bg-gradient-to-r from-primary to-pink-600 bg-clip-text text-transparent">
-            ARTEMIS
-          </span>
-          <span className="text-[10px] text-muted-foreground leading-tight">
-            Guardian Bracelets
-          </span>
-        </div>
+        <span className="text-2xl font-bold leading-tight bg-gradient-to-r from-primary to-pink-600 bg-clip-text text-transparent">
+          ARTEMIS
+        </span>
       )}
     </Link>
   )
