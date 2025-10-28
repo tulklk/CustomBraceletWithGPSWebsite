@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ProductCard } from "@/components/ProductCard"
 import { Card, CardContent } from "@/components/ui/card"
@@ -17,11 +18,11 @@ import { Product, Template } from "@/lib/types"
 // Mock data - same as API routes
 const MOCK_PRODUCTS: Product[] = [
   {
-    id: 'artemis-mini',
-    name: 'ARTEMIS Mini',
-    slug: 'artemis-mini',
+    id: 'bunny-baby-pink',
+    name: 'ARTEMIS Bunny Baby Pink',
+    slug: 'bunny-baby-pink',
     priceFrom: 1200000,
-    images: ['/images/products/mini-1.svg', '/images/products/mini-2.svg'],
+    images: ['/images/templates/bunny-baby-pink.png'],
     specs: {
       waterproof: 'IP67',
       battery: '400mAh - 3-5 ngày',
@@ -29,45 +30,45 @@ const MOCK_PRODUCTS: Product[] = [
       simCard: true,
       weight: '35g',
     },
-    description: 'Vòng tay thông minh nhỏ gọn, phù hợp cho trẻ 3-8 tuổi. Tích hợp GPS/LBS, gọi thoại 2 chiều, và SOS khẩn cấp.',
+    description: 'Thỏ hồng đáng yêu với họa tiết hoa và tim, dành cho bé gái năng động. Thiết kế độc quyền với màu hồng pastel ngọt ngào.',
     features: [
       'Định vị GPS/LBS chính xác',
-      'Gọi thoại 2 chiều',
-      'Nút SOS khẩn cấp',
+      'Thiết kế Bunny độc quyền',
+      'Họa tiết hoa & tim đáng yêu',
       'Chống nước IP67',
       'Pin 3-5 ngày',
-      'Thiết kế nhẹ, thoải mái',
+      'Màu hồng pastel dịu nhẹ',
     ],
   },
   {
-    id: 'artemis-active',
-    name: 'ARTEMIS Active',
-    slug: 'artemis-active',
-    priceFrom: 1800000,
-    images: ['/images/products/active-1.svg', '/images/products/active-2.svg'],
+    id: 'bunny-lavender',
+    name: 'ARTEMIS Bunny Lavender',
+    slug: 'bunny-lavender',
+    priceFrom: 1200000,
+    images: ['/images/templates/bunny-lavender.png'],
     specs: {
-      waterproof: 'IP68',
-      battery: '500mAh - 5-7 ngày',
+      waterproof: 'IP67',
+      battery: '400mAh - 3-5 ngày',
       gps: true,
       simCard: true,
-      weight: '42g',
+      weight: '35g',
     },
-    description: 'Phiên bản cao cấp với GPS 4G, camera, và chống nước IP68. Lý tưởng cho trẻ năng động 6-12 tuổi.',
+    description: 'Thỏ tím pastel với họa tiết chấm tròn đầy màu sắc, dễ thương và sáng tạo. Phù hợp cho bé yêu thích sự độc đáo.',
     features: [
-      'GPS 4G tốc độ cao',
-      'Camera chụp ảnh từ xa',
-      'Chống nước IP68 (bơi lội)',
-      'Đếm bước, nhắc uống nước',
-      'Pin 5-7 ngày',
-      'Màn hình màu cảm ứng',
+      'Định vị GPS/LBS chính xác',
+      'Thiết kế Bunny sáng tạo',
+      'Họa tiết chấm tròn đa màu',
+      'Chống nước IP67',
+      'Pin 3-5 ngày',
+      'Màu tím lavender trendy',
     ],
   },
   {
-    id: 'artemis-pro',
-    name: 'ARTEMIS Pro',
-    slug: 'artemis-pro',
-    priceFrom: 2400000,
-    images: ['/images/products/pro-1.svg', '/images/products/pro-2.svg'],
+    id: 'bunny-yellow',
+    name: 'ARTEMIS Bunny Yellow',
+    slug: 'bunny-yellow',
+    priceFrom: 1200000,
+    images: ['/images/templates/bunny-yellow.png'],
     specs: {
       waterproof: 'IP68',
       battery: '600mAh - 7-10 ngày',
@@ -297,95 +298,69 @@ const MOCK_PRODUCTS: Product[] = [
 
 const MOCK_TEMPLATES: Template[] = [
   {
-    id: 'sport',
-    name: 'Sport',
-    basePrice: 1200000,
-    defaultColors: {
-      band: 'blue',
-      face: 'white',
-      rim: 'blue',
-    },
-    recommendedAccessories: ['star', 'soccer'],
-    preview: '/images/templates/sport.svg',
-    description: 'Phong cách thể thao năng động, phù hợp với trẻ năng động',
-  },
-  {
-    id: 'cute',
-    name: 'Cute',
+    id: 'bunny-baby-pink',
+    name: 'Bunny Baby Pink',
     basePrice: 1200000,
     defaultColors: {
       band: 'pink',
       face: 'white',
       rim: 'pink',
     },
-    recommendedAccessories: ['heart', 'bear', 'unicorn'],
-    preview: '/images/templates/cute.svg',
-    description: 'Thiết kế dễ thương, ngọt ngào cho bé gái',
+    recommendedAccessories: ['heart', 'flower', 'bunny'],
+    preview: '/images/templates/bunny-baby-pink.png',
+    description: 'Thỏ hồng đáng yêu với họa tiết hoa và tim, dành cho bé gái năng động',
   },
   {
-    id: 'galaxy',
-    name: 'Galaxy',
-    basePrice: 1400000,
+    id: 'bunny-lavender',
+    name: 'Bunny Lavender',
+    basePrice: 1200000,
     defaultColors: {
       band: 'purple',
-      face: 'black',
-      rim: 'cyan',
-    },
-    recommendedAccessories: ['star', 'rocket', 'planet'],
-    preview: '/images/templates/galaxy.svg',
-    description: 'Chủ đề vũ trụ huyền bí, kích thích trí tưởng tượng',
-  },
-  {
-    id: 'minimal',
-    name: 'Minimal',
-    basePrice: 1100000,
-    defaultColors: {
-      band: 'black',
       face: 'white',
-      rim: 'gray',
+      rim: 'purple',
     },
-    recommendedAccessories: [],
-    preview: '/images/templates/minimal.svg',
-    description: 'Thiết kế tối giản, thanh lịch, phù hợp mọi lứa tuổi',
+    recommendedAccessories: ['star', 'circle', 'bunny'],
+    preview: '/images/templates/bunny-lavender.png',
+    description: 'Thỏ tím pastel với họa tiết chấm tròn đầy màu sắc, dễ thương và sáng tạo',
   },
   {
-    id: 'ocean',
-    name: 'Ocean',
-    basePrice: 1300000,
+    id: 'bunny-yellow',
+    name: 'Bunny Yellow',
+    basePrice: 1200000,
     defaultColors: {
-      band: 'cyan',
+      band: 'yellow',
       face: 'white',
-      rim: 'blue',
+      rim: 'orange',
     },
-    recommendedAccessories: ['dolphin', 'shell'],
-    preview: '/images/templates/ocean.svg',
-    description: 'Chủ đề đại dương tươi mát, năng động',
+    recommendedAccessories: ['carrot', 'leaf', 'bunny'],
+    preview: '/images/templates/bunny-yellow.png',
+    description: 'Thỏ vàng tươi với cà rốt và lá, năng lượng tích cực cho bé',
   },
   {
-    id: 'dino',
-    name: 'Dinosaur',
-    basePrice: 1250000,
+    id: 'bunny-mint',
+    name: 'Bunny Mint',
+    basePrice: 1200000,
     defaultColors: {
       band: 'green',
       face: 'white',
       rim: 'green',
     },
-    recommendedAccessories: ['dino', 'egg'],
-    preview: '/images/templates/dino.svg',
-    description: 'Khủng long đáng yêu cho bé thích khám phá',
+    recommendedAccessories: ['leaf', 'flower', 'bunny'],
+    preview: '/images/templates/bunny-mint.png',
+    description: 'Thỏ xanh mint tươi mát với họa tiết lá và hoa, thanh lịch và dịu dàng',
   },
   {
-    id: 'unicorn',
-    name: 'Unicorn',
-    basePrice: 1350000,
+    id: 'bunny-pink',
+    name: 'Bunny Pink',
+    basePrice: 1150000,
     defaultColors: {
-      band: 'purple',
+      band: 'pink',
       face: 'white',
       rim: 'pink',
     },
-    recommendedAccessories: ['unicorn', 'rainbow', 'star'],
-    preview: '/images/templates/unicorn.svg',
-    description: 'Kỳ lân thần tiên, lung linh sắc màu',
+    recommendedAccessories: ['bunny', 'heart'],
+    preview: '/images/templates/bunny-pink.png',
+    description: 'Thỏ hồng pastel đơn giản, nhẹ nhàng và dễ thương nhất',
   },
 ]
 
@@ -419,7 +394,7 @@ export default function HomePage() {
             </div>
             <div className="relative order-first lg:order-last">
               <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl flex items-center justify-center p-8 md:p-12">
-                <BraceletImage theme="cute" size={400} />
+                <BraceletImage theme="bunny-baby-pink" size={400} />
               </div>
             </div>
           </div>
@@ -672,10 +647,12 @@ export default function HomePage() {
                 className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
               >
                 <Link href={`/products`}>
-                  <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center p-6">
-                    <BraceletImage 
-                      theme={template.id as any} 
-                      size={200} 
+                  <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center p-6 relative">
+                    <Image 
+                      src={template.preview} 
+                      alt={template.name}
+                      fill
+                      className="object-contain p-4"
                     />
                   </div>
                   <CardContent className="p-4">

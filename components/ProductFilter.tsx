@@ -20,10 +20,7 @@ import { formatCurrency } from "@/lib/utils"
 
 export interface FilterState {
   priceRange: [number, number]
-  waterproof: string[]
-  ageRange: string
-  hasGPS: boolean
-  hasSimCard: boolean
+  productTypes: string[]
   sortBy: string
 }
 
@@ -46,19 +43,16 @@ export function ProductFilter({
     onFilterChange({ ...filters, priceRange: [value[0], value[1]] })
   }
 
-  const handleWaterproofToggle = (value: string) => {
-    const newWaterproof = filters.waterproof.includes(value)
-      ? filters.waterproof.filter((w) => w !== value)
-      : [...filters.waterproof, value]
-    onFilterChange({ ...filters, waterproof: newWaterproof })
+  const handleProductTypeToggle = (value: string) => {
+    const newProductTypes = filters.productTypes.includes(value)
+      ? filters.productTypes.filter((t) => t !== value)
+      : [...filters.productTypes, value]
+    onFilterChange({ ...filters, productTypes: newProductTypes })
   }
 
   const activeFiltersCount =
-    (filters.waterproof.length > 0 ? 1 : 0) +
-    (filters.ageRange !== "all" ? 1 : 0) +
-    (filters.hasGPS ? 1 : 0) +
-    (filters.hasSimCard ? 1 : 0) +
-    (filters.priceRange[0] !== 500000 || filters.priceRange[1] !== 3000000 ? 1 : 0)
+    (filters.productTypes.length > 0 ? 1 : 0) +
+    (filters.priceRange[0] !== 100000 || filters.priceRange[1] !== 400000 ? 1 : 0)
 
   return (
     <Card className="lg:sticky lg:top-20">
@@ -113,9 +107,9 @@ export function ProductFilter({
             <Label className="text-sm font-semibold">Khoảng giá</Label>
             <div className="px-2 py-4">
               <Slider
-                min={500000}
-                max={3000000}
-                step={100000}
+                min={100000}
+                max={400000}
+                step={50000}
                 value={filters.priceRange}
                 onValueChange={handlePriceChange}
                 className="w-full"
@@ -133,110 +127,47 @@ export function ProductFilter({
 
           <Separator />
 
-          {/* Age Range */}
+          {/* Product Type */}
           <div className="space-y-3">
-            <Label className="text-sm font-semibold">Độ tuổi</Label>
-            <Select
-              value={filters.ageRange}
-              onValueChange={(value) =>
-                onFilterChange({ ...filters, ageRange: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả độ tuổi</SelectItem>
-                <SelectItem value="3-6">3-6 tuổi</SelectItem>
-                <SelectItem value="6-10">6-10 tuổi</SelectItem>
-                <SelectItem value="10-15">10-15 tuổi</SelectItem>
-                <SelectItem value="13-18">13-18 tuổi</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Separator />
-
-          {/* Waterproof */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">Chống nước</Label>
+            <Label className="text-sm font-semibold">Loại sản phẩm</Label>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  id="ip65"
-                  checked={filters.waterproof.includes("IP65")}
-                  onCheckedChange={() => handleWaterproofToggle("IP65")}
+                  id="bracelet"
+                  checked={filters.productTypes.includes("bracelet")}
+                  onCheckedChange={() => handleProductTypeToggle("bracelet")}
                 />
                 <label
-                  htmlFor="ip65"
+                  htmlFor="bracelet"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
-                  IP65 (Chống bụi, chống nước nhẹ)
+                  Vòng tay thông minh
                 </label>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  id="ip67"
-                  checked={filters.waterproof.includes("IP67")}
-                  onCheckedChange={() => handleWaterproofToggle("IP67")}
+                  id="necklace"
+                  checked={filters.productTypes.includes("necklace")}
+                  onCheckedChange={() => handleProductTypeToggle("necklace")}
                 />
                 <label
-                  htmlFor="ip67"
+                  htmlFor="necklace"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
-                  IP67 (Ngâm nước 30 phút)
+                  Dây chuyền
                 </label>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  id="ip68"
-                  checked={filters.waterproof.includes("IP68")}
-                  onCheckedChange={() => handleWaterproofToggle("IP68")}
+                  id="clip"
+                  checked={filters.productTypes.includes("clip")}
+                  onCheckedChange={() => handleProductTypeToggle("clip")}
                 />
                 <label
-                  htmlFor="ip68"
+                  htmlFor="clip"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
-                  IP68 (Bơi lội, chống nước tốt)
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Features */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">Tính năng</Label>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="gps"
-                  checked={filters.hasGPS}
-                  onCheckedChange={(checked: boolean) =>
-                    onFilterChange({ ...filters, hasGPS: !!checked })
-                  }
-                />
-                <label
-                  htmlFor="gps"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Có GPS
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="simcard"
-                  checked={filters.hasSimCard}
-                  onCheckedChange={(checked: boolean) =>
-                    onFilterChange({ ...filters, hasSimCard: !!checked })
-                  }
-                />
-                <label
-                  htmlFor="simcard"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Có SIM card
+                  Pin kẹp quần áo
                 </label>
               </div>
             </div>

@@ -7,11 +7,8 @@ import { Pagination } from "@/components/Pagination"
 import { Product } from "@/lib/types"
 
 const initialFilters: FilterState = {
-  priceRange: [500000, 3000000],
-  waterproof: [],
-  ageRange: "all",
-  hasGPS: false,
-  hasSimCard: false,
+  priceRange: [100000, 400000],
+  productTypes: [],
   sortBy: "default",
 }
 
@@ -44,34 +41,14 @@ export default function ProductsPage() {
         p.priceFrom <= filters.priceRange[1]
     )
 
-    // Waterproof filter
-    if (filters.waterproof.length > 0) {
-      result = result.filter((p) =>
-        filters.waterproof.includes(p.specs.waterproof)
-      )
-    }
-
-    // Age range filter
-    if (filters.ageRange !== "all") {
-      const ageRangeMap: Record<string, string[]> = {
-        "3-6": ["artemis-lite", "artemis-mini"],
-        "6-10": ["artemis-mini", "artemis-active", "artemis-princess", "artemis-sport"],
-        "10-15": ["artemis-active", "artemis-sport", "artemis-explorer", "artemis-pro", "artemis-teen"],
-        "13-18": ["artemis-teen", "artemis-pro"],
-      }
-      result = result.filter((p) =>
-        ageRangeMap[filters.ageRange]?.includes(p.slug)
-      )
-    }
-
-    // GPS filter
-    if (filters.hasGPS) {
-      result = result.filter((p) => p.specs.gps)
-    }
-
-    // SIM card filter
-    if (filters.hasSimCard) {
-      result = result.filter((p) => p.specs.simCard)
+    // Product type filter
+    if (filters.productTypes.length > 0) {
+      result = result.filter((p) => {
+        const productType = p.id.startsWith('necklace-') ? 'necklace' 
+          : p.id.startsWith('clip-') ? 'clip'
+          : 'bracelet'
+        return filters.productTypes.includes(productType)
+      })
     }
 
     // Sort
@@ -117,7 +94,7 @@ export default function ProductsPage() {
   return (
     <div className="container py-8 md:py-12 px-4">
       <div className="mb-8 md:mb-12">
-        <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">Sản phẩm vòng tay ARTEMIS</h1>
+        <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">Sản phẩm vòng tay ARTEMIS</h1>
         <p className="text-muted-foreground text-base md:text-lg">
           Chọn sản phẩm phù hợp và bắt đầu tùy biến theo phong cách của bé
         </p>

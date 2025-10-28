@@ -1,5 +1,5 @@
 interface BraceletImageProps {
-  theme?: 'sport' | 'cute' | 'galaxy' | 'minimal' | 'ocean' | 'dino' | 'unicorn' | 'default'
+  theme?: 'bunny-baby-pink' | 'bunny-lavender' | 'bunny-yellow' | 'bunny-mint' | 'bunny-pink' | 'default' | string
   color?: string
   size?: number
 }
@@ -11,48 +11,41 @@ export function BraceletImage({
 }: BraceletImageProps) {
   
   // Theme-specific colors and charms
-  const themeConfig = {
-    sport: {
-      bandColor: '#3b82f6',
+  const themeConfig: Record<string, {
+    bandColor: string
+    faceColor: string
+    rimColor: string
+    charms: string[]
+  }> = {
+    'bunny-baby-pink': {
+      bandColor: '#FF69B4',
       faceColor: '#ffffff',
-      rimColor: '#2563eb',
-      charms: ['🚗', '⚽', '🏃', '🚁'],
+      rimColor: '#FF1493',
+      charms: ['🐰', '💕', '🌸', '🎀'],
     },
-    cute: {
-      bandColor: '#ec4899',
+    'bunny-lavender': {
+      bandColor: '#9370DB',
       faceColor: '#ffffff',
-      rimColor: '#db2777',
-      charms: ['💕', '🌸', '🦄', '🌈'],
+      rimColor: '#8A2BE2',
+      charms: ['🐰', '⭐', '⚪', '🔵'],
     },
-    galaxy: {
-      bandColor: '#1e1b4b',
-      faceColor: '#312e81',
-      rimColor: '#06b6d4',
-      charms: ['⭐', '🌙', '🚀', '🪐'],
-    },
-    minimal: {
-      bandColor: '#1f2937',
+    'bunny-yellow': {
+      bandColor: '#FFD700',
       faceColor: '#ffffff',
-      rimColor: '#6b7280',
-      charms: [],
+      rimColor: '#FF8C00',
+      charms: ['🐰', '🥕', '🍃', '🌻'],
     },
-    ocean: {
-      bandColor: '#06b6d4',
+    'bunny-mint': {
+      bandColor: '#98FB98',
       faceColor: '#ffffff',
-      rimColor: '#0891b2',
-      charms: ['🐬', '🐙', '🐠', '🦈'],
+      rimColor: '#3CB371',
+      charms: ['🐰', '🍃', '🌿', '🌸'],
     },
-    dino: {
-      bandColor: '#84cc16',
+    'bunny-pink': {
+      bandColor: '#FFB6C1',
       faceColor: '#ffffff',
-      rimColor: '#65a30d',
-      charms: ['🦕', '🦖', '🥚', '🌿'],
-    },
-    unicorn: {
-      bandColor: '#c084fc',
-      faceColor: '#ffffff',
-      rimColor: '#ec4899',
-      charms: ['🦄', '🌈', '⭐', '💖'],
+      rimColor: '#FF69B4',
+      charms: ['🐰', '💕'],
     },
     default: {
       bandColor: color || '#ec4899',
@@ -62,7 +55,7 @@ export function BraceletImage({
     },
   }
 
-  const config = themeConfig[theme]
+  const config = themeConfig[theme] || themeConfig.default
 
   return (
     <svg

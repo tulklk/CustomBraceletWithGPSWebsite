@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/utils"
 import { Check } from "lucide-react"
-import { BraceletImage } from "@/components/BraceletImage"
+import Image from "next/image"
 
 interface TemplatePickerProps {
   templates: Template[]
@@ -29,8 +29,16 @@ export function TemplatePicker({ templates }: TemplatePickerProps) {
           }
         >
           <CardContent className="p-4">
-            <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center mb-3 relative p-4">
-              <BraceletImage theme={template.id as any} size={150} />
+            <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center mb-3 relative overflow-hidden">
+              {/* Display PNG image like preview 2D */}
+              <Image
+                src={template.preview}
+                alt={template.name}
+                width={200}
+                height={200}
+                className="object-contain w-full h-full p-4"
+                priority
+              />
               {templateId === template.id && (
                 <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
                   <Check className="h-3 w-3" />

@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Canvas } from "@/components/Customizer/Canvas"
 import { Canvas3D } from "@/components/Customizer/Canvas3D"
-import { ColorPicker } from "@/components/Customizer/ColorPicker"
 import { TemplatePicker } from "@/components/Customizer/TemplatePicker"
-import { AccessoryBoard } from "@/components/Customizer/AccessoryBoard"
 import { EngraveForm } from "@/components/Customizer/EngraveForm"
 import { PriceBar } from "@/components/Customizer/PriceBar"
 import { useCustomizer } from "@/store/useCustomizer"
@@ -228,20 +226,6 @@ export default function ProductDetailPage() {
               <div>
                 <h2 className="text-2xl font-semibold mb-4">Chọn Template</h2>
                 <TemplatePicker templates={templates} />
-              </div>
-
-              <Separator />
-
-              <div>
-                <h2 className="text-2xl font-semibold mb-4">Chọn Màu</h2>
-                <ColorPicker />
-              </div>
-
-              <Separator />
-
-              <div>
-                <h2 className="text-2xl font-semibold mb-4">Phụ kiện</h2>
-                <AccessoryBoard accessories={accessories} />
               </div>
 
               <Separator />
