@@ -15,6 +15,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts"
 
 // Mock data
 const recentOrders = [
@@ -56,9 +65,25 @@ const recentOrders = [
 ]
 
 const topProducts = [
-  { name: "KidTrack Pro GPS", sales: 156, revenue: 312000000 },
-  { name: "KidTrack Lite", sales: 89, revenue: 133500000 },
-  { name: "KidTrack Max", sales: 67, revenue: 167500000 },
+  { name: "ARTEMIS Bunny Baby Pink", sales: 156, revenue: 62400000 },
+  { name: "ARTEMIS Bunny Lavender", sales: 89, revenue: 35600000 },
+  { name: "ARTEMIS Dây Chuyền Bunny Baby Pink", sales: 67, revenue: 10050000 },
+]
+
+// Dữ liệu doanh thu theo tháng (VNĐ)
+const monthlyRevenue = [
+  { month: "T1", revenue: 28500000 },
+  { month: "T2", revenue: 32100000 },
+  { month: "T3", revenue: 35400000 },
+  { month: "T4", revenue: 38900000 },
+  { month: "T5", revenue: 41200000 },
+  { month: "T6", revenue: 39800000 },
+  { month: "T7", revenue: 43500000 },
+  { month: "T8", revenue: 46200000 },
+  { month: "T9", revenue: 44100000 },
+  { month: "T10", revenue: 48300000 },
+  { month: "T11", revenue: 52600000 },
+  { month: "T12", revenue: 45200000 },
 ]
 
 export default function AdminDashboard() {
@@ -152,12 +177,38 @@ export default function AdminDashboard() {
             <CardTitle>Doanh thu theo tháng</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Biểu đồ doanh thu sẽ được hiển thị tại đây</p>
-                <p className="text-sm mt-1">Có thể tích hợp Chart.js hoặc Recharts</p>
-              </div>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="month" 
+                    className="text-xs"
+                    tick={{ fill: 'currentColor' }}
+                  />
+                  <YAxis 
+                    className="text-xs"
+                    tick={{ fill: 'currentColor' }}
+                    tickFormatter={(value: any) => `${(value / 1000000).toFixed(0)}M`}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => [
+                      `${Number(value).toLocaleString('vi-VN')} ₫`,
+                      'Doanh thu'
+                    ]}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '0.5rem',
+                    }}
+                  />
+                  <Bar 
+                    dataKey="revenue" 
+                    fill="hsl(var(--primary))" 
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>

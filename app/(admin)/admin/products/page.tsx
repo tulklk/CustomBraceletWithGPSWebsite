@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { DataTable } from "@/components/admin/DataTable"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Edit, Trash2, Eye } from "lucide-react"
 import {
   Dialog,
@@ -24,6 +25,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [productFilter, setProductFilter] = useState<string>("all")
   const { toast } = useToast()
 
   // Fetch products
@@ -138,6 +140,15 @@ export default function ProductsPage() {
     })
   }
 
+  // Filter products based on type
+  const filteredProducts = products.filter((product) => {
+    if (productFilter === "all") return true
+    if (productFilter === "bracelet") return product.id.startsWith("bunny-")
+    if (productFilter === "necklace") return product.id.startsWith("necklace-")
+    if (productFilter === "clip") return product.id.startsWith("clip-")
+    return true
+  })
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -162,9 +173,27 @@ export default function ProductsPage() {
         </Button>
       </div>
 
+      {/* Filter Tabs */}
+      <Tabs value={productFilter} onValueChange={setProductFilter}>
+        <TabsList>
+          <TabsTrigger value="all">
+            Tất cả ({products.length})
+          </TabsTrigger>
+          <TabsTrigger value="bracelet">
+            Vòng tay ({products.filter(p => p.id.startsWith("bunny-")).length})
+          </TabsTrigger>
+          <TabsTrigger value="necklace">
+            Dây chuyền ({products.filter(p => p.id.startsWith("necklace-")).length})
+          </TabsTrigger>
+          <TabsTrigger value="clip">
+            Pin kẹp quần áo ({products.filter(p => p.id.startsWith("clip-")).length})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Products Table */}
       <DataTable
-        data={products}
+        data={filteredProducts}
         columns={columns}
         searchPlaceholder="Tìm kiếm sản phẩm..."
       />

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { DataTable } from "@/components/admin/DataTable"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Edit, Trash2 } from "lucide-react"
 import {
   Dialog,
@@ -24,6 +25,7 @@ export default function TemplatesPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null)
+  const [templateFilter, setTemplateFilter] = useState<string>("all")
   const { toast } = useToast()
 
   // Fetch templates
@@ -155,6 +157,15 @@ export default function TemplatesPage() {
     })
   }
 
+  // Filter templates based on type
+  const filteredTemplates = templates.filter((template) => {
+    if (templateFilter === "all") return true
+    if (templateFilter === "bracelet") return template.id.startsWith("bunny-")
+    if (templateFilter === "necklace") return template.id.startsWith("necklace-")
+    if (templateFilter === "clip") return template.id.startsWith("clip-")
+    return true
+  })
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -170,7 +181,7 @@ export default function TemplatesPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Templates</h1>
           <p className="text-muted-foreground mt-2">
-            Quản lý các mẫu thiết kế vòng tay
+            Quản lý các mẫu thiết kế sản phẩm
           </p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
@@ -179,9 +190,27 @@ export default function TemplatesPage() {
         </Button>
       </div>
 
+      {/* Filter Tabs */}
+      <Tabs value={templateFilter} onValueChange={setTemplateFilter}>
+        <TabsList>
+          <TabsTrigger value="all">
+            Tất cả ({templates.length})
+          </TabsTrigger>
+          <TabsTrigger value="bracelet">
+            Vòng tay ({templates.filter(t => t.id.startsWith("bunny-")).length})
+          </TabsTrigger>
+          <TabsTrigger value="necklace">
+            Dây chuyền ({templates.filter(t => t.id.startsWith("necklace-")).length})
+          </TabsTrigger>
+          <TabsTrigger value="clip">
+            Pin kẹp quần áo ({templates.filter(t => t.id.startsWith("clip-")).length})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Templates Grid View */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {templates.slice(0, 6).map((template) => (
+        {filteredTemplates.slice(0, 6).map((template) => (
           <Card key={template.id} className="hover:shadow-lg transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
@@ -231,7 +260,7 @@ export default function TemplatesPage() {
 
       {/* Templates Table */}
       <DataTable
-        data={templates}
+        data={filteredTemplates}
         columns={columns}
         searchPlaceholder="Tìm kiếm template..."
       />

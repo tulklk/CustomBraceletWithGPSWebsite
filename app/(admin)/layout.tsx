@@ -8,7 +8,6 @@ import {
   Package,
   ShoppingCart,
   Palette,
-  Sparkles,
   Users,
   Settings,
   LogOut,
@@ -38,11 +37,6 @@ const navItems = [
     title: "Templates",
     href: "/admin/templates",
     icon: Palette,
-  },
-  {
-    title: "Accessories",
-    href: "/admin/accessories",
-    icon: Sparkles,
   },
   {
     title: "Khách hàng",
