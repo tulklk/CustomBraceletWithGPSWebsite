@@ -38,7 +38,7 @@ export function Canvas({ accessories }: CanvasProps) {
     <div className="relative w-full bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 overflow-hidden">
       {/* Title */}
       <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold mb-1">KÍCH THƯỚC SẢN PHẨM</h3>
+        <h3 className="text-lg font-semibold mb-1 text-primary">KÍCH THƯỚC SẢN PHẨM</h3>
         <p className="text-sm text-muted-foreground">
           Thiết kế mới: bản dây nhỏ hơn, dây mỏng nhẹ hơn
         </p>

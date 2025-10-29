@@ -59,8 +59,8 @@ export function ProductFilter({
       <CardHeader className="py-4 md:py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="h-4 w-4 md:h-5 md:w-5" />
-            <CardTitle className="text-base md:text-lg">Bộ lọc</CardTitle>
+            <SlidersHorizontal className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+            <CardTitle className="text-base md:text-lg text-primary">Bộ lọc</CardTitle>
             {activeFiltersCount > 0 && (
               <Badge variant="secondary" className="text-xs">{activeFiltersCount}</Badge>
             )}

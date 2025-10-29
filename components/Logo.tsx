@@ -25,7 +25,7 @@ export function Logo({ className = "", showText = true }: LogoProps) {
 
       {/* Logo Text */}
       {showText && (
-        <span className="text-2xl font-bold leading-tight bg-gradient-to-r from-primary to-pink-600 bg-clip-text text-transparent">
+        <span className="text-2xl font-normal leading-tight bg-gradient-to-r from-primary to-pink-600 bg-clip-text text-transparent" style={{ fontFamily: 'var(--font-akina)' }}>
           ARTEMIS
         </span>
       )}

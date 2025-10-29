@@ -45,7 +45,7 @@ export function TemplatePicker({ templates }: TemplatePickerProps) {
                 </div>
               )}
             </div>
-            <h3 className="font-semibold text-sm mb-1">{template.name}</h3>
+            <h3 className="font-semibold text-sm mb-1 text-primary">{template.name}</h3>
             <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
               {template.description}
             </p>

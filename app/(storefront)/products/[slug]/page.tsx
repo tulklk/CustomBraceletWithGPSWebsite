@@ -146,7 +146,7 @@ export default function ProductDetailPage() {
       </Button>
 
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">{product.name}</h1>
+        <h1 className="text-4xl font-bold mb-2 text-primary">{product.name}</h1>
         <p className="text-muted-foreground text-lg">{product.description}</p>
       </div>
 
@@ -224,14 +224,14 @@ export default function ProductDetailPage() {
             {/* Customizer Options */}
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-semibold mb-4">Chọn Template</h2>
+                <h2 className="text-2xl font-semibold mb-4 text-primary">Chọn Template</h2>
                 <TemplatePicker templates={templates} />
               </div>
 
               <Separator />
 
               <div>
-                <h2 className="text-2xl font-semibold mb-4">Khắc tên</h2>
+                <h2 className="text-2xl font-semibold mb-4 text-primary">Khắc tên</h2>
                 <EngraveForm />
               </div>
             </div>
@@ -241,7 +241,7 @@ export default function ProductDetailPage() {
         <TabsContent value="specs" className="space-y-6">
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h2 className="text-2xl font-semibold mb-4">Thông số kỹ thuật</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-primary">Thông số kỹ thuật</h2>
               <div className="space-y-3">
                 <div className="flex justify-between py-2 border-b">
                   <span className="text-muted-foreground">Chống nước:</span>
