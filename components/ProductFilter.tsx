@@ -52,7 +52,7 @@ export function ProductFilter({
 
   const activeFiltersCount =
     (filters.productTypes.length > 0 ? 1 : 0) +
-    (filters.priceRange[0] !== 100000 || filters.priceRange[1] !== 400000 ? 1 : 0)
+    (filters.priceRange[0] !== 299000 || filters.priceRange[1] !== 499000 ? 1 : 0)
 
   return (
     <Card className="lg:sticky lg:top-20">
@@ -107,8 +107,8 @@ export function ProductFilter({
             <Label className="text-sm font-semibold">Khoảng giá</Label>
             <div className="px-2 py-4">
               <Slider
-                min={100000}
-                max={400000}
+                min={299000}
+                max={499000}
                 step={50000}
                 value={filters.priceRange}
                 onValueChange={handlePriceChange}

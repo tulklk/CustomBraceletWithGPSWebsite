@@ -21,7 +21,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'bunny-baby-pink',
     name: 'ARTEMIS Bunny Baby Pink',
     slug: 'bunny-baby-pink',
-    priceFrom: 400000,
+    priceFrom: 499000,
     images: ['/images/templates/bunny-baby-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -44,7 +44,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'bunny-lavender',
     name: 'ARTEMIS Bunny Lavender',
     slug: 'bunny-lavender',
-    priceFrom: 400000,
+    priceFrom: 499000,
     images: ['/images/templates/bunny-lavender.png'],
     specs: {
       waterproof: 'IP67',
@@ -67,7 +67,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'bunny-yellow',
     name: 'ARTEMIS Bunny Yellow',
     slug: 'bunny-yellow',
-    priceFrom: 400000,
+    priceFrom: 499000,
     images: ['/images/templates/bunny-yellow.png'],
     specs: {
       waterproof: 'IP67',
@@ -90,7 +90,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'bunny-mint',
     name: 'ARTEMIS Bunny Mint',
     slug: 'bunny-mint',
-    priceFrom: 400000,
+    priceFrom: 499000,
     images: ['/images/templates/bunny-mint.png'],
     specs: {
       waterproof: 'IP67',
@@ -113,7 +113,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'bunny-pink',
     name: 'ARTEMIS Bunny Green',
     slug: 'bunny-pink',
-    priceFrom: 400000,
+    priceFrom: 499000,
     images: ['/images/templates/bunny-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -136,7 +136,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'necklace-baby-pink',
     name: 'ARTEMIS Dây Chuyền Bunny Baby Pink',
     slug: 'necklace-baby-pink',
-    priceFrom: 150000,
+    priceFrom: 375000,
     images: ['/images/necklaces/necklace-baby-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -159,7 +159,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'necklace-pink',
     name: 'ARTEMIS Dây Chuyền Bunny Pink',
     slug: 'necklace-pink',
-    priceFrom: 150000,
+    priceFrom: 375000,
     images: ['/images/necklaces/necklace-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -182,7 +182,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'necklace-lavender',
     name: 'ARTEMIS Dây Chuyền Bunny Lavender',
     slug: 'necklace-lavender',
-    priceFrom: 150000,
+    priceFrom: 375000,
     images: ['/images/necklaces/necklace-lavender.png'],
     specs: {
       waterproof: 'IP67',
@@ -205,7 +205,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'necklace-yellow',
     name: 'ARTEMIS Dây Chuyền Bunny Yellow',
     slug: 'necklace-yellow',
-    priceFrom: 150000,
+    priceFrom: 375000,
     images: ['/images/necklaces/necklace-yellow.png'],
     specs: {
       waterproof: 'IP67',
@@ -228,7 +228,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'necklace-mint',
     name: 'ARTEMIS Dây Chuyền Bunny Mint',
     slug: 'necklace-mint',
-    priceFrom: 150000,
+    priceFrom: 375000,
     images: ['/images/necklaces/necklace-mint.png'],
     specs: {
       waterproof: 'IP67',
@@ -251,7 +251,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'clip-baby-pink',
     name: 'ARTEMIS Pin Kẹp Bunny Baby Pink',
     slug: 'clip-baby-pink',
-    priceFrom: 100000,
+    priceFrom: 299000,
     images: ['/images/clips/clip-baby-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -274,7 +274,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'clip-pink',
     name: 'ARTEMIS Pin Kẹp Bunny Pink',
     slug: 'clip-pink',
-    priceFrom: 100000,
+    priceFrom: 299000,
     images: ['/images/clips/clip-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -297,7 +297,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'clip-lavender',
     name: 'ARTEMIS Pin Kẹp Bunny Lavender',
     slug: 'clip-lavender',
-    priceFrom: 100000,
+    priceFrom: 299000,
     images: ['/images/clips/clip-lavender.png'],
     specs: {
       waterproof: 'IP67',
@@ -320,7 +320,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'clip-yellow',
     name: 'ARTEMIS Pin Kẹp Bunny Yellow',
     slug: 'clip-yellow',
-    priceFrom: 100000,
+    priceFrom: 299000,
     images: ['/images/clips/clip-yellow.png'],
     specs: {
       waterproof: 'IP67',
@@ -345,7 +345,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'bunny-baby-pink',
     name: 'Bunny Baby Pink',
-    basePrice: 400000,
+    basePrice: 499000,
     defaultColors: {
       band: 'pink',
       face: 'white',
@@ -358,7 +358,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'bunny-lavender',
     name: 'Bunny Lavender',
-    basePrice: 400000,
+    basePrice: 499000,
     defaultColors: {
       band: 'purple',
       face: 'white',
@@ -371,7 +371,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'bunny-yellow',
     name: 'Bunny Yellow',
-    basePrice: 400000,
+    basePrice: 499000,
     defaultColors: {
       band: 'yellow',
       face: 'white',
@@ -384,7 +384,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'bunny-mint',
     name: 'Bunny Mint',
-    basePrice: 400000,
+    basePrice: 499000,
     defaultColors: {
       band: 'green',
       face: 'white',
@@ -397,7 +397,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'bunny-pink',
     name: 'Bunny Green',
-    basePrice: 400000,
+    basePrice: 499000,
     defaultColors: {
       band: 'pink',
       face: 'white',
