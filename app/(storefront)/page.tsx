@@ -136,7 +136,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'necklace-baby-pink',
     name: 'ARTEMIS Dây Chuyền Bunny Baby Pink',
     slug: 'necklace-baby-pink',
-    priceFrom: 375000,
+    priceFrom: 400000,
     images: ['/images/necklaces/necklace-baby-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -159,7 +159,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'necklace-pink',
     name: 'ARTEMIS Dây Chuyền Bunny Pink',
     slug: 'necklace-pink',
-    priceFrom: 375000,
+    priceFrom: 400000,
     images: ['/images/necklaces/necklace-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -182,7 +182,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'necklace-lavender',
     name: 'ARTEMIS Dây Chuyền Bunny Lavender',
     slug: 'necklace-lavender',
-    priceFrom: 375000,
+    priceFrom: 400000,
     images: ['/images/necklaces/necklace-lavender.png'],
     specs: {
       waterproof: 'IP67',
@@ -205,7 +205,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'necklace-yellow',
     name: 'ARTEMIS Dây Chuyền Bunny Yellow',
     slug: 'necklace-yellow',
-    priceFrom: 375000,
+    priceFrom: 400000,
     images: ['/images/necklaces/necklace-yellow.png'],
     specs: {
       waterproof: 'IP67',
@@ -228,7 +228,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'necklace-mint',
     name: 'ARTEMIS Dây Chuyền Bunny Mint',
     slug: 'necklace-mint',
-    priceFrom: 375000,
+    priceFrom: 400000,
     images: ['/images/necklaces/necklace-mint.png'],
     specs: {
       waterproof: 'IP67',
@@ -251,7 +251,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'clip-baby-pink',
     name: 'ARTEMIS Pin Kẹp Bunny Baby Pink',
     slug: 'clip-baby-pink',
-    priceFrom: 299000,
+    priceFrom: 350000,
     images: ['/images/clips/clip-baby-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -274,7 +274,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'clip-pink',
     name: 'ARTEMIS Pin Kẹp Bunny Pink',
     slug: 'clip-pink',
-    priceFrom: 299000,
+    priceFrom: 350000,
     images: ['/images/clips/clip-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -297,7 +297,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'clip-lavender',
     name: 'ARTEMIS Pin Kẹp Bunny Lavender',
     slug: 'clip-lavender',
-    priceFrom: 299000,
+    priceFrom: 350000,
     images: ['/images/clips/clip-lavender.png'],
     specs: {
       waterproof: 'IP67',
@@ -320,7 +320,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'clip-yellow',
     name: 'ARTEMIS Pin Kẹp Bunny Yellow',
     slug: 'clip-yellow',
-    priceFrom: 299000,
+    priceFrom: 350000,
     images: ['/images/clips/clip-yellow.png'],
     specs: {
       waterproof: 'IP67',

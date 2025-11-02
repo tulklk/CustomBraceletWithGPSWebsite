@@ -73,7 +73,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'necklace-baby-pink',
     name: 'Dây Chuyền Baby Pink',
-    basePrice: 375000,
+    basePrice: 400000,
     defaultColors: {
       band: '#FFC0CB',
       face: '#FFFFFF',
@@ -86,7 +86,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'necklace-pink',
     name: 'Dây Chuyền Pink',
-    basePrice: 375000,
+    basePrice: 400000,
     defaultColors: {
       band: '#FFB6C1',
       face: '#FFFFFF',
@@ -99,7 +99,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'necklace-lavender',
     name: 'Dây Chuyền Lavender',
-    basePrice: 375000,
+    basePrice: 400000,
     defaultColors: {
       band: '#E6E6FA',
       face: '#FFFFFF',
@@ -112,7 +112,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'necklace-yellow',
     name: 'Dây Chuyền Yellow',
-    basePrice: 375000,
+    basePrice: 400000,
     defaultColors: {
       band: '#FFFF99',
       face: '#FFFFFF',
@@ -125,7 +125,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'necklace-mint',
     name: 'Dây Chuyền Mint',
-    basePrice: 375000,
+    basePrice: 400000,
     defaultColors: {
       band: '#98FF98',
       face: '#FFFFFF',
@@ -140,7 +140,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'clip-baby-pink',
     name: 'Pin Kẹp Baby Pink',
-    basePrice: 299000,
+    basePrice: 350000,
     defaultColors: {
       band: '#FFC0CB',
       face: '#FFFFFF',
@@ -153,7 +153,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'clip-pink',
     name: 'Pin Kẹp Pink',
-    basePrice: 299000,
+    basePrice: 350000,
     defaultColors: {
       band: '#FFB6C1',
       face: '#FFFFFF',
@@ -166,7 +166,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'clip-lavender',
     name: 'Pin Kẹp Lavender',
-    basePrice: 299000,
+    basePrice: 350000,
     defaultColors: {
       band: '#E6E6FA',
       face: '#FFFFFF',
@@ -179,7 +179,7 @@ const MOCK_TEMPLATES: Template[] = [
   {
     id: 'clip-yellow',
     name: 'Pin Kẹp Yellow',
-    basePrice: 299000,
+    basePrice: 350000,
     defaultColors: {
       band: '#FFFF99',
       face: '#FFFFFF',
