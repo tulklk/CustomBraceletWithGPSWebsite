@@ -19,7 +19,7 @@ const MOCK_ORDERS: Order[] = [
           accessories: [],
           engrave: {
             text: 'Bé Minh',
-            font: 'Arial',
+            font: 'Sans',
             position: 'center',
           },
           unitPrice: 400000,
@@ -47,7 +47,7 @@ const MOCK_ORDERS: Order[] = [
           accessories: [],
           engrave: {
             text: 'Baby Anh',
-            font: 'Arial',
+            font: 'Sans',
             position: 'center',
           },
           unitPrice: 400000,
@@ -109,7 +109,7 @@ const MOCK_ORDERS: Order[] = [
           accessories: [],
           engrave: {
             text: 'Thiên Ân',
-            font: 'Arial',
+            font: 'Sans',
             position: 'center',
           },
           unitPrice: 400000,
@@ -147,7 +147,7 @@ const MOCK_ORDERS: Order[] = [
           accessories: [],
           engrave: {
             text: 'Gia Bảo',
-            font: 'Arial',
+            font: 'Sans',
             position: 'center',
           },
           unitPrice: 400000,
@@ -233,7 +233,7 @@ const MOCK_ORDERS: Order[] = [
           accessories: [],
           engrave: {
             text: 'Phương Anh',
-            font: 'Arial',
+            font: 'Sans',
             position: 'center',
           },
           unitPrice: 400000,
@@ -305,7 +305,7 @@ const MOCK_ORDERS: Order[] = [
           accessories: [],
           engrave: {
             text: 'Kim Ngân',
-            font: 'Arial',
+            font: 'Sans',
             position: 'center',
           },
           unitPrice: 400000,

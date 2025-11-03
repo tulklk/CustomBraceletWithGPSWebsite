@@ -50,7 +50,7 @@ export function ChatWindow() {
         "Xin chào! 👋 Tôi là trợ lý AI của ARTEMIS.\n\n✨ Tôi có thể giúp bạn:\n• Tư vấn sản phẩm và tính năng\n• Hướng dẫn thiết kế vòng tay\n• Giải đáp thắc mắc về bảo hành\n• Hỗ trợ đặt hàng\n\nBạn cần tôi giúp gì không? 😊"
       )
     }
-  }, [])
+  }, [messages.length, addMessage])
 
   const handleSend = () => {
     if (!input.trim()) return
