@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Heart, Shield, MapPin, Clock, Play, AlertCircle, CheckCircle2, Star, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Heart, Shield, MapPin, Clock, AlertCircle, CheckCircle2, Star, AlertTriangle, Palette } from "lucide-react"
 import Link from "next/link"
 import { Separator } from "@/components/ui/separator"
 import { motion } from "framer-motion"
@@ -85,10 +85,6 @@ export default function ExperiencePage() {
                   <Shield className="mr-2 h-5 w-5" />
                   Bảo vệ con ngay
                 </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="text-lg h-14 px-8">
-                <Play className="mr-2 h-5 w-5" />
-                Xem video
               </Button>
             </div>
           </motion.div>
@@ -328,12 +324,12 @@ export default function ExperiencePage() {
 
                 <div className="flex items-start gap-4 p-4 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900">
                   <div className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
-                    <Shield className="h-6 w-6 text-white" />
+                    <Palette className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <div className="text-3xl font-bold text-purple-600 mb-1">SOS</div>
+                    <div className="text-3xl font-bold text-purple-600 mb-1">Free-Custom</div>
                     <p className="text-sm text-muted-foreground">
-                      nút khẩn cấp gửi cảnh báo ngay cho ba mẹ
+                      có thể trang trí đa dạng với nhiều loại template, phụ kiện và khắc tên
                     </p>
                   </div>
                 </div>
@@ -464,7 +460,7 @@ export default function ExperiencePage() {
                     Xem sản phẩm
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="text-lg h-14 px-8 border-white text-white hover:bg-white/20">
+                <Button size="lg" variant="outline" asChild className="text-lg h-14 px-8 border-2 border-white bg-white text-primary hover:bg-white/90 hover:text-primary">
                   <Link href="/guides">
                     Tìm hiểu thêm
                   </Link>

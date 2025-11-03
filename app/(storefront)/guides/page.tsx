@@ -88,18 +88,6 @@ export default function GuidesPage() {
                 <li>Sạc pin khi còn dưới 20%</li>
               </ul>
             </div>
-
-            <Separator />
-
-            <div>
-              <h3 className="font-semibold mb-2">Lưu ý chống nước:</h3>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>IP67: Chịu được rửa tay, mưa nhẹ (KHÔNG bơi)</li>
-                <li>IP68: Có thể bơi ở độ sâu 1.5m, tối đa 30 phút</li>
-                <li>Tránh nước biển, nước nóng trên 40°C</li>
-                <li>Không nhấn nút khi đang trong nước</li>
-              </ul>
-            </div>
           </CardContent>
         </Card>
 
@@ -112,16 +100,6 @@ export default function GuidesPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <ol className="list-decimal list-inside space-y-3 text-muted-foreground">
-              <li>
-                <span className="font-medium text-foreground">
-                  Lắp SIM 4G (nano SIM)
-                </span>{" "}
-                vào khay SIM ở mặt sau vòng tay
-              </li>
-              <li>
-                <span className="font-medium text-foreground">Sạc đầy pin</span>{" "}
-                trước lần sử dụng đầu tiên (~2 giờ)
-              </li>
               <li>
                 <span className="font-medium text-foreground">
                   Tải ứng dụng ARTEMIS
@@ -137,57 +115,10 @@ export default function GuidesPage() {
                 hộp sản phẩm để ghép nối vòng tay
               </li>
               <li>
-                <span className="font-medium text-foreground">
-                  Cài đặt hồ sơ trẻ
-                </span>
-                : tên, tuổi, vùng an toàn, danh bạ SOS
-              </li>
-              <li>
                 <span className="font-medium text-foreground">Hoàn tất!</span> Bắt
                 đầu theo dõi con yêu
               </li>
             </ol>
-          </CardContent>
-        </Card>
-
-        {/* Features Guide */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              🎯 Các tính năng chính
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="border-l-4 border-primary pl-4">
-              <h3 className="font-semibold">Định vị GPS/LBS</h3>
-              <p className="text-sm text-muted-foreground">
-                Xem vị trí thời gian thực, lịch sử di chuyển trên bản đồ
-              </p>
-            </div>
-            <div className="border-l-4 border-primary pl-4">
-              <h3 className="font-semibold">Vùng an toàn (Geo-fence)</h3>
-              <p className="text-sm text-muted-foreground">
-                Nhận cảnh báo khi trẻ ra/vào vùng đã cài đặt (nhà, trường)
-              </p>
-            </div>
-            <div className="border-l-4 border-primary pl-4">
-              <h3 className="font-semibold">Gọi thoại 2 chiều</h3>
-              <p className="text-sm text-muted-foreground">
-                Gọi trực tiếp từ vòng tay hoặc từ app đến vòng tay
-              </p>
-            </div>
-            <div className="border-l-4 border-primary pl-4">
-              <h3 className="font-semibold">Nút SOS</h3>
-              <p className="text-sm text-muted-foreground">
-                Giữ nút SOS 3 giây để gọi khẩn cấp đến phụ huynh
-              </p>
-            </div>
-            <div className="border-l-4 border-primary pl-4">
-              <h3 className="font-semibold">Đếm bước, nhắc uống nước</h3>
-              <p className="text-sm text-muted-foreground">
-                Theo dõi hoạt động thể chất, nhắc nhở lối sống lành mạnh
-              </p>
-            </div>
           </CardContent>
         </Card>
 
@@ -200,29 +131,10 @@ export default function GuidesPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <h3 className="font-semibold">Vòng tay không bật được:</h3>
-              <p className="text-sm text-muted-foreground">
-                → Sạc ít nhất 30 phút, sau đó giữ nút nguồn 3 giây
-              </p>
-            </div>
-            <div>
               <h3 className="font-semibold">Không kết nối được GPS:</h3>
               <p className="text-sm text-muted-foreground">
                 → Đảm bảo ở ngoài trời, tránh nhà cao tầng. Đợi 2-3 phút để bắt
                 tín hiệu
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold">Pin hết nhanh:</h3>
-              <p className="text-sm text-muted-foreground">
-                → Giảm tần suất cập nhật vị trí (từ 10s → 30s). Tắt tính năng
-                không cần thiết
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold">Không gọi thoại được:</h3>
-              <p className="text-sm text-muted-foreground">
-                → Kiểm tra SIM có đủ cước, có bật chức năng gọi thoại không
               </p>
             </div>
           </CardContent>

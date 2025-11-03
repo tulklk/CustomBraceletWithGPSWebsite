@@ -16,7 +16,7 @@ export default function FAQPage() {
     {
       question: "Thời lượng pin là bao lâu?",
       answer:
-        "ARTEMIS Mini: 3-5 ngày sử dụng bình thường. ARTEMIS Active: 5-7 ngày. Thời gian sạc đầy khoảng 2 giờ. Pin có thể kéo dài hơn nếu bật chế độ tiết kiệm điện.",
+        "Các sản phẩm có thời gian sử dụng trong một năm, khi hết pin thì sẽ được thay pin miễn phí.",
     },
     {
       question: "Có bảo hành bao lâu?",
@@ -26,7 +26,7 @@ export default function FAQPage() {
     {
       question: "Khắc tên có mất phí không?",
       answer:
-        "Có, phí khắc tên là 50.000đ. Bạn có thể khắc tối đa 12 ký tự (A-Z, 0-9, khoảng trắng, dấu gạch). Lưu ý: kiểm tra kỹ chính tả vì không hỗ trợ đổi trả nếu sai thông tin khắc.",
+        "Không, khắc tên hoàn toàn miễn phí. Bạn có thể khắc tối đa 12 ký tự (A-Z, 0-9, khoảng trắng, dấu gạch). Lưu ý: kiểm tra kỹ chính tả vì không hỗ trợ đổi trả nếu sai thông tin khắc.",
     },
     {
       question: "Thời gian giao hàng?",
@@ -44,19 +44,9 @@ export default function FAQPage() {
         "Dùng thước dây đo chu vi cổ tay trẻ, sau đó cộng thêm 1-1.5cm để thoải mái. Size S (12-14cm): 3-5 tuổi. Size M (14-16cm): 6-8 tuổi. Size L (16-18cm): 9-12 tuổi. Tham khảo thêm tại trang Hướng dẫn.",
     },
     {
-      question: "Vòng tay có cần SIM không?",
-      answer:
-        "Có, để sử dụng định vị GPS và gọi thoại, bạn cần lắp SIM 4G (nano SIM). Khuyến nghị dùng gói data 3GB/tháng. SIM không đi kèm, bạn tự mua riêng.",
-    },
-    {
       question: "Ứng dụng theo dõi có tính phí không?",
       answer:
-        "Ứng dụng ARTEMIS (iOS/Android) hoàn toàn miễn phí. Bạn chỉ mất phí data di động (từ SIM đã lắp vào vòng tay).",
-    },
-    {
-      question: "Có thể thêm bao nhiêu phụ kiện?",
-      answer:
-        "Tối đa 6 phụ kiện (charms) trên 4 vị trí: trên, dưới, trái, phải. Mỗi phụ kiện có giá từ 50.000 - 120.000đ tùy loại.",
+        "Ứng dụng ARTEMIS (iOS/Android) hoàn toàn miễn phí.",
     },
   ]
 
