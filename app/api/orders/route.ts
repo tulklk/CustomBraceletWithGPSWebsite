@@ -1,6 +1,28 @@
 import { NextResponse } from 'next/server'
 import { Order } from '@/lib/types'
 
+// Helper function to create design object
+function createDesign(
+  productId: string,
+  templateId: string,
+  color: string,
+  engrave: { text: string; font: 'Sans' | 'Rounded' | 'Mono'; position: 'inside' | 'band' } | null,
+  unitPrice: number
+) {
+  return {
+    productId,
+    templateId,
+    colors: {
+      band: color,
+      face: color,
+      rim: color,
+    },
+    accessories: [],
+    engrave: engrave || undefined,
+    unitPrice,
+  }
+}
+
 // Mock orders data
 const MOCK_ORDERS: Order[] = [
   {
@@ -13,17 +35,14 @@ const MOCK_ORDERS: Order[] = [
     },
     items: [
       {
-        design: {
-          templateId: 'bunny-baby-pink',
-          color: '#FFC0CB',
-          accessories: [],
-          engrave: {
-            text: 'Bé Minh',
-            font: 'Sans',
-            position: 'center',
-          },
-          unitPrice: 400000,
-        },
+        id: 'item-1',
+        design: createDesign(
+          'bracelet-1',
+          'bunny-baby-pink',
+          '#FFC0CB',
+          { text: 'Bé Minh', font: 'Sans', position: 'inside' },
+          400000
+        ),
         qty: 2,
       },
     ],
@@ -41,27 +60,25 @@ const MOCK_ORDERS: Order[] = [
     },
     items: [
       {
-        design: {
-          templateId: 'bunny-lavender',
-          color: '#E6E6FA',
-          accessories: [],
-          engrave: {
-            text: 'Baby Anh',
-            font: 'Sans',
-            position: 'center',
-          },
-          unitPrice: 400000,
-        },
+        id: 'item-2',
+        design: createDesign(
+          'bracelet-1',
+          'bunny-lavender',
+          '#E6E6FA',
+          { text: 'Baby Anh', font: 'Sans', position: 'inside' },
+          400000
+        ),
         qty: 1,
       },
       {
-        design: {
-          templateId: 'necklace-baby-pink',
-          color: '#FFC0CB',
-          accessories: [],
-          engrave: null,
-          unitPrice: 150000,
-        },
+        id: 'item-3',
+        design: createDesign(
+          'necklace-1',
+          'necklace-baby-pink',
+          '#FFC0CB',
+          null,
+          150000
+        ),
         qty: 1,
       },
     ],
@@ -79,13 +96,14 @@ const MOCK_ORDERS: Order[] = [
     },
     items: [
       {
-        design: {
-          templateId: 'clip-pink',
-          color: '#FFB6C1',
-          accessories: [],
-          engrave: null,
-          unitPrice: 100000,
-        },
+        id: 'item-4',
+        design: createDesign(
+          'clip-1',
+          'clip-pink',
+          '#FFB6C1',
+          null,
+          100000
+        ),
         qty: 3,
       },
     ],
@@ -103,27 +121,25 @@ const MOCK_ORDERS: Order[] = [
     },
     items: [
       {
-        design: {
-          templateId: 'bunny-yellow',
-          color: '#FFFF99',
-          accessories: [],
-          engrave: {
-            text: 'Thiên Ân',
-            font: 'Sans',
-            position: 'center',
-          },
-          unitPrice: 400000,
-        },
+        id: 'item-5',
+        design: createDesign(
+          'bracelet-1',
+          'bunny-yellow',
+          '#FFFF99',
+          { text: 'Thiên Ân', font: 'Sans', position: 'inside' },
+          400000
+        ),
         qty: 1,
       },
       {
-        design: {
-          templateId: 'necklace-yellow',
-          color: '#FFFF99',
-          accessories: [],
-          engrave: null,
-          unitPrice: 150000,
-        },
+        id: 'item-6',
+        design: createDesign(
+          'necklace-1',
+          'necklace-yellow',
+          '#FFFF99',
+          null,
+          150000
+        ),
         qty: 2,
       },
     ],
@@ -141,17 +157,14 @@ const MOCK_ORDERS: Order[] = [
     },
     items: [
       {
-        design: {
-          templateId: 'bunny-mint',
-          color: '#98FF98',
-          accessories: [],
-          engrave: {
-            text: 'Gia Bảo',
-            font: 'Sans',
-            position: 'center',
-          },
-          unitPrice: 400000,
-        },
+        id: 'item-7',
+        design: createDesign(
+          'bracelet-1',
+          'bunny-mint',
+          '#98FF98',
+          { text: 'Gia Bảo', font: 'Sans', position: 'inside' },
+          400000
+        ),
         qty: 1,
       },
     ],
@@ -169,13 +182,14 @@ const MOCK_ORDERS: Order[] = [
     },
     items: [
       {
-        design: {
-          templateId: 'necklace-lavender',
-          color: '#E6E6FA',
-          accessories: [],
-          engrave: null,
-          unitPrice: 150000,
-        },
+        id: 'item-8',
+        design: createDesign(
+          'necklace-1',
+          'necklace-lavender',
+          '#E6E6FA',
+          null,
+          150000
+        ),
         qty: 5,
       },
     ],
@@ -193,23 +207,25 @@ const MOCK_ORDERS: Order[] = [
     },
     items: [
       {
-        design: {
-          templateId: 'clip-baby-pink',
-          color: '#FFB6C1',
-          accessories: [],
-          engrave: null,
-          unitPrice: 100000,
-        },
+        id: 'item-9',
+        design: createDesign(
+          'clip-1',
+          'clip-baby-pink',
+          '#FFB6C1',
+          null,
+          100000
+        ),
         qty: 2,
       },
       {
-        design: {
-          templateId: 'clip-lavender',
-          color: '#E6E6FA',
-          accessories: [],
-          engrave: null,
-          unitPrice: 100000,
-        },
+        id: 'item-10',
+        design: createDesign(
+          'clip-1',
+          'clip-lavender',
+          '#E6E6FA',
+          null,
+          100000
+        ),
         qty: 2,
       },
     ],
@@ -227,37 +243,36 @@ const MOCK_ORDERS: Order[] = [
     },
     items: [
       {
-        design: {
-          templateId: 'bunny-pink',
-          color: '#FFB6C1',
-          accessories: [],
-          engrave: {
-            text: 'Phương Anh',
-            font: 'Sans',
-            position: 'center',
-          },
-          unitPrice: 400000,
-        },
+        id: 'item-11',
+        design: createDesign(
+          'bracelet-1',
+          'bunny-pink',
+          '#FFB6C1',
+          { text: 'Phương Anh', font: 'Sans', position: 'inside' },
+          400000
+        ),
         qty: 1,
       },
       {
-        design: {
-          templateId: 'necklace-pink',
-          color: '#FFB6C1',
-          accessories: [],
-          engrave: null,
-          unitPrice: 150000,
-        },
+        id: 'item-12',
+        design: createDesign(
+          'necklace-1',
+          'necklace-pink',
+          '#FFB6C1',
+          null,
+          150000
+        ),
         qty: 1,
       },
       {
-        design: {
-          templateId: 'clip-pink',
-          color: '#FFB6C1',
-          accessories: [],
-          engrave: null,
-          unitPrice: 100000,
-        },
+        id: 'item-13',
+        design: createDesign(
+          'clip-1',
+          'clip-pink',
+          '#FFB6C1',
+          null,
+          100000
+        ),
         qty: 1,
       },
     ],
@@ -275,13 +290,14 @@ const MOCK_ORDERS: Order[] = [
     },
     items: [
       {
-        design: {
-          templateId: 'necklace-mint',
-          color: '#98FF98',
-          accessories: [],
-          engrave: null,
-          unitPrice: 150000,
-        },
+        id: 'item-14',
+        design: createDesign(
+          'necklace-1',
+          'necklace-mint',
+          '#98FF98',
+          null,
+          150000
+        ),
         qty: 3,
       },
     ],
@@ -299,27 +315,25 @@ const MOCK_ORDERS: Order[] = [
     },
     items: [
       {
-        design: {
-          templateId: 'bunny-baby-pink',
-          color: '#FFC0CB',
-          accessories: [],
-          engrave: {
-            text: 'Kim Ngân',
-            font: 'Sans',
-            position: 'center',
-          },
-          unitPrice: 400000,
-        },
+        id: 'item-15',
+        design: createDesign(
+          'bracelet-1',
+          'bunny-baby-pink',
+          '#FFC0CB',
+          { text: 'Kim Ngân', font: 'Sans', position: 'inside' },
+          400000
+        ),
         qty: 2,
       },
       {
-        design: {
-          templateId: 'clip-yellow',
-          color: '#FFFF99',
-          accessories: [],
-          engrave: null,
-          unitPrice: 100000,
-        },
+        id: 'item-16',
+        design: createDesign(
+          'clip-1',
+          'clip-yellow',
+          '#FFFF99',
+          null,
+          100000
+        ),
         qty: 2,
       },
     ],
@@ -352,4 +366,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json(order)
 }
-
