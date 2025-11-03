@@ -36,6 +36,22 @@ export default function ProductDetailPage() {
   const { user, saveDesign } = useUser()
   const { toast } = useToast()
 
+  // Helper function to get product type from ID
+  const getProductType = (productId: string): 'bracelet' | 'necklace' | 'clip' => {
+    if (productId.startsWith('bunny-')) return 'bracelet'
+    if (productId.startsWith('necklace-')) return 'necklace'
+    if (productId.startsWith('clip-')) return 'clip'
+    return 'bracelet' // default
+  }
+
+  // Helper function to get template type from ID
+  const getTemplateType = (templateId: string): 'bracelet' | 'necklace' | 'clip' => {
+    if (templateId.startsWith('bunny-')) return 'bracelet'
+    if (templateId.startsWith('necklace-')) return 'necklace'
+    if (templateId.startsWith('clip-')) return 'clip'
+    return 'bracelet' // default
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -56,13 +72,20 @@ export default function ProductDetailPage() {
           return
         }
 
+        // Filter templates based on product type
+        const productType = getProductType(foundProduct.id)
+        const filteredTemplates = templatesData.filter((template: Template) => {
+          const templateType = getTemplateType(template.id)
+          return templateType === productType
+        })
+
         setProduct(foundProduct)
-        setTemplates(templatesData)
+        setTemplates(filteredTemplates)
         setAccessories(accessoriesData)
         setCustomizerProduct(foundProduct.id)
 
         // Auto-select first template if none selected
-        if (!templateId && templatesData.length > 0) {
+        if (!templateId && filteredTemplates.length > 0) {
           // Will be set by user clicking
         }
 

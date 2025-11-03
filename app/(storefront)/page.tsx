@@ -571,7 +571,7 @@ export default function HomePage() {
       <section className="py-12 md:py-16 lg:py-20 bg-muted/40">
         <div className="container px-4">
           <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-primary">
               Tại sao chọn ARTEMIS?
             </h2>
             <p className="text-muted-foreground text-base md:text-lg">
@@ -580,72 +580,60 @@ export default function HomePage() {
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            <Card>
+            <Card className="bg-gray-50 dark:bg-gray-900 shadow-sm">
               <CardContent className="p-6 space-y-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-lg flex items-center justify-center">
                   <MapPin className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg text-pink-500">Định vị GPS/4G chính xác</h3>
+                <h3 className="font-bold text-lg">Định vị GPS chính xác</h3>
                 <p className="text-muted-foreground">
                   Theo dõi vị trí thời gian thực, lịch sử di chuyển, vùng an toàn
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gray-50 dark:bg-gray-900 shadow-sm">
               <CardContent className="p-6 space-y-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-lg flex items-center justify-center">
                   <Droplet className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg text-pink-500">Chống nước IP67/IP68</h3>
+                <h3 className="font-bold text-lg">Chống nước IP67/IP68</h3>
                 <p className="text-muted-foreground">
                   Thoải mái rửa tay, đi mưa, thậm chí bơi lội (IP68)
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gray-50 dark:bg-gray-900 shadow-sm">
               <CardContent className="p-6 space-y-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-lg flex items-center justify-center">
                   <Battery className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg text-pink-500">Pin bền 3-7 ngày</h3>
+                <h3 className="font-bold text-lg">Pin bền 1 năm</h3>
                 <p className="text-muted-foreground">
-                  Không lo hết pin giữa chừng, sạc nhanh chỉ 2 giờ
+                  Không lo hết pin giữa chừng.
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gray-50 dark:bg-gray-900 shadow-sm">
               <CardContent className="p-6 space-y-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-lg text-pink-500">SOS khẩn cấp</h3>
-                <p className="text-muted-foreground">
-                  Nút cứu hộ 1 chạm, gọi ngay cho phụ huynh
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6 space-y-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-lg flex items-center justify-center">
                   <Sparkles className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg text-pink-500">Tùy biến không giới hạn</h3>
+                <h3 className="font-bold text-lg">Tùy biến không giới hạn</h3>
                 <p className="text-muted-foreground">
                   Hàng trăm tùy chọn màu, phụ kiện, khắc tên theo sở thích
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gray-50 dark:bg-gray-900 shadow-sm">
               <CardContent className="p-6 space-y-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-lg flex items-center justify-center">
                   <Heart className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg text-pink-500">Bảo hành 12 tháng</h3>
+                <h3 className="font-bold text-lg">Bảo hành 6 tháng</h3>
                 <p className="text-muted-foreground">
                   Hỗ trợ kỹ thuật trọn đời, đổi trả miễn phí trong 7 ngày
                 </p>
