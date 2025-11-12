@@ -7,7 +7,7 @@ import { Pagination } from "@/components/Pagination"
 import { Product } from "@/lib/types"
 
 const initialFilters: FilterState = {
-  priceRange: [299000, 499000],
+  priceRange: [500000, 600000],
   productTypes: [],
   sortBy: "default",
 }
