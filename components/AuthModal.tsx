@@ -121,12 +121,13 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     }
   }
 
-  // Handle Google credential response (ID token)
+  // Handle Google credential response (ID token from Google Identity Services)
   const handleGoogleCredentialResponse = async (response: { credential: string }) => {
     setIsLoading(true)
     try {
-      // response.credential is the ID token (JWT)
-      const authResponse = await authApi.loginWithGoogle({
+      // response.credential is the ID token (JWT) from Google Identity Services
+      // Send id_token to backend to verify and get user info + access token
+      const authResponse = await authApi.verifyGoogleToken({
         idToken: response.credential,
       })
       setAuth(authResponse)

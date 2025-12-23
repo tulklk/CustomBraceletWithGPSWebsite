@@ -118,9 +118,11 @@ export const authApi = {
   },
 
   /**
-   * Login with Google
+   * Verify Google id_token and login
+   * Frontend uses Google Identity Services to get id_token, then sends to backend to verify
+   * Backend endpoint: /api/Auth/login/google (verifies id_token and returns user + tokens)
    */
-  async loginWithGoogle(data: GoogleLoginRequest): Promise<AuthResponse> {
+  async verifyGoogleToken(data: GoogleLoginRequest): Promise<AuthResponse> {
     const response = await fetch(`${API_BASE_URL}/api/Auth/login/google`, {
       method: "POST",
       headers: {
@@ -131,6 +133,13 @@ export const authApi = {
     })
 
     return handleResponse<AuthResponse>(response)
+  },
+
+  /**
+   * @deprecated Use verifyGoogleToken instead. Kept for backward compatibility.
+   */
+  async loginWithGoogle(data: GoogleLoginRequest): Promise<AuthResponse> {
+    return this.verifyGoogleToken(data)
   },
 
   /**
