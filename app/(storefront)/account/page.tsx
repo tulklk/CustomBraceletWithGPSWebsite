@@ -96,8 +96,8 @@ export default function AccountPage() {
     })
   }
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     toast({
       title: "Đã đăng xuất",
     })
@@ -445,18 +445,6 @@ export default function AccountPage() {
                   <Save className="h-4 w-4 mr-2" />
                   Lưu thay đổi
                 </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-destructive">Vùng nguy hiểm</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Xóa tài khoản sẽ xóa toàn bộ dữ liệu của bạn và không thể khôi phục.
-                </p>
-                <Button variant="destructive">Xóa tài khoản</Button>
               </CardContent>
             </Card>
           </TabsContent>

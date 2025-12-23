@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -14,6 +14,24 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useUser } from "@/store/useUser"
 import { useToast } from "@/hooks/use-toast"
+import { authApi, ApiError } from "@/lib/api/auth"
+// Google Identity Services types
+declare global {
+  interface Window {
+    google: {
+      accounts: {
+        id: {
+          initialize: (config: { client_id: string; callback: (response: { credential: string }) => void }) => void
+          prompt: (callback?: (notification: any) => void) => void
+          renderButton: (element: HTMLElement, config: any) => void
+        }
+        oauth2: {
+          initTokenClient: (config: any) => any
+        }
+      }
+    }
+  }
+}
 import { Mail, Lock, User, Chrome, Eye, EyeOff, Facebook } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -28,8 +46,10 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [name, setName] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const { login } = useUser()
+  const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false)
+  const { setAuth } = useUser()
   const { toast } = useToast()
+  const googleSignInButtonRef = useRef<HTMLDivElement>(null)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,17 +63,25 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     }
 
     setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    login(email, email.split("@")[0])
-    toast({
-      title: "Đăng nhập thành công! 🎉",
-      description: `Chào mừng trở lại`,
-    })
-    setIsLoading(false)
-    onOpenChange(false)
-    resetForm()
+    try {
+      const authResponse = await authApi.login({ email, password })
+      setAuth(authResponse)
+      toast({
+        title: "Đăng nhập thành công! 🎉",
+        description: `Chào mừng trở lại, ${authResponse.user.fullName}`,
+      })
+      onOpenChange(false)
+      resetForm()
+    } catch (error) {
+      const apiError = error as ApiError
+      toast({
+        title: "Đăng nhập thất bại",
+        description: apiError.message || "Vui lòng kiểm tra lại thông tin đăng nhập",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -68,49 +96,225 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     }
 
     setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    login(email, name)
-    toast({
-      title: "Đăng ký thành công! 🎉",
-      description: `Chào mừng ${name} đến với ARTEMIS`,
-    })
-    setIsLoading(false)
-    onOpenChange(false)
-    resetForm()
+    try {
+      const authResponse = await authApi.register({
+        email,
+        password,
+        fullName: name,
+      })
+      setAuth(authResponse)
+      toast({
+        title: "Đăng ký thành công! 🎉",
+        description: `Chào mừng ${name} đến với ARTEMIS`,
+      })
+      onOpenChange(false)
+      resetForm()
+    } catch (error) {
+      const apiError = error as ApiError
+      toast({
+        title: "Đăng ký thất bại",
+        description: apiError.message || "Có lỗi xảy ra, vui lòng thử lại",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleGoogleLogin = async () => {
+  // Handle Google credential response (ID token)
+  const handleGoogleCredentialResponse = async (response: { credential: string }) => {
     setIsLoading(true)
-    // Simulate Google OAuth
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+    try {
+      // response.credential is the ID token (JWT)
+      const authResponse = await authApi.loginWithGoogle({
+        idToken: response.credential,
+      })
+      setAuth(authResponse)
+      toast({
+        title: "Đăng nhập thành công! 🎉",
+        description: `Chào mừng ${authResponse.user.fullName}`,
+      })
+      onOpenChange(false)
+      resetForm()
+    } catch (error) {
+      const apiError = error as ApiError
+      toast({
+        title: "Đăng nhập thất bại",
+        description: apiError.message || "Có lỗi xảy ra, vui lòng thử lại",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Load Google Identity Services script when modal opens
+  useEffect(() => {
+    if (!open) {
+      setGoogleScriptLoaded(false)
+      return
+    }
+
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+    if (!clientId) return
+
+    const initializeGoogleSignIn = () => {
+      if (!window.google?.accounts?.id || !googleSignInButtonRef.current) return
+      
+      // Clear any existing button
+      googleSignInButtonRef.current.innerHTML = ''
+      
+      setGoogleScriptLoaded(true)
+      
+      // Initialize Google Identity Services
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleCredentialResponse,
+      })
+
+      // Render Google Sign-In button into the hidden ref
+      try {
+        window.google.accounts.id.renderButton(googleSignInButtonRef.current, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+        })
+      } catch (error) {
+        console.error("Error rendering Google button:", error)
+      }
+    }
+
+    // Check if already loaded
+    if (window.google?.accounts?.id) {
+      // Wait a bit for DOM to be ready
+      setTimeout(initializeGoogleSignIn, 100)
+      return
+    }
+
+    // Check if script already exists
+    const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]')
+    if (existingScript) {
+      // Wait for script to load
+      const checkInterval = setInterval(() => {
+        if (window.google?.accounts?.id) {
+          clearInterval(checkInterval)
+          setTimeout(initializeGoogleSignIn, 100)
+        }
+      }, 100)
+      
+      setTimeout(() => clearInterval(checkInterval), 5000)
+      return
+    }
+
+    // Load script
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    script.onload = () => {
+      setTimeout(initializeGoogleSignIn, 100)
+    }
+    script.onerror = () => {
+      console.error("Failed to load Google Identity Services")
+    }
+    document.head.appendChild(script)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  // Handle Google login button click - trigger sign-in popup directly
+  const handleGoogleLoginClick = () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
     
-    // Mock Google login
-    login("user@gmail.com", "Google User")
-    toast({
-      title: "Đăng nhập thành công! 🎉",
-      description: "Đã đăng nhập qua Google",
-    })
-    setIsLoading(false)
-    onOpenChange(false)
-    resetForm()
+    if (!clientId) {
+      toast({
+        title: "Lỗi cấu hình",
+        description: "Google Client ID chưa được cấu hình",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!googleScriptLoaded || !window.google?.accounts?.id) {
+      toast({
+        title: "Đang tải...",
+        description: "Vui lòng đợi Google Sign-In tải xong và thử lại",
+        variant: "default",
+      })
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      // Click on the rendered button in the hidden ref
+      const button = googleSignInButtonRef.current?.querySelector('div[role="button"]') as HTMLElement
+      if (button) {
+        button.click()
+      } else {
+        setIsLoading(false)
+        toast({
+          title: "Lỗi",
+          description: "Không thể khởi tạo Google Sign-In. Vui lòng thử lại.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error triggering Google Sign-In:", error)
+      toast({
+        title: "Đăng nhập thất bại",
+        description: "Không thể khởi tạo Google Sign-In. Vui lòng thử lại.",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+    }
   }
 
   const handleFacebookLogin = async () => {
     setIsLoading(true)
-    // Simulate Facebook OAuth
-    await new Promise((resolve) => setTimeout(resolve, 1200))
-    
-    // Mock Facebook login
-    login("user@facebook.com", "Facebook User")
-    toast({
-      title: "Đăng nhập thành công! 🎉",
-      description: "Đã đăng nhập qua Facebook",
-    })
-    setIsLoading(false)
-    onOpenChange(false)
-    resetForm()
+    try {
+      // Facebook login is not available in the backend API
+      toast({
+        title: "Chức năng chưa khả dụng",
+        description: "Đăng nhập bằng Facebook chưa được hỗ trợ",
+        variant: "default",
+      })
+    } catch (error) {
+      const apiError = error as ApiError
+      toast({
+        title: "Đăng nhập thất bại",
+        description: apiError.message || "Có lỗi xảy ra, vui lòng thử lại",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng nhập email của bạn",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      await authApi.forgotPassword({ email })
+      toast({
+        title: "Đã gửi email",
+        description: "Vui lòng kiểm tra email để đặt lại mật khẩu",
+      })
+    } catch (error) {
+      const apiError = error as ApiError
+      toast({
+        title: "Gửi email thất bại",
+        description: apiError.message || "Có lỗi xảy ra, vui lòng thử lại",
+        variant: "destructive",
+      })
+    }
   }
 
   const resetForm = () => {
@@ -124,13 +328,17 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <div className="p-6">
+          {/* Hidden div for Google Sign-In button */}
+          <div ref={googleSignInButtonRef} style={{ position: 'fixed', left: '-9999px', opacity: 0, pointerEvents: 'none' }} />
+          
           {/* Social Login Buttons */}
           <div className="grid grid-cols-2 gap-3 mb-6">
             <Button
               variant="outline"
               className="h-12 text-base font-semibold hover:bg-accent hover:border-primary transition-all"
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
+              onClick={handleGoogleLoginClick}
+              disabled={isLoading || !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+              title={!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? "Vui lòng cấu hình NEXT_PUBLIC_GOOGLE_CLIENT_ID trong .env.local" : undefined}
             >
               {isLoading ? (
                 <div className="h-5 w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -225,6 +433,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                   <button
                     type="button"
                     className="text-sm text-primary hover:underline"
+                    onClick={handleForgotPassword}
                   >
                     Quên mật khẩu?
                   </button>

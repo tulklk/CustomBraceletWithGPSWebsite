@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ShoppingCart, Menu, Moon, Sun, User } from "lucide-react"
+import { ShoppingCart, Menu, Moon, Sun, User, ChevronDown, Settings, History, Heart, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/store/useCart"
 import { useUser } from "@/store/useUser"
@@ -12,6 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { useState } from "react"
 import { CartDrawer } from "./CartDrawer"
@@ -25,8 +26,22 @@ export function Header() {
   const [cartOpen, setCartOpen] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [avatarError, setAvatarError] = useState(false)
 
   const totalItems = getTotalItems()
+
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (user?.name) return user.name[0].toUpperCase()
+    if (user?.fullName) return user.fullName[0].toUpperCase()
+    if (user?.email) return user.email[0].toUpperCase()
+    return "U"
+  }
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    return user?.name || user?.fullName || "User"
+  }
 
   return (
     <>
@@ -78,15 +93,65 @@ export function Header() {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10">
-                    <User className="h-[18px] w-[18px] md:h-5 md:w-5" />
+                  <Button 
+                    variant="ghost" 
+                    className="h-auto px-2 py-1.5 md:px-3 md:py-2 hover:bg-accent rounded-lg"
+                  >
+                    <div className="flex items-center gap-2">
+                      {/* Avatar */}
+                      <div className="relative w-8 h-8 md:w-9 md:h-9 rounded-full border-2 border-pink-400 dark:border-pink-500 overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                        {user.avatar && !avatarError ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={user.avatar}
+                            alt={getUserDisplayName()}
+                            className="w-full h-full object-cover"
+                            onError={() => setAvatarError(true)}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-400 to-pink-600">
+                            <span className="text-white text-sm font-semibold">
+                              {getUserInitials()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Name */}
+                      <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">
+                        {getUserDisplayName()}
+                      </span>
+                      {/* Dropdown arrow */}
+                      <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    </div>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem asChild>
-                    <Link href="/account">Thiết kế của tôi</Link>
+                    <Link href="/account" className="flex items-center gap-2 cursor-pointer">
+                      <Settings className="h-4 w-4" />
+                      Quản lý tài khoản
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout}>
+                  <DropdownMenuItem asChild>
+                    <Link href="/account?tab=orders" className="flex items-center gap-2 cursor-pointer">
+                      <History className="h-4 w-4" />
+                      Lịch sử đơn hàng
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/account?tab=favorites" className="flex items-center gap-2 cursor-pointer">
+                      <Heart className="h-4 w-4" />
+                      Sản phẩm yêu thích
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={async () => {
+                      await logout()
+                    }}
+                    className="flex items-center gap-2 cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+                  >
+                    <LogOut className="h-4 w-4" />
                     Đăng xuất
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -156,4 +221,3 @@ export function Header() {
     </>
   )
 }
-

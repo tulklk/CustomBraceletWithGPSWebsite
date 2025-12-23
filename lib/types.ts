@@ -102,11 +102,38 @@ export type ChatMessage = {
   timestamp: string
 }
 
-// User (Mock)
+// Backend User (from API)
+export type BackendUser = {
+  id: string
+  email: string
+  fullName: string
+  phoneNumber: string | null
+  avatar: string | null
+  role: number
+  emailVerified: boolean
+}
+
+// Auth Response from API
+export type AuthResponse = {
+  accessToken: string
+  accessTokenExpiresAt: string
+  refreshToken: string
+  refreshTokenExpiresAt: string
+  user: BackendUser
+}
+
+// User (for frontend store, includes savedDesigns)
 export type User = {
   id: string
   email: string
   name: string
+  fullName?: string
+  phoneNumber?: string | null
+  avatar?: string | null
+  role?: number
+  emailVerified?: boolean
   savedDesigns: CustomDesign[]
+  accessToken?: string
+  refreshToken?: string
 }
 

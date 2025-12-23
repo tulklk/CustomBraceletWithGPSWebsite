@@ -27,3 +27,6 @@ export const QUICK_CHAT_CHIPS = [
   "Cách khắc tên",
 ]
 
+// API Configuration
+export const API_BASE_URL = "https://customerbraceletwithgpswebsite-backend.fly.dev"
+

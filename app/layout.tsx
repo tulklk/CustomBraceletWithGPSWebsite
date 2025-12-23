@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import localFont from "next/font/local"
 import "./globals.css"
 import { ThemeProvider } from "@/components/providers/theme-provider"
+import { GoogleOAuthProviderWrapper } from "@/components/providers/google-oauth-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
@@ -31,17 +32,19 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${inter.className} ${akina.variable}`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <TooltipProvider>
-            {children}
-          </TooltipProvider>
-          <Toaster />
-        </ThemeProvider>
+        <GoogleOAuthProviderWrapper>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+            <Toaster />
+          </ThemeProvider>
+        </GoogleOAuthProviderWrapper>
       </body>
     </html>
   )
