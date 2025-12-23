@@ -157,39 +157,51 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     }
 
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-    if (!clientId) return
+    if (!clientId) {
+      console.warn("NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured")
+      return
+    }
 
     const initializeGoogleSignIn = () => {
-      if (!window.google?.accounts?.id || !googleSignInButtonRef.current) return
-      
-      // Clear any existing button
-      googleSignInButtonRef.current.innerHTML = ''
-      
-      setGoogleScriptLoaded(true)
-      
-      // Initialize Google Identity Services
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleGoogleCredentialResponse,
-      })
+      if (!window.google?.accounts?.id) {
+        console.error("Google Identity Services not available")
+        return
+      }
 
-      // Render Google Sign-In button into the hidden ref
+      if (!googleSignInButtonRef.current) {
+        console.error("Google button ref not available")
+        return
+      }
+      
       try {
+        // Clear any existing button
+        googleSignInButtonRef.current.innerHTML = ''
+        
+        // Initialize Google Identity Services
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredentialResponse,
+        })
+
+        // Render Google Sign-In button into the hidden ref
         window.google.accounts.id.renderButton(googleSignInButtonRef.current, {
           type: 'standard',
           theme: 'outline',
           size: 'large',
           text: 'signin_with',
         })
+        
+        setGoogleScriptLoaded(true)
+        console.log("Google Sign-In initialized successfully")
       } catch (error) {
-        console.error("Error rendering Google button:", error)
+        console.error("Error initializing Google Sign-In:", error)
+        setGoogleScriptLoaded(false)
       }
     }
 
     // Check if already loaded
     if (window.google?.accounts?.id) {
-      // Wait a bit for DOM to be ready
-      setTimeout(initializeGoogleSignIn, 100)
+      setTimeout(initializeGoogleSignIn, 200)
       return
     }
 
@@ -197,15 +209,20 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]')
     if (existingScript) {
       // Wait for script to load
+      let attempts = 0
+      const maxAttempts = 50 // 5 seconds
       const checkInterval = setInterval(() => {
+        attempts++
         if (window.google?.accounts?.id) {
           clearInterval(checkInterval)
-          setTimeout(initializeGoogleSignIn, 100)
+          setTimeout(initializeGoogleSignIn, 200)
+        } else if (attempts >= maxAttempts) {
+          clearInterval(checkInterval)
+          console.error("Timeout waiting for Google Identity Services")
         }
       }, 100)
       
-      setTimeout(() => clearInterval(checkInterval), 5000)
-      return
+      return () => clearInterval(checkInterval)
     }
 
     // Load script
@@ -214,12 +231,25 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     script.async = true
     script.defer = true
     script.onload = () => {
-      setTimeout(initializeGoogleSignIn, 100)
+      // Wait a bit for Google API to be fully ready
+      setTimeout(() => {
+        if (window.google?.accounts?.id) {
+          initializeGoogleSignIn()
+        } else {
+          console.error("Google Identity Services API not available after script load")
+        }
+      }, 300)
     }
-    script.onerror = () => {
-      console.error("Failed to load Google Identity Services")
+    script.onerror = (error) => {
+      console.error("Failed to load Google Identity Services script:", error)
+      setGoogleScriptLoaded(false)
     }
     document.head.appendChild(script)
+    
+    return () => {
+      // Cleanup if component unmounts
+      setGoogleScriptLoaded(false)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
@@ -230,44 +260,125 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     if (!clientId) {
       toast({
         title: "Lỗi cấu hình",
-        description: "Google Client ID chưa được cấu hình",
+        description: "Google Client ID chưa được cấu hình. Vui lòng liên hệ quản trị viên.",
         variant: "destructive",
       })
       return
     }
 
-    if (!googleScriptLoaded || !window.google?.accounts?.id) {
+    if (!window.google?.accounts?.id) {
       toast({
         title: "Đang tải...",
         description: "Vui lòng đợi Google Sign-In tải xong và thử lại",
         variant: "default",
       })
+      
+      // Check if script is loading, if not, try to load it
+      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]')
+      if (!existingScript) {
+        const script = document.createElement('script')
+        script.src = 'https://accounts.google.com/gsi/client'
+        script.async = true
+        script.defer = true
+        script.onload = () => {
+          setTimeout(() => {
+            if (window.google?.accounts?.id) {
+              setGoogleScriptLoaded(true)
+              // Trigger click again after script loads
+              const button = googleSignInButtonRef.current?.querySelector('div[role="button"]') as HTMLElement
+              if (button) {
+                button.click()
+              } else {
+                // Re-initialize and render
+                window.google.accounts.id.initialize({
+                  client_id: clientId,
+                  callback: handleGoogleCredentialResponse,
+                })
+                if (googleSignInButtonRef.current) {
+                  googleSignInButtonRef.current.innerHTML = ''
+                  window.google.accounts.id.renderButton(googleSignInButtonRef.current, {
+                    type: 'standard',
+                    theme: 'outline',
+                    size: 'large',
+                    text: 'signin_with',
+                  })
+                  setTimeout(() => {
+                    const newButton = googleSignInButtonRef.current?.querySelector('div[role="button"]') as HTMLElement
+                    newButton?.click()
+                  }, 200)
+                }
+              }
+            }
+          }, 300)
+        }
+        document.head.appendChild(script)
+      }
       return
     }
 
     setIsLoading(true)
 
-    try {
-      // Click on the rendered button in the hidden ref
-      const button = googleSignInButtonRef.current?.querySelector('div[role="button"]') as HTMLElement
-      if (button) {
-        button.click()
-      } else {
-        setIsLoading(false)
-        toast({
-          title: "Lỗi",
-          description: "Không thể khởi tạo Google Sign-In. Vui lòng thử lại.",
-          variant: "destructive",
-        })
+    // Function to trigger sign-in
+    const triggerSignIn = (): boolean => {
+      if (!googleSignInButtonRef.current || !window.google?.accounts?.id) {
+        return false
       }
-    } catch (error) {
-      console.error("Error triggering Google Sign-In:", error)
-      toast({
-        title: "Đăng nhập thất bại",
-        description: "Không thể khởi tạo Google Sign-In. Vui lòng thử lại.",
-        variant: "destructive",
-      })
-      setIsLoading(false)
+
+      try {
+        // Try to find and click the rendered button
+        const button = googleSignInButtonRef.current.querySelector('div[role="button"]') as HTMLElement
+        if (button) {
+          button.click()
+          return true
+        }
+
+        // If button not found, try to re-render it
+        googleSignInButtonRef.current.innerHTML = ''
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredentialResponse,
+        })
+        window.google.accounts.id.renderButton(googleSignInButtonRef.current, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+        })
+
+        // Wait a bit and try clicking again
+        setTimeout(() => {
+          const newButton = googleSignInButtonRef.current?.querySelector('div[role="button"]') as HTMLElement
+          if (newButton) {
+            newButton.click()
+          } else {
+            setIsLoading(false)
+            toast({
+              title: "Lỗi",
+              description: "Không thể render Google Sign-In button. Vui lòng refresh trang và thử lại.",
+              variant: "destructive",
+            })
+          }
+        }, 300)
+        return true
+      } catch (error) {
+        console.error("Error triggering Google Sign-In:", error)
+        return false
+      }
+    }
+
+    // Try to trigger sign-in
+    if (!triggerSignIn()) {
+      // Retry after a short delay
+      setTimeout(() => {
+        if (!triggerSignIn()) {
+          setIsLoading(false)
+          toast({
+            title: "Lỗi",
+            description: "Không thể khởi tạo Google Sign-In. Vui lòng refresh trang và thử lại.",
+            variant: "destructive",
+          })
+        }
+      }, 500)
     }
   }
 
