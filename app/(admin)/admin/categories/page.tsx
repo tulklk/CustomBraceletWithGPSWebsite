@@ -125,6 +125,8 @@ export default function CategoriesPage() {
 
   const handleSubmit = async () => {
     if (!user?.accessToken) return
+    const accessToken = user.accessToken
+    
     if (!formData.name.trim()) {
       toast({
         title: "Lỗi",
@@ -156,7 +158,7 @@ export default function CategoriesPage() {
           slug: slug,
           parentId: null,
         }
-        await adminApi.categories.update(user.accessToken, editingCategory.id, categoryData)
+        await adminApi.categories.update(accessToken, editingCategory.id, categoryData)
         toast({
           title: "Thành công",
           description: "Đã cập nhật danh mục",
@@ -172,7 +174,7 @@ export default function CategoriesPage() {
 
         // Create parent category
         const parentCategory = await adminApi.categories.create(
-          user.accessToken,
+          accessToken,
           parentCategoryData
         )
 
@@ -180,7 +182,7 @@ export default function CategoriesPage() {
         if (formData.subcategories.length > 0) {
           const subcategoryPromises = formData.subcategories.map((sub) => {
             const subSlug = slugify(sub.name.trim())
-            return adminApi.categories.create(user.accessToken, {
+            return adminApi.categories.create(accessToken, {
               name: sub.name.trim(),
               slug: subSlug,
               parentId: parentCategory.id,
