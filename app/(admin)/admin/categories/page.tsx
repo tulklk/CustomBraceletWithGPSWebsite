@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -44,12 +44,7 @@ export default function CategoriesPage() {
     subcategories: [] as Array<{ name: string; description: string }>,
   })
 
-  useEffect(() => {
-    if (!user?.accessToken) return
-    fetchCategories()
-  }, [user?.accessToken])
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     if (!user?.accessToken) return
     try {
       setLoading(true)
@@ -65,7 +60,12 @@ export default function CategoriesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.accessToken, toast])
+
+  useEffect(() => {
+    if (!user?.accessToken) return
+    fetchCategories()
+  }, [user?.accessToken, fetchCategories])
 
   const handleOpenDialog = (category?: AdminCategory) => {
     if (category) {
@@ -478,8 +478,8 @@ export default function CategoriesPage() {
 
                 {formData.subcategories.length === 0 && (
                   <p className="text-sm text-muted-foreground">
-                    Ví dụ: danh mục cha "Vợt Pickleball" có các danh mục con như "Vợt Pickleball
-                    Joola", "Vợt Pickleball Franklin"...
+                    Ví dụ: danh mục cha &quot;Vợt Pickleball&quot; có các danh mục con như &quot;Vợt Pickleball
+                    Joola&quot;, &quot;Vợt Pickleball Franklin&quot;...
                   </p>
                 )}
               </div>
