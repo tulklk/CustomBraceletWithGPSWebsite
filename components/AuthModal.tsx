@@ -65,6 +65,35 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     setIsLoading(true)
     try {
       const authResponse = await authApi.login({ email, password })
+      
+      // Fetch full user info including isActive from /me endpoint
+      let isActive: boolean | undefined = authResponse.user.isActive
+      if (isActive === undefined && authResponse.accessToken) {
+        try {
+          const meResponse = await authApi.getMe(authResponse.accessToken)
+          isActive = meResponse.isActive
+        } catch (error) {
+          // If /me fails, proceed with login but log warning
+          console.warn("Failed to fetch user details:", error)
+        }
+      }
+      
+      // Check if account is active (explicitly check for false, undefined/null means active)
+      if (isActive === false) {
+        toast({
+          title: "Tài khoản đã bị khóa",
+          description: "Tài khoản của bạn đã bị khóa, liên hệ admin",
+          variant: "destructive",
+        })
+        setIsLoading(false)
+        return
+      }
+      
+      // Update authResponse with isActive if we fetched it from /me
+      if (isActive !== undefined && authResponse.user.isActive === undefined) {
+        authResponse.user.isActive = isActive
+      }
+      
       setAuth(authResponse)
       toast({
         title: "Đăng nhập thành công! 🎉",
@@ -130,6 +159,35 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       const authResponse = await authApi.verifyGoogleToken({
         idToken: response.credential,
       })
+      
+      // Fetch full user info including isActive from /me endpoint
+      let isActive: boolean | undefined = authResponse.user.isActive
+      if (isActive === undefined && authResponse.accessToken) {
+        try {
+          const meResponse = await authApi.getMe(authResponse.accessToken)
+          isActive = meResponse.isActive
+        } catch (error) {
+          // If /me fails, proceed with login but log warning
+          console.warn("Failed to fetch user details:", error)
+        }
+      }
+      
+      // Check if account is active (explicitly check for false, undefined/null means active)
+      if (isActive === false) {
+        toast({
+          title: "Tài khoản đã bị khóa",
+          description: "Tài khoản của bạn đã bị khóa, liên hệ admin",
+          variant: "destructive",
+        })
+        setIsLoading(false)
+        return
+      }
+      
+      // Update authResponse with isActive if we fetched it from /me
+      if (isActive !== undefined && authResponse.user.isActive === undefined) {
+        authResponse.user.isActive = isActive
+      }
+      
       setAuth(authResponse)
       toast({
         title: "Đăng nhập thành công! 🎉",

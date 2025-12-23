@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ShoppingCart, Menu, Moon, Sun, User, ChevronDown, Settings, History, Heart, LogOut } from "lucide-react"
+import { ShoppingCart, Menu, Moon, Sun, User, ChevronDown, Settings, History, Heart, LogOut, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/store/useCart"
 import { useUser } from "@/store/useUser"
@@ -126,6 +126,18 @@ export function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
+                  {/* Admin Menu Item - Only show for admin users (role === 1) */}
+                  {user && user.role === 1 && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="flex items-center gap-2 cursor-pointer">
+                          <Shield className="h-4 w-4" />
+                          Quản trị
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link href="/account" className="flex items-center gap-2 cursor-pointer">
                       <Settings className="h-4 w-4" />

@@ -111,6 +111,7 @@ export type BackendUser = {
   avatar: string | null
   role: number
   emailVerified: boolean
+  isActive?: boolean // User account status
 }
 
 // Auth Response from API
@@ -135,5 +136,99 @@ export type User = {
   savedDesigns: CustomDesign[]
   accessToken?: string
   refreshToken?: string
+}
+
+// Admin Types
+export type AdminCategory = {
+  id: string
+  name: string
+  slug?: string
+  description?: string | null
+  parentId?: string | null
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type AdminNews = {
+  id: string
+  title: string
+  content: string
+  summary?: string | null
+  imageUrl?: string | null
+  categoryId?: string | null
+  published: boolean
+  views?: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type AdminVoucher = {
+  id: string
+  code: string
+  name: string
+  discountType: "Percent" | "Amount"
+  discountValue: number
+  minimumOrderAmount?: number | null
+  maximumDiscountAmount?: number | null
+  startDate: string
+  endDate: string
+  published: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type AdminOrder = {
+  id: string
+  orderCode: string
+  customerId: string
+  customerName?: string
+  customerEmail?: string
+  totalAmount: number
+  status: string
+  paymentStatus: string
+  createdAt: string
+  updatedAt?: string
+}
+
+export type AdminProduct = {
+  id: string
+  name: string
+  description?: string | null
+  price: number
+  stock: number
+  brand?: string | null
+  categoryId?: string | null
+  imageUrl?: string | null
+  images?: string[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type AdminUser = {
+  id: string
+  email: string
+  fullName: string
+  phoneNumber?: string | null
+  role: number
+  status?: string // Mapped from isActive
+  isActive?: boolean // From backend
+  createdAt: string
+  updatedAt?: string
+}
+
+export type AdminReport = {
+  totalRevenue: number
+  totalOrders: number
+  totalProducts: number
+  totalCategories: number
+  dailyRevenue?: Array<{
+    date: string
+    revenue: number
+  }>
+  topProducts?: Array<{
+    productId: string
+    productName: string
+    revenue: number
+  }>
 }
 

@@ -1,21 +1,25 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
   Package,
   ShoppingCart,
-  Palette,
+  Tags,
+  Newspaper,
+  Ticket,
+  BarChart3,
   Users,
-  Settings,
   LogOut,
   Menu,
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import { useUser } from "@/store/useUser"
 
 const navItems = [
   {
@@ -24,35 +28,65 @@ const navItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Sản phẩm",
+    title: "Categories",
+    href: "/admin/categories",
+    icon: Tags,
+  },
+  {
+    title: "Products",
     href: "/admin/products",
     icon: Package,
   },
   {
-    title: "Đơn hàng",
+    title: "Orders",
     href: "/admin/orders",
     icon: ShoppingCart,
   },
   {
-    title: "Templates",
-    href: "/admin/templates",
-    icon: Palette,
+    title: "News",
+    href: "/admin/news",
+    icon: Newspaper,
   },
   {
-    title: "Khách hàng",
-    href: "/admin/customers",
+    title: "Vouchers",
+    href: "/admin/vouchers",
+    icon: Ticket,
+  },
+  {
+    title: "Reports",
+    href: "/admin/reports",
+    icon: BarChart3,
+  },
+  {
+    title: "Users",
+    href: "/admin/users",
     icon: Users,
-  },
-  {
-    title: "Cài đặt",
-    href: "/admin/settings",
-    icon: Settings,
   },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { user, logout } = useUser()
+  const router = useRouter()
+
+  // Role check - only allow admin (role === 1 theo backend)
+  useEffect(() => {
+    if (!user) {
+      router.push("/")
+      return
+    }
+    
+    // Backend hiện trả về role = 1 cho admin, role = 0 cho customer
+    if (user.role !== 1) {
+      router.push("/")
+    }
+  }, [user, router])
+
+  // Show loading or nothing while checking
+  if (!user || user.role !== 1) {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -116,19 +150,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 border-t">
             <div className="flex items-center gap-3 px-3 py-2 mb-2">
               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-primary font-medium text-sm">AD</span>
+                <span className="text-primary font-medium text-sm">
+                  {user?.fullName?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || "A"}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">Admin User</p>
-                <p className="text-xs text-muted-foreground truncate">admin@artemis.com</p>
+                <p className="text-sm font-medium truncate">{user?.fullName || user?.name || "Admin"}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
               </div>
             </div>
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => {
-                // Logout logic
-                window.location.href = "/"
+              onClick={async () => {
+                await logout()
+                router.push("/")
               }}
             >
               <LogOut className="w-4 h-4 mr-2" />

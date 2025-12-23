@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { StatsCard } from "@/components/admin/StatsCard"
 import { DataTable } from "@/components/admin/DataTable"
 import {
@@ -7,184 +8,204 @@ import {
   ShoppingCart,
   Package,
   Users,
-  TrendingUp,
+  Tags,
   ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts"
-
-// Mock data
-const recentOrders = [
-  {
-    id: "ORD-001",
-    customer: "Nguyễn Văn A",
-    total: 2450000,
-    status: "pending",
-    date: "2024-01-15",
-  },
-  {
-    id: "ORD-002",
-    customer: "Trần Thị B",
-    total: 1850000,
-    status: "processing",
-    date: "2024-01-15",
-  },
-  {
-    id: "ORD-003",
-    customer: "Lê Văn C",
-    total: 3200000,
-    status: "completed",
-    date: "2024-01-14",
-  },
-  {
-    id: "ORD-004",
-    customer: "Phạm Thị D",
-    total: 1950000,
-    status: "processing",
-    date: "2024-01-14",
-  },
-  {
-    id: "ORD-005",
-    customer: "Hoàng Văn E",
-    total: 2750000,
-    status: "completed",
-    date: "2024-01-13",
-  },
-]
-
-const topProducts = [
-  { name: "ARTEMIS Bunny Baby Pink", sales: 156, revenue: 62400000 },
-  { name: "ARTEMIS Bunny Lavender", sales: 89, revenue: 35600000 },
-  { name: "ARTEMIS Dây Chuyền Bunny Baby Pink", sales: 67, revenue: 10050000 },
-]
-
-// Dữ liệu doanh thu theo tháng (VNĐ)
-const monthlyRevenue = [
-  { month: "T1", revenue: 28500000 },
-  { month: "T2", revenue: 32100000 },
-  { month: "T3", revenue: 35400000 },
-  { month: "T4", revenue: 38900000 },
-  { month: "T5", revenue: 41200000 },
-  { month: "T6", revenue: 39800000 },
-  { month: "T7", revenue: 43500000 },
-  { month: "T8", revenue: 46200000 },
-  { month: "T9", revenue: 44100000 },
-  { month: "T10", revenue: 48300000 },
-  { month: "T11", revenue: 52600000 },
-  { month: "T12", revenue: 45200000 },
-]
+import { useUser } from "@/store/useUser"
+import { adminApi } from "@/lib/api/admin"
+import { AdminOrder, AdminReport } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
+import { formatCurrency } from "@/lib/utils"
 
 export default function AdminDashboard() {
+  const { user } = useUser()
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<AdminReport | null>(null)
+  const [recentOrders, setRecentOrders] = useState<AdminOrder[]>([])
+
+  useEffect(() => {
+    if (!user?.accessToken) return
+
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [reportData, ordersData] = await Promise.all([
+          adminApi.reports.getStats(user.accessToken!),
+          adminApi.orders.getAll(user.accessToken!),
+        ])
+
+        setStats(reportData)
+        // Get recent 5 orders
+        const sortedOrders = ordersData
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 5)
+        setRecentOrders(sortedOrders)
+      } catch (error: any) {
+        console.error("Error fetching dashboard data:", error)
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể tải dữ liệu dashboard",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [user?.accessToken, toast])
+
   const orderColumns = [
     {
-      key: "id",
+      key: "orderCode",
       label: "Mã đơn",
       sortable: true,
     },
     {
-      key: "customer",
+      key: "customerName",
       label: "Khách hàng",
       sortable: true,
+      render: (order: AdminOrder) => order.customerName || order.customerEmail || "N/A",
     },
     {
-      key: "total",
+      key: "totalAmount",
       label: "Tổng tiền",
       sortable: true,
-      render: (order: any) => (
+      render: (order: AdminOrder) => (
         <span className="font-medium">
-          {order.total.toLocaleString("vi-VN")} ₫
+          {formatCurrency(order.totalAmount)}
         </span>
       ),
     },
     {
       key: "status",
       label: "Trạng thái",
-      render: (order: any) => {
-        const statusMap = {
-          pending: { label: "Chờ xử lý", variant: "secondary" as const },
-          processing: { label: "Đang xử lý", variant: "default" as const },
-          completed: { label: "Hoàn thành", variant: "default" as const },
+      render: (order: AdminOrder) => {
+        const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
+          "Đang xử lý": { label: "Đang xử lý", variant: "default" },
+          "Đã xác nhận": { label: "Đã xác nhận", variant: "default" },
+          "Đã giao": { label: "Đã giao", variant: "default" },
+          "Đã hủy": { label: "Đã hủy", variant: "destructive" },
         }
-        const status = statusMap[order.status as keyof typeof statusMap]
+        const status = statusMap[order.status] || { label: order.status, variant: "secondary" as const }
         return <Badge variant={status.variant}>{status.label}</Badge>
       },
     },
     {
-      key: "date",
+      key: "createdAt",
       label: "Ngày đặt",
       sortable: true,
+      render: (order: AdminOrder) => {
+        const date = new Date(order.createdAt)
+        return date.toLocaleDateString("vi-VN")
+      },
     },
   ]
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">BẢNG ĐIỀU KHIỂN</h1>
         <p className="text-muted-foreground mt-2">
-          Tổng quan hoạt động kinh doanh của bạn
+          Xin chào, {user?.fullName || user?.name || "Admin"}
         </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Theo dõi nhanh doanh thu, đơn hàng và trạng thái tồn kho để đảm bảo mọi thứ vận hành mượt mà.
+        </p>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        <Button asChild>
+          <Link href="/admin/orders">Quản lý đơn hàng</Link>
+        </Button>
+        <Button variant="outline" asChild>
+          <Link href="/admin/products">Thêm sản phẩm mới</Link>
+        </Button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
-          title="Tổng doanh thu"
-          value="₫45.2M"
-          description="Tháng này"
+          title="Doanh thu toàn thời gian"
+          value={stats ? formatCurrency(stats.totalRevenue) : "0 ₫"}
+          description={stats ? `${stats.totalOrders} đơn trong hệ thống` : "Đang tải..."}
           icon={DollarSign}
-          trend={{ value: 12.5, isPositive: true }}
+          trend={stats && stats.totalOrders > 0 ? { value: 18, isPositive: true } : undefined}
         />
         <StatsCard
-          title="Đơn hàng"
-          value="312"
-          description="Tổng số đơn hàng"
+          title="Đơn hàng đang xử lý"
+          value={stats ? stats.totalOrders.toString() : "0"}
+          description={stats ? `${stats.totalOrders} đơn trong hệ thống` : "Đang tải..."}
           icon={ShoppingCart}
-          trend={{ value: 8.2, isPositive: true }}
         />
         <StatsCard
-          title="Sản phẩm"
-          value="48"
-          description="Đang hoạt động"
+          title="Sản phẩm đang kinh doanh"
+          value={stats ? stats.totalProducts.toString() : "0"}
+          description={stats ? `${stats.totalProducts} sản phẩm` : "Đang tải..."}
           icon={Package}
-          trend={{ value: 3.1, isPositive: true }}
         />
         <StatsCard
-          title="Khách hàng"
-          value="1,234"
-          description="Tổng khách hàng"
-          icon={Users}
-          trend={{ value: 15.3, isPositive: true }}
+          title="Danh mục"
+          value={stats ? stats.totalCategories.toString() : "0"}
+          description="Tạo thêm danh mục để tổ chức sản phẩm"
+          icon={Tags}
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-7">
-        {/* Revenue Chart */}
-        <Card className="lg:col-span-4">
+      {/* Revenue Chart */}
+      {stats && stats.dailyRevenue && stats.dailyRevenue.length > 0 && (
+        <Card>
           <CardHeader>
-            <CardTitle>Doanh thu theo tháng</CardTitle>
+            <CardTitle>Biểu đồ doanh thu</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Xem xu hướng doanh thu theo ngày, tuần, quý hoặc năm.
+            </p>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <p className="text-lg font-semibold">
+                Tổng doanh thu: {formatCurrency(stats.totalRevenue)}
+              </p>
+            </div>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyRevenue}>
+                <LineChart data={stats.dailyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis 
-                    dataKey="month" 
+                    dataKey="date" 
                     className="text-xs"
                     tick={{ fill: 'currentColor' }}
+                    tickFormatter={(value) => {
+                      const date = new Date(value)
+                      return date.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric" })
+                    }}
                   />
                   <YAxis 
                     className="text-xs"
@@ -193,7 +214,7 @@ export default function AdminDashboard() {
                   />
                   <Tooltip 
                     formatter={(value: any) => [
-                      `${Number(value).toLocaleString('vi-VN')} ₫`,
+                      formatCurrency(Number(value)),
                       'Doanh thu'
                     ]}
                     contentStyle={{
@@ -201,50 +222,61 @@ export default function AdminDashboard() {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '0.5rem',
                     }}
+                    labelFormatter={(value) => {
+                      const date = new Date(value)
+                      return date.toLocaleDateString("vi-VN")
+                    }}
                   />
-                  <Bar 
+                  <Line 
+                    type="monotone"
                     dataKey="revenue" 
-                    fill="hsl(var(--primary))" 
-                    radius={[8, 8, 0, 0]}
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    dot={{ fill: 'hsl(var(--primary))', r: 4 }}
                   />
-                </BarChart>
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
+      )}
 
-        {/* Top Products */}
-        <Card className="lg:col-span-3">
+      {/* Top Products */}
+      {stats && stats.topProducts && stats.topProducts.length > 0 && (
+        <Card>
           <CardHeader>
-            <CardTitle>Sản phẩm bán chạy</CardTitle>
+            <CardTitle>Top sản phẩm mang lại doanh thu cao nhất</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {topProducts.map((product, index) => (
+              {stats.topProducts.map((product, index) => (
                 <div key={index} className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">{product.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {product.sales} đơn hàng
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">
-                      {(product.revenue / 1000000).toFixed(1)}M ₫
-                    </p>
-                    <div className="flex items-center gap-1 text-green-600">
-                      <ArrowUpRight className="w-3 h-3" />
-                      <span className="text-xs">
-                        {((product.sales / 312) * 100).toFixed(0)}%
-                      </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Package className="w-5 h-5 text-primary" />
                     </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">{product.productName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatCurrency(product.revenue)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-green-600">
+                    <ArrowUpRight className="w-3 h-3" />
+                    <span className="text-xs font-medium">
+                      {stats.totalRevenue > 0 
+                        ? `${((product.revenue / stats.totalRevenue) * 100).toFixed(1)}%`
+                        : "0%"
+                      }
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
 
       {/* Recent Orders */}
       <Card>
@@ -255,15 +287,20 @@ export default function AdminDashboard() {
           </Button>
         </CardHeader>
         <CardContent>
-          <DataTable
-            data={recentOrders}
-            columns={orderColumns}
-            searchable={false}
-            pageSize={5}
-          />
+          {recentOrders.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Chưa có đơn hàng nào
+            </div>
+          ) : (
+            <DataTable
+              data={recentOrders}
+              columns={orderColumns}
+              searchable={false}
+              pageSize={5}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
   )
 }
-
