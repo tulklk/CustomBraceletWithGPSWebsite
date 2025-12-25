@@ -10,6 +10,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useCart } from "@/store/useCart"
 import { useUser } from "@/store/useUser"
 import { formatCurrency } from "@/lib/utils"
@@ -18,14 +25,17 @@ import { CreditCard, Wallet, Building, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { productsApi, BackendProduct } from "@/lib/api/products"
+import { ordersApi, ShippingAddress, ApplyVoucherResponse } from "@/lib/api/orders"
+import { provincesApi, Province, District, Ward } from "@/lib/api/provinces"
 
 const checkoutSchema = z.object({
-  name: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
-  email: z.string().email("Email không hợp lệ"),
-  phone: z.string().min(10, "Số điện thoại không hợp lệ"),
-  address: z.string().min(10, "Địa chỉ quá ngắn"),
-  city: z.string().min(2, "Vui lòng nhập tỉnh/thành phố"),
-  paymentMethod: z.enum(["cod", "momo", "bank"]),
+  email: z.string().email("Email không hợp lệ").optional().or(z.literal("")),
+  fullName: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
+  phoneNumber: z.string().min(10, "Số điện thoại không hợp lệ"),
+  addressLine: z.string().min(5, "Địa chỉ quá ngắn"),
+  ward: z.string().min(1, "Vui lòng chọn phường/xã"),
+  city: z.string().min(1, "Vui lòng chọn tỉnh/thành phố"),
+  paymentMethod: z.enum(["COD", "PayOS"]), // Chỉ chấp nhận COD hoặc PayOS
 })
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>
@@ -45,6 +55,13 @@ export default function CheckoutPage() {
   const [discountCode, setDiscountCode] = useState("")
   const [discountApplied, setDiscountApplied] = useState(false)
   const [discountAmount, setDiscountAmount] = useState(0)
+  const [isApplyingVoucher, setIsApplyingVoucher] = useState(false)
+  
+  // Provinces, Wards state (removed districts)
+  const [provinces, setProvinces] = useState<Province[]>([])
+  const [wards, setWards] = useState<Ward[]>([])
+  const [loadingProvinces, setLoadingProvinces] = useState(false)
+  const [loadingWards, setLoadingWards] = useState(false)
 
   // Fetch product information for cart items
   useEffect(() => {
@@ -80,17 +97,127 @@ export default function CheckoutPage() {
     fetchProducts()
   }, [items])
 
-  const handleApplyDiscount = () => {
-    // TODO: Implement discount code validation with API
-    if (discountCode.trim()) {
-      // Mock discount - 10% off
-      const discount = getTotalPrice() * 0.1
-      setDiscountAmount(discount)
-      setDiscountApplied(true)
+  // Fetch provinces on mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      setLoadingProvinces(true)
+      try {
+        const fetchedProvinces = await provincesApi.getProvinces()
+        console.log("Fetched provinces:", fetchedProvinces.length, fetchedProvinces)
+        setProvinces(fetchedProvinces)
+        if (fetchedProvinces.length === 0) {
+          toast({
+            title: "Không tìm thấy tỉnh/thành phố",
+            description: "Vui lòng thử lại sau",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching provinces:", error)
+        toast({
+          title: "Lỗi khi tải danh sách tỉnh/thành phố",
+          description: error instanceof Error ? error.message : "Vui lòng thử lại sau",
+          variant: "destructive",
+        })
+      } finally {
+        setLoadingProvinces(false)
+      }
+    }
+
+    fetchProvinces()
+  }, [])
+
+  // Handle province change - load wards directly
+  const handleProvinceChange = async (provinceCode: string) => {
+    console.log("Province selected:", provinceCode)
+    form.setValue("city", provinceCode)
+    form.setValue("ward", "") // Reset ward
+    setWards([])
+
+    if (!provinceCode) return
+
+    setLoadingWards(true)
+    try {
+      // Get wards directly from province
+      const fetchedWards = await provincesApi.getWardsByProvince(provinceCode)
+      console.log("Fetched wards:", fetchedWards.length)
+      setWards(fetchedWards)
+      
+      if (fetchedWards.length === 0) {
+        toast({
+          title: "Không tìm thấy phường/xã",
+          description: "Tỉnh/thành phố này có thể chưa có dữ liệu phường/xã",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching wards:", error)
       toast({
-        title: "Áp dụng mã giảm giá thành công!",
-        description: `Giảm ${formatCurrency(discount)}`,
+        title: "Lỗi khi tải danh sách phường/xã",
+        description: error instanceof Error ? error.message : "Vui lòng thử lại sau",
+        variant: "destructive",
       })
+    } finally {
+      setLoadingWards(false)
+    }
+  }
+
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) {
+      toast({
+        title: "Vui lòng nhập mã giảm giá",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsApplyingVoucher(true)
+    try {
+      let result: ApplyVoucherResponse
+      
+      // Try to apply voucher with auth if user is logged in, otherwise without auth
+      if (user?.accessToken) {
+        result = await user.makeAuthenticatedRequest(async (token) => {
+          return await ordersApi.applyVoucher(
+            { voucherCode: discountCode.trim() },
+            token,
+            user.refreshToken,
+            (newToken) => {
+              // Token refresh handled by makeAuthenticatedRequest
+            }
+          )
+        })
+      } else {
+        // Apply voucher without authentication
+        result = await ordersApi.applyVoucherWithoutAuth({ voucherCode: discountCode.trim() })
+      }
+
+      if (result.isValid && result.discountAmount) {
+        setDiscountAmount(result.discountAmount)
+        setDiscountApplied(true)
+        toast({
+          title: "Áp dụng mã giảm giá thành công!",
+          description: `Giảm ${formatCurrency(result.discountAmount)}`,
+        })
+      } else {
+        setDiscountApplied(false)
+        setDiscountAmount(0)
+        toast({
+          title: "Mã giảm giá không hợp lệ",
+          description: result.message || "Vui lòng kiểm tra lại mã giảm giá",
+          variant: "destructive",
+        })
+      }
+    } catch (error: any) {
+      setDiscountApplied(false)
+      setDiscountAmount(0)
+      toast({
+        title: "Lỗi khi áp dụng mã giảm giá",
+        description: error.message || "Vui lòng thử lại sau",
+        variant: "destructive",
+      })
+    } finally {
+      setIsApplyingVoucher(false)
     }
   }
 
@@ -99,12 +226,13 @@ export default function CheckoutPage() {
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      name: user?.fullName || user?.name || "",
       email: user?.email || "",
-      phone: user?.phoneNumber || "",
-      address: "",
+      fullName: user?.fullName || user?.name || "",
+      phoneNumber: user?.phoneNumber || "",
+      addressLine: "",
+      ward: "",
       city: "",
-      paymentMethod: "cod",
+      paymentMethod: "COD",
     },
   })
 
@@ -113,14 +241,15 @@ export default function CheckoutPage() {
     if (user) {
       const currentValues = form.getValues()
       // Only auto-fill if fields are empty
-      if (!currentValues.name || !currentValues.email || !currentValues.phone) {
+      if (!currentValues.fullName || !currentValues.phoneNumber || !currentValues.email) {
         form.reset({
-          name: currentValues.name || user.fullName || user.name || "",
           email: currentValues.email || user.email || "",
-          phone: currentValues.phone || user.phoneNumber || "",
-          address: currentValues.address || "",
+          fullName: currentValues.fullName || user.fullName || user.name || "",
+          phoneNumber: currentValues.phoneNumber || user.phoneNumber || "",
+          addressLine: currentValues.addressLine || "",
+          ward: currentValues.ward || "",
           city: currentValues.city || "",
-          paymentMethod: currentValues.paymentMethod || "cod",
+          paymentMethod: currentValues.paymentMethod || "COD",
         })
       }
     }
@@ -130,37 +259,151 @@ export default function CheckoutPage() {
     setIsSubmitting(true)
 
     try {
-      // Mock API call
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items,
-          total: finalTotal,
-          discountCode: discountApplied ? discountCode : null,
-          discountAmount: discountApplied ? discountAmount : 0,
-          customer: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            address: `${data.address}, ${data.city}`,
-          },
-        }),
+      // Validate email for guest checkout
+      if (!user?.accessToken && !data.email) {
+        toast({
+          title: "Email là bắt buộc",
+          description: "Vui lòng nhập email để đặt hàng",
+          variant: "destructive",
+        })
+        setIsSubmitting(false)
+        return
+      }
+
+      // Get province and ward names from codes
+      const selectedProvince = provinces.find(p => p.code === data.city || p.code?.toString() === data.city)
+      const selectedWard = wards.find(w => w.code === data.ward || w.code?.toString() === data.ward)
+
+      // Prepare shipping address (district is empty since we removed it)
+      const shippingAddress: ShippingAddress = {
+        fullName: data.fullName,
+        phoneNumber: data.phoneNumber,
+        addressLine: data.addressLine,
+        ward: selectedWard?.name || data.ward,
+        district: "", // Empty since we removed district selection
+        city: selectedProvince?.name || data.city,
+      }
+
+      // Map cart items to order items (only for guest checkout)
+      const orderItems = items.map(item => {
+        const itemData: { productId: string; quantity: number; productVariantId?: string } = {
+          productId: item.design.productId,
+          quantity: item.qty,
+        }
+        // Only include productVariantId if it exists
+        if (item.design.productVariantId) {
+          itemData.productVariantId = item.design.productVariantId
+        }
+        return itemData
       })
 
-      const order = await response.json()
-
-      toast({
-        title: "Đặt hàng thành công!",
-        description: `Mã đơn hàng: ${order.id}. Chúng tôi sẽ liên hệ qua ${data.email}`,
-      })
+      // Create order using API (with or without auth)
+      let order: any
+      
+      if (user?.accessToken) {
+        // User is logged in, use authenticated request
+        order = await user.makeAuthenticatedRequest(async (token) => {
+          return await ordersApi.createOrder(
+            {
+              shippingAddress,
+              paymentMethod: data.paymentMethod, // "COD" or "PayOS"
+              voucherCode: discountApplied ? discountCode : undefined,
+            },
+            token,
+            user.refreshToken,
+            (newToken) => {
+              // Token refresh handled by makeAuthenticatedRequest
+            }
+          )
+        })
+      } else {
+        // User is not logged in, create order without authentication (guest checkout)
+        order = await ordersApi.createOrderWithoutAuth({
+          email: data.email || "",
+          fullName: data.fullName,
+          shippingAddress,
+          paymentMethod: data.paymentMethod, // "COD" or "PayOS"
+          items: orderItems,
+          voucherCode: discountApplied ? discountCode : undefined,
+        })
+      }
 
       clearCart()
-      router.push("/")
-    } catch (error) {
+
+      // Handle payment flow based on payment method
+      if (data.paymentMethod === "COD") {
+        // COD: Redirect to success page
+        toast({
+          title: "Đặt hàng thành công!",
+          description: `Mã đơn hàng: ${order.orderNumber || order.id}. Chúng tôi sẽ liên hệ qua ${data.phoneNumber}`,
+        })
+        
+        // Redirect to success page
+        if (user?.accessToken) {
+          router.push(`/order/success?orderId=${order.id}`)
+        } else {
+          router.push(`/order/success?orderId=${order.id}`)
+        }
+      } else if (data.paymentMethod === "PayOS") {
+        // PayOS: Create payment link and redirect to PayOS
+        try {
+          const baseUrl = window.location.origin
+          const returnUrl = `${baseUrl}/payment/success?orderId=${order.id}`
+          const cancelUrl = `${baseUrl}/payment/cancel?orderId=${order.id}`
+
+          let paymentResult: any
+          
+          if (user?.accessToken) {
+            paymentResult = await user.makeAuthenticatedRequest(async (token) => {
+              return await ordersApi.createPaymentLink(
+                order.id,
+                {
+                  provider: "PayOS",
+                  returnUrl: returnUrl,
+                  cancelUrl: cancelUrl,
+                },
+                token,
+                user.refreshToken
+              )
+            })
+          } else {
+            paymentResult = await ordersApi.createPaymentLinkWithoutAuth(
+              order.id,
+              {
+                provider: "PayOS",
+                returnUrl: returnUrl,
+                cancelUrl: cancelUrl,
+              }
+            )
+          }
+          
+          if (paymentResult.paymentUrl) {
+            // Redirect to PayOS checkout page
+            window.location.href = paymentResult.paymentUrl
+            return
+          } else {
+            throw new Error("Không nhận được payment URL từ PayOS")
+          }
+        } catch (paymentError: any) {
+          console.error("Payment processing error:", paymentError)
+          toast({
+            title: "Lỗi khi tạo payment link",
+            description: paymentError.message || "Vui lòng thử lại sau",
+            variant: "destructive",
+          })
+          // Still redirect to order page even if payment link creation fails
+          if (user?.accessToken) {
+            router.push(`/account?order=${order.id}`)
+          } else {
+            router.push(`/?order=${order.id}`)
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error("Order creation error:", error)
       toast({
         title: "Có lỗi xảy ra",
-        description: "Vui lòng thử lại sau",
+        description: error.message || "Vui lòng thử lại sau",
         variant: "destructive",
       })
     } finally {
@@ -196,75 +439,131 @@ export default function CheckoutPage() {
                 <CardTitle>Thông tin giao hàng</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
+                {!user?.accessToken && (
                   <div className="space-y-2">
-                    <Label htmlFor="name">Họ và tên *</Label>
+                    <Label htmlFor="email">Email *</Label>
                     <Input
-                      id="name"
-                      {...form.register("name")}
-                      placeholder="Nguyễn Văn A"
+                      id="email"
+                      type="email"
+                      {...form.register("email")}
+                      placeholder="user@example.com"
                     />
-                    {form.formState.errors.name && (
+                    {form.formState.errors.email && (
                       <p className="text-sm text-destructive">
-                        {form.formState.errors.name.message}
+                        {form.formState.errors.email.message}
                       </p>
                     )}
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Số điện thoại *</Label>
-                    <Input
-                      id="phone"
-                      {...form.register("phone")}
-                      placeholder="0901234567"
-                    />
-                    {form.formState.errors.phone && (
-                      <p className="text-sm text-destructive">
-                        {form.formState.errors.phone.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="fullName">Họ và tên *</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    {...form.register("email")}
-                    placeholder="email@example.com"
+                    id="fullName"
+                    {...form.register("fullName")}
+                    placeholder="Nguyễn Văn A"
                   />
-                  {form.formState.errors.email && (
+                  {form.formState.errors.fullName && (
                     <p className="text-sm text-destructive">
-                      {form.formState.errors.email.message}
+                      {form.formState.errors.fullName.message}
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="address">Địa chỉ *</Label>
+                  <Label htmlFor="phoneNumber">Số điện thoại *</Label>
                   <Input
-                    id="address"
-                    {...form.register("address")}
-                    placeholder="Số nhà, tên đường, phường/xã"
+                    id="phoneNumber"
+                    {...form.register("phoneNumber")}
+                    placeholder="0901234567"
                   />
-                  {form.formState.errors.address && (
+                  {form.formState.errors.phoneNumber && (
                     <p className="text-sm text-destructive">
-                      {form.formState.errors.address.message}
+                      {form.formState.errors.phoneNumber.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="addressLine">Địa chỉ (Số nhà, tên đường) *</Label>
+                  <Input
+                    id="addressLine"
+                    {...form.register("addressLine")}
+                    placeholder="123 Đường ABC"
+                  />
+                  {form.formState.errors.addressLine && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.addressLine.message}
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="city">Tỉnh/Thành phố *</Label>
-                  <Input
-                    id="city"
-                    {...form.register("city")}
-                    placeholder="Hà Nội, TP.HCM, ..."
-                  />
+                  <Select
+                    value={form.watch("city") || undefined}
+                    onValueChange={handleProvinceChange}
+                    disabled={loadingProvinces}
+                  >
+                    <SelectTrigger id="city">
+                      <SelectValue placeholder={loadingProvinces ? "Đang tải..." : "Chọn tỉnh/thành phố"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {provinces.length === 0 && !loadingProvinces ? (
+                        <SelectItem value="no-data" disabled>
+                          Không có dữ liệu
+                        </SelectItem>
+                      ) : (
+                        provinces.map((province) => (
+                          <SelectItem key={province.code} value={String(province.code)}>
+                            {province.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                   {form.formState.errors.city && (
                     <p className="text-sm text-destructive">
                       {form.formState.errors.city.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ward">Phường/Xã *</Label>
+                  <Select
+                    value={form.watch("ward") || undefined}
+                    onValueChange={(value) => form.setValue("ward", value)}
+                    disabled={!form.watch("city") || loadingWards}
+                  >
+                    <SelectTrigger id="ward">
+                      <SelectValue 
+                        placeholder={
+                          !form.watch("city") 
+                            ? "Vui lòng chọn tỉnh/thành phố trước" 
+                            : loadingWards 
+                            ? "Đang tải..." 
+                            : "Chọn phường/xã"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {wards.length === 0 && !loadingWards && form.watch("city") ? (
+                        <SelectItem value="no-data" disabled>
+                          Không có dữ liệu
+                        </SelectItem>
+                      ) : (
+                        wards.map((ward) => (
+                          <SelectItem key={ward.code} value={String(ward.code)}>
+                            {ward.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {form.formState.errors.ward && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.ward.message}
                     </p>
                   )}
                 </div>
@@ -278,11 +577,11 @@ export default function CheckoutPage() {
               <CardContent className="space-y-3">
                 <div
                   className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    form.watch("paymentMethod") === "cod"
+                    form.watch("paymentMethod") === "COD"
                       ? "border-primary bg-primary/5"
                       : "hover:bg-accent"
                   }`}
-                  onClick={() => form.setValue("paymentMethod", "cod")}
+                  onClick={() => form.setValue("paymentMethod", "COD")}
                 >
                   <div className="flex items-center gap-3">
                     <CreditCard className="h-5 w-5" />
@@ -297,37 +596,18 @@ export default function CheckoutPage() {
 
                 <div
                   className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    form.watch("paymentMethod") === "momo"
+                    form.watch("paymentMethod") === "PayOS"
                       ? "border-primary bg-primary/5"
                       : "hover:bg-accent"
                   }`}
-                  onClick={() => form.setValue("paymentMethod", "momo")}
+                  onClick={() => form.setValue("paymentMethod", "PayOS")}
                 >
                   <div className="flex items-center gap-3">
                     <Wallet className="h-5 w-5" />
                     <div>
-                      <p className="font-medium">Ví MoMo</p>
+                      <p className="font-medium">Chuyển Khoản Ngân Hàng</p>
                       <p className="text-sm text-muted-foreground">
-                        Thanh toán qua ví điện tử
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    form.watch("paymentMethod") === "bank"
-                      ? "border-primary bg-primary/5"
-                      : "hover:bg-accent"
-                  }`}
-                  onClick={() => form.setValue("paymentMethod", "bank")}
-                >
-                  <div className="flex items-center gap-3">
-                    <Building className="h-5 w-5" />
-                    <div>
-                      <p className="font-medium">Chuyển khoản ngân hàng</p>
-                      <p className="text-sm text-muted-foreground">
-                        Nhận thông tin sau khi đặt hàng
+                        Thanh toán online qua chuyển khoản
                       </p>
                     </div>
                   </div>
@@ -415,9 +695,9 @@ export default function CheckoutPage() {
                       type="button"
                       variant="outline"
                       onClick={handleApplyDiscount}
-                      disabled={discountApplied || !discountCode.trim()}
+                      disabled={discountApplied || !discountCode.trim() || isApplyingVoucher}
                     >
-                      Áp dụng
+                      {isApplyingVoucher ? "Đang xử lý..." : "Áp dụng"}
                     </Button>
                   </div>
                   {discountApplied && (

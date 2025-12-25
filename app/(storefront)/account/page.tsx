@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useUser } from "@/store/useUser"
 import { useCustomizer } from "@/store/useCustomizer"
 import { useCart } from "@/store/useCart"
@@ -17,41 +17,88 @@ import {
   MapPin, Save, Heart, Settings, Phone, Mail, Home 
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { ordersApi, Order, OrderStatus } from "@/lib/api/orders"
 
-// Mock orders data
-const mockOrders = [
-  {
-    id: "ORD-001",
-    date: "2025-10-20",
-    status: "Đã giao",
-    total: 1650000,
-    items: 3,
-  },
-  {
-    id: "ORD-002",
-    date: "2025-10-25",
-    status: "Đang giao",
-    total: 800000,
-    items: 2,
-  },
-]
+// Map backend status to Vietnamese
+const getStatusLabel = (status: OrderStatus): string => {
+  const statusMap: Record<OrderStatus, string> = {
+    Pending: "Chờ xử lý",
+    Confirmed: "Đã xác nhận",
+    Processing: "Đang xử lý",
+    Shipped: "Đang giao",
+    Delivered: "Đã giao",
+    Cancelled: "Đã hủy",
+  }
+  return statusMap[status] || status
+}
+
+const getStatusVariant = (status: OrderStatus): "default" | "secondary" | "destructive" => {
+  if (status === "Delivered") return "default"
+  if (status === "Cancelled") return "destructive"
+  return "secondary"
+}
 
 export default function AccountPage() {
-  const { user, logout, removeDesign } = useUser()
+  const { user, logout, removeDesign, makeAuthenticatedRequest } = useUser()
   const { setTemplate, setColor, setEngrave } = useCustomizer()
   const { addItem } = useCart()
   const { toast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState("overview")
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loadingOrders, setLoadingOrders] = useState(false)
   
   // User profile state
   const [profileData, setProfileData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    phone: "0123456789",
+    phone: user?.phoneNumber || "0123456789",
     address: "123 Nguyễn Văn Linh, Q7, TP.HCM",
   })
+
+  // Check if we should open orders tab from URL
+  useEffect(() => {
+    const orderId = searchParams?.get("order")
+    if (orderId) {
+      setActiveTab("orders")
+    }
+  }, [searchParams])
+
+  // Fetch orders when user is logged in and orders tab is active
+  useEffect(() => {
+    if (user?.accessToken && activeTab === "orders") {
+      fetchOrders()
+    }
+  }, [user?.accessToken, activeTab])
+
+  const fetchOrders = async () => {
+    if (!user?.accessToken) return
+
+    setLoadingOrders(true)
+    try {
+      const fetchedOrders = await makeAuthenticatedRequest(async (token) => {
+        return await ordersApi.getMyOrders(
+          token,
+          user.refreshToken,
+          (newToken) => {
+            // Token refresh handled by makeAuthenticatedRequest
+          }
+        )
+      })
+      setOrders(fetchedOrders)
+    } catch (error: any) {
+      console.error("Error fetching orders:", error)
+      toast({
+        title: "Lỗi khi tải đơn hàng",
+        description: error.message || "Vui lòng thử lại sau",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingOrders(false)
+    }
+  }
 
   if (!user) {
     return (
@@ -164,7 +211,7 @@ export default function AccountPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{mockOrders.length}</div>
+                  <div className="text-2xl font-bold">{orders.length}</div>
                   <p className="text-xs text-muted-foreground">Tổng số đơn</p>
                 </CardContent>
               </Card>
@@ -191,7 +238,7 @@ export default function AccountPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {formatCurrency(mockOrders.reduce((sum, order) => sum + order.total, 0))}
+                    {formatCurrency(orders.reduce((sum, order) => sum + order.totalAmount, 0))}
                   </div>
                   <p className="text-xs text-muted-foreground">VNĐ</p>
                 </CardContent>
@@ -235,10 +282,25 @@ export default function AccountPage() {
           <TabsContent value="orders" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Đơn hàng của tôi</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Đơn hàng của tôi</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={fetchOrders}
+                    disabled={loadingOrders}
+                  >
+                    {loadingOrders ? "Đang tải..." : "Làm mới"}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                {mockOrders.length === 0 ? (
+                {loadingOrders ? (
+                  <div className="text-center py-12">
+                    <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-muted-foreground">Đang tải đơn hàng...</p>
+                  </div>
+                ) : orders.length === 0 ? (
                   <div className="text-center py-12">
                     <p className="text-muted-foreground mb-4">Bạn chưa có đơn hàng nào</p>
                     <Button onClick={() => router.push("/products")}>
@@ -247,34 +309,54 @@ export default function AccountPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {mockOrders.map((order) => (
-                      <Card key={order.id}>
-                        <CardContent className="p-4">
-                          <div className="flex flex-col md:flex-row justify-between gap-4">
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold">{order.id}</span>
-                                <Badge variant={order.status === "Đã giao" ? "default" : "secondary"}>
-                                  {order.status}
-                                </Badge>
+                    {orders.map((order) => {
+                      const orderDate = new Date(order.createdAt).toLocaleDateString("vi-VN")
+                      return (
+                        <Card key={order.id}>
+                          <CardContent className="p-4">
+                            <div className="flex flex-col md:flex-row justify-between gap-4">
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-semibold">
+                                    {order.orderNumber || order.id}
+                                  </span>
+                                  <Badge variant={getStatusVariant(order.status)}>
+                                    {getStatusLabel(order.status)}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  Ngày đặt: {orderDate}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {order.items.length} sản phẩm
+                                </p>
+                                {order.shippingAddress && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Giao đến: {order.shippingAddress.fullName} - {order.shippingAddress.phoneNumber}
+                                  </p>
+                                )}
                               </div>
-                              <p className="text-sm text-muted-foreground">
-                                Ngày đặt: {order.date}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {order.items} sản phẩm
-                              </p>
+                              <div className="flex flex-col justify-between items-end gap-2">
+                                <p className="font-bold text-lg">{formatCurrency(order.totalAmount)}</p>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    // Could navigate to order detail page
+                                    toast({
+                                      title: "Chi tiết đơn hàng",
+                                      description: `Đơn hàng ${order.orderNumber || order.id}`,
+                                    })
+                                  }}
+                                >
+                                  Xem chi tiết
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex flex-col justify-between items-end">
-                              <p className="font-bold text-lg">{formatCurrency(order.total)}</p>
-                              <Button size="sm" variant="outline">
-                                Xem chi tiết
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
                   </div>
                 )}
               </CardContent>
