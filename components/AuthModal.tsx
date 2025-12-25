@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useUser } from "@/store/useUser"
+import { useCart } from "@/store/useCart"
 import { useToast } from "@/hooks/use-toast"
 import { authApi, ApiError } from "@/lib/api/auth"
 // Google Identity Services types
@@ -48,6 +49,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false)
   const { setAuth } = useUser()
+  const { fetchCart } = useCart()
   const { toast } = useToast()
   const googleSignInButtonRef = useRef<HTMLDivElement>(null)
 
@@ -95,6 +97,14 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       }
       
       setAuth(authResponse)
+      
+      // Fetch cart from backend after login
+      try {
+        await fetchCart()
+      } catch (error) {
+        console.warn("Failed to fetch cart after login:", error)
+      }
+      
       toast({
         title: "Đăng nhập thành công! 🎉",
         description: `Chào mừng trở lại, ${authResponse.user.fullName}`,
@@ -132,6 +142,14 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
         fullName: name,
       })
       setAuth(authResponse)
+      
+      // Fetch cart from backend after registration
+      try {
+        await fetchCart()
+      } catch (error) {
+        console.warn("Failed to fetch cart after registration:", error)
+      }
+      
       toast({
         title: "Đăng ký thành công! 🎉",
         description: `Chào mừng ${name} đến với ARTEMIS`,
@@ -189,6 +207,14 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       }
       
       setAuth(authResponse)
+      
+      // Fetch cart from backend after Google sign in
+      try {
+        await fetchCart()
+      } catch (error) {
+        console.warn("Failed to fetch cart after Google sign in:", error)
+      }
+      
       toast({
         title: "Đăng nhập thành công! 🎉",
         description: `Chào mừng ${authResponse.user.fullName}`,

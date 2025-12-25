@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -13,8 +13,10 @@ import { Separator } from "@/components/ui/separator"
 import { useCart } from "@/store/useCart"
 import { formatCurrency } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { CreditCard, Wallet, Building } from "lucide-react"
+import { CreditCard, Wallet, Building, ShoppingBag } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
+import { productsApi, BackendProduct } from "@/lib/api/products"
 
 const checkoutSchema = z.object({
   name: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
@@ -22,21 +24,80 @@ const checkoutSchema = z.object({
   phone: z.string().min(10, "Số điện thoại không hợp lệ"),
   address: z.string().min(10, "Địa chỉ quá ngắn"),
   city: z.string().min(2, "Vui lòng nhập tỉnh/thành phố"),
-  paymentMethod: z.enum(["card", "momo", "bank"]),
+  paymentMethod: z.enum(["cod", "momo", "bank"]),
 })
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>
+
+interface ProductInfo {
+  [productId: string]: BackendProduct | null
+}
 
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart } = useCart()
   const { toast } = useToast()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [products, setProducts] = useState<ProductInfo>({})
+  const [loading, setLoading] = useState(false)
+  const [discountCode, setDiscountCode] = useState("")
+  const [discountApplied, setDiscountApplied] = useState(false)
+  const [discountAmount, setDiscountAmount] = useState(0)
+
+  // Fetch product information for cart items
+  useEffect(() => {
+    if (items.length === 0) return
+
+    const fetchProducts = async () => {
+      setLoading(true)
+      const productIds = [...new Set(items.map(item => item.design.productId))]
+      const productMap: ProductInfo = {}
+      
+      await Promise.all(
+        productIds.map(async (productId) => {
+          try {
+            const allProducts = await productsApi.getAll()
+            const product = allProducts.find(p => p.id === productId)
+            if (product && product.slug) {
+              const fullProduct = await productsApi.getBySlug(product.slug)
+              if (fullProduct) {
+                productMap[productId] = fullProduct
+              }
+            }
+          } catch (error) {
+            console.error(`Error fetching product ${productId}:`, error)
+            productMap[productId] = null
+          }
+        })
+      )
+      
+      setProducts(productMap)
+      setLoading(false)
+    }
+
+    fetchProducts()
+  }, [items])
+
+  const handleApplyDiscount = () => {
+    // TODO: Implement discount code validation with API
+    if (discountCode.trim()) {
+      // Mock discount - 10% off
+      const discount = getTotalPrice() * 0.1
+      setDiscountAmount(discount)
+      setDiscountApplied(true)
+      toast({
+        title: "Áp dụng mã giảm giá thành công!",
+        description: `Giảm ${formatCurrency(discount)}`,
+      })
+    }
+  }
+
+  const finalTotal = getTotalPrice() - discountAmount
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      paymentMethod: "card",
+      paymentMethod: "cod",
     },
   })
 
@@ -50,7 +111,9 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items,
-          total: getTotalPrice(),
+          total: finalTotal,
+          discountCode: discountApplied ? discountCode : null,
+          discountAmount: discountApplied ? discountAmount : 0,
           customer: {
             name: data.name,
             email: data.email,
@@ -190,18 +253,18 @@ export default function CheckoutPage() {
               <CardContent className="space-y-3">
                 <div
                   className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    form.watch("paymentMethod") === "card"
+                    form.watch("paymentMethod") === "cod"
                       ? "border-primary bg-primary/5"
                       : "hover:bg-accent"
                   }`}
-                  onClick={() => form.setValue("paymentMethod", "card")}
+                  onClick={() => form.setValue("paymentMethod", "cod")}
                 >
                   <div className="flex items-center gap-3">
                     <CreditCard className="h-5 w-5" />
                     <div>
-                      <p className="font-medium">Thẻ tín dụng/ghi nợ</p>
+                      <p className="font-medium">COD</p>
                       <p className="text-sm text-muted-foreground">
-                        Visa, Mastercard, JCB (Demo)
+                        Thanh toán bằng tiền mặt khi nhận được hàng
                       </p>
                     </div>
                   </div>
@@ -220,7 +283,7 @@ export default function CheckoutPage() {
                     <div>
                       <p className="font-medium">Ví MoMo</p>
                       <p className="text-sm text-muted-foreground">
-                        Thanh toán qua ví điện tử (Demo)
+                        Thanh toán qua ví điện tử
                       </p>
                     </div>
                   </div>
@@ -239,7 +302,7 @@ export default function CheckoutPage() {
                     <div>
                       <p className="font-medium">Chuyển khoản ngân hàng</p>
                       <p className="text-sm text-muted-foreground">
-                        Nhận thông tin sau khi đặt hàng (Demo)
+                        Nhận thông tin sau khi đặt hàng
                       </p>
                     </div>
                   </div>
@@ -250,55 +313,147 @@ export default function CheckoutPage() {
 
           <div>
             <Card className="sticky top-24">
-              <CardHeader>
-                <CardTitle>Đơn hàng ({items.length} sản phẩm)</CardTitle>
+              {/* Header with icon */}
+              <CardHeader className="bg-primary/10 dark:bg-primary/20 pb-4">
+                <div className="flex items-center gap-3">
+                  <ShoppingBag className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-black dark:text-white">
+                    Tóm tắt đơn hàng
+                  </CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                  {items.map((item) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <div className="flex-1">
-                        <p className="font-medium">
-                          {item.design.templateId} x{item.qty}
-                        </p>
-                        {item.design.engrave && (
-                          <p className="text-xs text-muted-foreground">
-                            + Khắc: &ldquo;{item.design.engrave.text}&rdquo;
-                          </p>
-                        )}
-                      </div>
-                      <p className="font-medium">
-                        {formatCurrency(item.design.unitPrice * item.qty)}
-                      </p>
+              <CardContent className="space-y-4 p-6">
+                {/* Product List */}
+                <div className="space-y-4">
+                  {loading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     </div>
-                  ))}
+                  ) : (
+                    items.map((item) => {
+                      const product = products[item.design.productId]
+                      const productName = product?.name || (item.design.templateId ? `Template: ${item.design.templateId}` : `Sản phẩm ${item.design.productId}`)
+                      const productImage = product?.imageUrls?.[0] || product?.images?.[0] || ""
+                      const currentPrice = product?.price || item.design.unitPrice || 0
+                      
+                      return (
+                        <div key={item.id} className="flex gap-4">
+                          {/* Product Image */}
+                          <div className="relative w-16 h-16 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
+                            {productImage ? (
+                              <Image
+                                src={productImage}
+                                alt={productName}
+                                width={64}
+                                height={64}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                                <ShoppingBag className="h-6 w-6 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Product Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                              {productName}
+                            </p>
+                            {item.design.templateId && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                ({item.design.templateId})
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Số lượng: {item.qty}
+                            </p>
+                            <p className="text-sm font-semibold text-primary mt-1">
+                              {formatCurrency(currentPrice * item.qty)}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
                 </div>
 
                 <Separator />
 
+                {/* Discount Code Section */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Mã giảm giá</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nhập mã giảm giá (ví dụ: HELLO)"
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value)}
+                      className="flex-1"
+                      disabled={discountApplied}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleApplyDiscount}
+                      disabled={discountApplied || !discountCode.trim()}
+                    >
+                      Áp dụng
+                    </Button>
+                  </div>
+                  {discountApplied && (
+                    <p className="text-xs text-green-600 dark:text-green-400">
+                      Đã áp dụng mã giảm giá: {discountCode}
+                    </p>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Price Summary */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Tạm tính:</span>
-                    <span>{formatCurrency(getTotalPrice())}</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Tạm tính ({items.length} {items.length === 1 ? "sản phẩm" : "sản phẩm"}):
+                    </span>
+                    <span className="text-gray-900 dark:text-gray-100">
+                      {formatCurrency(getTotalPrice())}
+                    </span>
                   </div>
+                  {discountApplied && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Giảm giá:
+                      </span>
+                      <span className="text-primary">
+                        -{formatCurrency(discountAmount)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Vận chuyển:</span>
-                    <span className="text-green-600">Miễn phí</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Phí vận chuyển:
+                    </span>
+                    <span className="text-primary font-medium">
+                      Miễn phí
+                    </span>
                   </div>
                 </div>
 
                 <Separator />
 
+                {/* Total */}
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold">Tổng cộng:</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
+                    Tổng cộng:
+                  </span>
                   <span className="text-2xl font-bold text-primary">
-                    {formatCurrency(getTotalPrice())}
+                    {formatCurrency(finalTotal)}
                   </span>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full bg-primary hover:bg-primary/90"
                   size="lg"
                   disabled={isSubmitting}
                 >

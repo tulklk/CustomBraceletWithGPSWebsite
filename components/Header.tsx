@@ -23,8 +23,17 @@ import { categoriesApi, Category } from "@/lib/api/categories"
 import { cn } from "@/lib/utils"
 
 export function Header() {
-  const { getTotalItems } = useCart()
+  const { getTotalItems, fetchCart } = useCart()
   const { user, logout } = useUser()
+  
+  // Fetch cart when user is logged in
+  useEffect(() => {
+    if (user?.accessToken) {
+      fetchCart().catch((error) => {
+        console.warn("Failed to fetch cart:", error)
+      })
+    }
+  }, [user?.accessToken, fetchCart])
   const { setTheme, theme } = useTheme()
   const [cartOpen, setCartOpen] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
@@ -33,11 +42,17 @@ export function Header() {
   const [categories, setCategories] = useState<Category[]>([])
   const [productsDropdownOpen, setProductsDropdownOpen] = useState(false)
   const [cartPopupOpen, setCartPopupOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const productsDropdownRef = useRef<HTMLDivElement>(null)
   const productsNavRef = useRef<HTMLDivElement>(null)
   const cartButtonRef = useRef<HTMLButtonElement>(null)
 
   const totalItems = getTotalItems()
+
+  // Only render badge after client mount to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Fetch categories
   useEffect(() => {
@@ -167,21 +182,23 @@ export function Header() {
                 <div className="absolute top-full right-0 w-full h-2" />
               )}
               
-              <Button
-                ref={cartButtonRef}
-                variant="ghost"
-                size="icon"
-                className="relative h-9 w-9 md:h-10 md:w-10"
-                onClick={() => setCartOpen(true)}
-                aria-label="Open cart"
-              >
-                <ShoppingCart className="h-[18px] w-[18px] md:h-5 md:w-5" />
-                {totalItems > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]">
+              <div className="relative">
+                <Button
+                  ref={cartButtonRef}
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 md:h-10 md:w-10"
+                  onClick={() => setCartOpen(true)}
+                  aria-label="Open cart"
+                >
+                  <ShoppingCart className="h-[18px] w-[18px] md:h-5 md:w-5" />
+                </Button>
+                {mounted && totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium z-10">
                     {totalItems}
-                  </Badge>
+                  </span>
                 )}
-              </Button>
+              </div>
               <CartPopup
                 open={cartPopupOpen}
                 onClose={() => setCartPopupOpen(false)}

@@ -13,7 +13,7 @@ import { useCustomizer } from "@/store/useCustomizer"
 import { useCart } from "@/store/useCart"
 import { useUser } from "@/store/useUser"
 import { useToast } from "@/hooks/use-toast"
-import { Product, Template, Accessory } from "@/lib/types"
+import { Product, Template, Accessory, CustomDesign } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { Save, ShoppingCart, ArrowLeft, Box, Image as ImageIcon, Star, Send, Trash2, Reply, Mail, ChevronUp } from "lucide-react"
 import Link from "next/link"
@@ -89,7 +89,7 @@ export default function ProductDetailPage() {
 
   const { setProduct: setCustomizerProduct, getDesign, templateId } =
     useCustomizer()
-  const { addItem } = useCart()
+  const { addItem, addItemByProductId } = useCart()
   const { user, saveDesign } = useUser()
   const { toast } = useToast()
 
@@ -173,39 +173,132 @@ export default function ProductDetailPage() {
     fetchData()
   }, [slug, router, setCustomizerProduct, templateId])
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return
     
-    // For regular products (not customizer)
-    if (!product.hasVariants) {
-      toast({
-        title: "Đã thêm vào giỏ hàng!",
-        description: `${product.name} x${quantity}`,
-      })
+    // For regular products (not customizer) - use API
+    if (!hasCustomizer) {
+      try {
+        await addItemByProductId(product.id, quantity)
+        toast({
+          title: "Đã thêm vào giỏ hàng!",
+          description: `${product.name} x${quantity}`,
+        })
+      } catch (error: any) {
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể thêm sản phẩm vào giỏ hàng",
+          variant: "destructive",
+        })
+      }
       return
     }
     
-    // For customizer products
-    if (!templateId) {
-      toast({
-        title: "Vui lòng chọn template",
-        description: "Hãy chọn một mẫu thiết kế trước khi thêm vào giỏ",
-        variant: "destructive",
-      })
+    // For customizer products - use local storage with design
+    // If no template selected, use first template or create default design
+    let design
+    if (!templateId && templates.length > 0) {
+      // Use first template as default
+      const firstTemplate = templates[0]
+      const defaultDesign: CustomDesign = {
+        productId: product.id,
+        templateId: firstTemplate.id,
+        colors: {
+          band: firstTemplate.defaultColors?.band || '#FFFFFF',
+          face: firstTemplate.defaultColors?.face || '#FFFFFF',
+          rim: firstTemplate.defaultColors?.rim || '#FFFFFF',
+        },
+        accessories: [],
+        unitPrice: firstTemplate.basePrice || product.price,
+      }
+      design = defaultDesign
+    } else if (templateId) {
+      design = getDesign()
+    } else {
+      // No templates available, use product directly via API
+      try {
+        await addItemByProductId(product.id, quantity)
+        toast({
+          title: "Đã thêm vào giỏ hàng!",
+          description: `${product.name} x${quantity}`,
+        })
+      } catch (error: any) {
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể thêm sản phẩm vào giỏ hàng",
+          variant: "destructive",
+        })
+      }
       return
     }
 
-    const design = getDesign()
-    addItem(design)
+    await addItem(design)
     toast({
       title: "Đã thêm vào giỏ hàng!",
       description: "Xem giỏ hàng để thanh toán",
     })
   }
   
-  const handleBuyNow = () => {
-    handleAddToCart()
-    router.push("/cart")
+  const handleBuyNow = async () => {
+    if (!product) return
+    
+    try {
+      // For regular products (not customizer) - use API
+      if (!hasCustomizer) {
+        await addItemByProductId(product.id, quantity)
+        toast({
+          title: "Đã thêm vào giỏ hàng!",
+          description: `${product.name} x${quantity}`,
+        })
+      } else {
+        // For customizer products - use local storage with design
+        // If no template selected, use first template or create default design
+        let design
+        if (!templateId && templates.length > 0) {
+          // Use first template as default
+          const firstTemplate = templates[0]
+          const defaultDesign: CustomDesign = {
+            productId: product.id,
+            templateId: firstTemplate.id,
+            colors: {
+              band: firstTemplate.defaultColors?.band || '#FFFFFF',
+              face: firstTemplate.defaultColors?.face || '#FFFFFF',
+              rim: firstTemplate.defaultColors?.rim || '#FFFFFF',
+            },
+            accessories: [],
+            unitPrice: firstTemplate.basePrice || product.price,
+          }
+          design = defaultDesign
+        } else if (templateId) {
+          design = getDesign()
+        } else {
+          // No templates available, use product directly via API
+          await addItemByProductId(product.id, quantity)
+          toast({
+            title: "Đã thêm vào giỏ hàng!",
+            description: `${product.name} x${quantity}`,
+          })
+          router.push("/checkout")
+          return
+        }
+
+        await addItem(design)
+        toast({
+          title: "Đã thêm vào giỏ hàng!",
+          description: "Xem giỏ hàng để thanh toán",
+        })
+      }
+      
+      // Redirect to checkout after adding to cart
+      router.push("/checkout")
+    } catch (error: any) {
+      // If add to cart fails, show error and don't redirect
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể thêm sản phẩm vào giỏ hàng",
+        variant: "destructive",
+      })
+    }
   }
   
   const getProductImages = () => {
@@ -245,15 +338,35 @@ export default function ProductDetailPage() {
       return
     }
 
-    if (!templateId) {
+    if (!product) return
+
+    // If no template selected, use first template or skip
+    let design: CustomDesign
+    if (!templateId && templates.length > 0) {
+      // Use first template as default
+      const firstTemplate = templates[0]
+      design = {
+        productId: product.id,
+        templateId: firstTemplate.id,
+        colors: {
+          band: firstTemplate.defaultColors?.band || '#FFFFFF',
+          face: firstTemplate.defaultColors?.face || '#FFFFFF',
+          rim: firstTemplate.defaultColors?.rim || '#FFFFFF',
+        },
+        accessories: [],
+        unitPrice: firstTemplate.basePrice || product.price,
+      }
+    } else if (templateId) {
+      design = getDesign()
+    } else {
       toast({
-        title: "Vui lòng chọn template",
+        title: "Không thể lưu thiết kế",
+        description: "Sản phẩm này không có template",
         variant: "destructive",
       })
       return
     }
 
-    const design = getDesign()
     saveDesign(design)
     toast({
       title: "Đã lưu thiết kế!",
