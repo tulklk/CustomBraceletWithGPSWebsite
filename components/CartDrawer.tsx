@@ -137,11 +137,6 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                               <p className="font-medium text-gray-900">
                                 {productName}
                               </p>
-                              {item.design.templateId && (
-                                <p className="text-xs text-gray-500">
-                                  ({item.design.templateId})
-                                </p>
-                              )}
                               <p className="text-sm mt-1">
                                 Tình trạng:{" "}
                                 <span className={isInStock ? "text-green-600 font-medium" : "text-red-600 font-medium"}>

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useCart } from "@/store/useCart"
+import { useUser } from "@/store/useUser"
 import { formatCurrency } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { CreditCard, Wallet, Building, ShoppingBag } from "lucide-react"
@@ -35,6 +36,7 @@ interface ProductInfo {
 
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart } = useCart()
+  const { user } = useUser()
   const { toast } = useToast()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -97,9 +99,32 @@ export default function CheckoutPage() {
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
+      name: user?.fullName || user?.name || "",
+      email: user?.email || "",
+      phone: user?.phoneNumber || "",
+      address: "",
+      city: "",
       paymentMethod: "cod",
     },
   })
+
+  // Update form values when user logs in (only if fields are empty)
+  useEffect(() => {
+    if (user) {
+      const currentValues = form.getValues()
+      // Only auto-fill if fields are empty
+      if (!currentValues.name || !currentValues.email || !currentValues.phone) {
+        form.reset({
+          name: currentValues.name || user.fullName || user.name || "",
+          email: currentValues.email || user.email || "",
+          phone: currentValues.phone || user.phoneNumber || "",
+          address: currentValues.address || "",
+          city: currentValues.city || "",
+          paymentMethod: currentValues.paymentMethod || "cod",
+        })
+      }
+    }
+  }, [user?.id]) // Only run when user ID changes (user logs in)
 
   const onSubmit = async (data: CheckoutFormData) => {
     setIsSubmitting(true)
@@ -360,11 +385,6 @@ export default function CheckoutPage() {
                             <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
                               {productName}
                             </p>
-                            {item.design.templateId && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                ({item.design.templateId})
-                              </p>
-                            )}
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                               Số lượng: {item.qty}
                             </p>

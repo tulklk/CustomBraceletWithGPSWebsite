@@ -183,11 +183,6 @@ export function CartPopup({ open, onClose, triggerRef }: CartPopupProps) {
                         <p className="text-sm font-medium line-clamp-2">
                           {productName}
                         </p>
-                        {item.design.colors && (item.design.colors.band !== '#FFFFFF' || item.design.colors.face !== '#FFFFFF') && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Màu: {item.design.colors.band} / {item.design.colors.face}
-                          </p>
-                        )}
                       </div>
                       <Button
                         variant="ghost"
