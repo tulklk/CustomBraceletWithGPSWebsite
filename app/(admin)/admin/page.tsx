@@ -31,7 +31,7 @@ import { useToast } from "@/hooks/use-toast"
 import { formatCurrency } from "@/lib/utils"
 
 export default function AdminDashboard() {
-  const { user } = useUser()
+  const { user, makeAuthenticatedRequest } = useUser()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<AdminReport | null>(null)
@@ -44,8 +44,8 @@ export default function AdminDashboard() {
       try {
         setLoading(true)
         const [reportData, ordersData] = await Promise.all([
-          adminApi.reports.getStats(user.accessToken!),
-          adminApi.orders.getAll(user.accessToken!),
+          makeAuthenticatedRequest((token) => adminApi.reports.getStats(token)),
+          makeAuthenticatedRequest((token) => adminApi.orders.getAll(token)),
         ])
 
         setStats(reportData)
@@ -67,7 +67,7 @@ export default function AdminDashboard() {
     }
 
     fetchData()
-  }, [user?.accessToken, toast])
+  }, [user?.accessToken, makeAuthenticatedRequest, toast])
 
   const orderColumns = [
     {

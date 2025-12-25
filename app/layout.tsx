@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider"
 import { GoogleOAuthProviderWrapper } from "@/components/providers/google-oauth-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { ScrollToTop } from "@/components/ScrollToTop"
 
 const inter = Inter({ subsets: ["latin", "vietnamese"] })
 const akina = localFont({
@@ -43,6 +44,7 @@ export default function RootLayout({
               {children}
             </TooltipProvider>
             <Toaster />
+            <ScrollToTop />
           </ThemeProvider>
         </GoogleOAuthProviderWrapper>
       </body>

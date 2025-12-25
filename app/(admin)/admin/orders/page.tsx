@@ -30,7 +30,7 @@ import "dayjs/locale/vi"
 dayjs.locale("vi")
 
 export default function OrdersPage() {
-  const { user } = useUser()
+  const { user, makeAuthenticatedRequest } = useUser()
   const { toast } = useToast()
   const [orders, setOrders] = useState<AdminOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,13 +42,13 @@ export default function OrdersPage() {
   useEffect(() => {
     if (!user?.accessToken) return
     fetchOrders()
-  }, [user?.accessToken])
+  }, [user?.accessToken, makeAuthenticatedRequest])
 
   const fetchOrders = async () => {
     if (!user?.accessToken) return
     try {
       setLoading(true)
-      const data = await adminApi.orders.getAll(user.accessToken)
+      const data = await makeAuthenticatedRequest((token) => adminApi.orders.getAll(token))
       setOrders(data)
     } catch (error: any) {
       console.error("Error fetching orders:", error)
@@ -65,7 +65,7 @@ export default function OrdersPage() {
   const handleViewOrder = async (order: AdminOrder) => {
     if (!user?.accessToken) return
     try {
-      const orderDetail = await adminApi.orders.getById(user.accessToken, order.id)
+      const orderDetail = await makeAuthenticatedRequest((token) => adminApi.orders.getById(token, order.id))
       setSelectedOrder(orderDetail)
       setDialogOpen(true)
     } catch (error: any) {
@@ -80,7 +80,11 @@ export default function OrdersPage() {
   const handleUpdateStatus = async (newStatus: string) => {
     if (!user?.accessToken || !selectedOrder) return
     try {
-      await adminApi.orders.updateStatus(user.accessToken, selectedOrder.id, newStatus)
+      const updatedOrder = await makeAuthenticatedRequest((token) => 
+        adminApi.orders.updateStatus(token, selectedOrder.id, newStatus)
+      )
+      setSelectedOrder(updatedOrder)
+      setOrders(orders.map((o) => (o.id === updatedOrder.id ? updatedOrder : o)))
       toast({
         title: "Thành công",
         description: "Đã cập nhật trạng thái đơn hàng",

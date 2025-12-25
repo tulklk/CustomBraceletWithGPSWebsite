@@ -113,7 +113,7 @@ export function ImageUpload({ value = [], onChange, maxImages = 5, multiple = tr
           ) : (
             <>
               <Upload className="h-4 w-4 mr-2" />
-              Chọn ảnh từ máy tính
+              + Chọn ảnh từ máy tính
             </>
           )}
         </Button>

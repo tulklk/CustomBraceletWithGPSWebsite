@@ -13,6 +13,7 @@ interface UserStore {
   saveDesign: (design: CustomDesign) => void
   removeDesign: (index: number) => void
   refreshAccessToken: () => Promise<void>
+  makeAuthenticatedRequest: <T>(apiCall: (token: string) => Promise<T>) => Promise<T>
 }
 
 export const useUser = create<UserStore>()(
@@ -109,6 +110,36 @@ export const useUser = create<UserStore>()(
             savedDesigns: user.savedDesigns.filter((_, i) => i !== index),
           },
         })
+      },
+
+      // Helper to make authenticated API calls with auto token refresh
+      async makeAuthenticatedRequest<T>(
+        apiCall: (token: string) => Promise<T>
+      ): Promise<T> {
+        const user = get().user
+        if (!user?.accessToken) {
+          throw new Error("No access token available")
+        }
+
+        try {
+          return await apiCall(user.accessToken)
+        } catch (error: any) {
+          // If 401 and we have refresh token, try to refresh and retry
+          if (error?.statusCode === 401 && user.refreshToken) {
+            try {
+              await get().refreshAccessToken()
+              const newUser = get().user
+              if (newUser?.accessToken) {
+                return await apiCall(newUser.accessToken)
+              }
+            } catch (refreshError) {
+              // If refresh fails, logout user
+              await get().logout()
+              throw new Error("Session expired. Please login again.")
+            }
+          }
+          throw error
+        }
       },
     }),
     {

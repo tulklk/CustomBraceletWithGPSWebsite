@@ -61,6 +61,54 @@ export async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 /**
+ * Fetch with automatic token refresh on 401
+ * This function will automatically retry the request with a refreshed token if it receives a 401
+ */
+export async function fetchWithAuth(
+  url: string,
+  options: RequestInit & {
+    accessToken: string
+    refreshToken?: string
+    onTokenRefresh?: (newToken: string) => void
+  }
+): Promise<Response> {
+  const { accessToken, refreshToken, onTokenRefresh, ...fetchOptions } = options
+
+  // First attempt
+  let response = await fetch(url, {
+    ...fetchOptions,
+    headers: {
+      ...createAuthHeaders(accessToken),
+      ...fetchOptions.headers,
+    },
+  })
+
+  // If 401 and we have refresh token, try to refresh and retry
+  if (response.status === 401 && refreshToken && onTokenRefresh) {
+    try {
+      const refreshResponse = await authApi.refreshToken({ refreshToken })
+      
+      // Update token via callback
+      onTokenRefresh(refreshResponse.accessToken)
+      
+      // Retry original request with new token
+      response = await fetch(url, {
+        ...fetchOptions,
+        headers: {
+          ...createAuthHeaders(refreshResponse.accessToken),
+          ...fetchOptions.headers,
+        },
+      })
+    } catch (refreshError) {
+      // If refresh fails, return original 401 response
+      console.error("Failed to refresh token:", refreshError)
+    }
+  }
+
+  return response
+}
+
+/**
  * Create headers for authenticated API requests
  */
 export function createAuthHeaders(accessToken: string, additionalHeaders?: HeadersInit): HeadersInit {

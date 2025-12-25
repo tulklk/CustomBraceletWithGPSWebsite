@@ -193,13 +193,20 @@ export type AdminOrder = {
 export type AdminProduct = {
   id: string
   name: string
+  slug?: string
   description?: string | null
   price: number
-  stock: number
+  stock?: number // Legacy field, may be undefined
+  stockQuantity?: number // Backend field name
+  originalPrice?: number | null
   brand?: string | null
   categoryId?: string | null
   imageUrl?: string | null
   images?: string[]
+  imageUrls?: string[] // Backend field name
+  isActive?: boolean
+  hasVariants?: boolean
+  variants?: any[]
   createdAt?: string
   updatedAt?: string
 }
