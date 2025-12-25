@@ -478,12 +478,6 @@ export default function CategoriesPage() {
                   </div>
                 )}
 
-                {formData.subcategories.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    Ví dụ: danh mục cha &quot;Vợt Pickleball&quot; có các danh mục con như &quot;Vợt Pickleball
-                    Joola&quot;, &quot;Vợt Pickleball Franklin&quot;...
-                  </p>
-                )}
               </div>
             )}
           </div>

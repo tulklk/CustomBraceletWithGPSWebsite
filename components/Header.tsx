@@ -14,10 +14,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { CartDrawer } from "./CartDrawer"
+import { CartPopup } from "./CartPopup"
 import { AuthModal } from "./AuthModal"
 import { Logo } from "@/components/Logo"
+import { categoriesApi, Category } from "@/lib/api/categories"
+import { cn } from "@/lib/utils"
 
 export function Header() {
   const { getTotalItems } = useCart()
@@ -27,8 +30,29 @@ export function Header() {
   const [authOpen, setAuthOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [avatarError, setAvatarError] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [productsDropdownOpen, setProductsDropdownOpen] = useState(false)
+  const [cartPopupOpen, setCartPopupOpen] = useState(false)
+  const productsDropdownRef = useRef<HTMLDivElement>(null)
+  const productsNavRef = useRef<HTMLDivElement>(null)
+  const cartButtonRef = useRef<HTMLButtonElement>(null)
 
   const totalItems = getTotalItems()
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoriesApi.getAll()
+        setCategories(data)
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+      }
+    }
+    fetchCategories()
+  }, [])
+
+  // No need for useEffect - we'll use onMouseEnter/onMouseLeave directly
 
   // Get user initials for avatar fallback
   const getUserInitials = () => {
@@ -51,9 +75,67 @@ export function Header() {
             <Logo className="scale-75 md:scale-100" />
             
             <nav className="hidden md:flex gap-6">
-              <Link href="/products" className="text-sm font-medium hover:text-primary transition-colors">
-                Sản phẩm
-              </Link>
+              {/* Products Dropdown */}
+              <div 
+                ref={productsNavRef}
+                className="relative"
+                onMouseEnter={() => setProductsDropdownOpen(true)}
+                onMouseLeave={() => setProductsDropdownOpen(false)}
+              >
+                <Link 
+                  href="/products" 
+                  className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1"
+                >
+                  Sản phẩm
+                  <ChevronDown className={cn(
+                    "h-4 w-4 transition-transform duration-200",
+                    productsDropdownOpen && "rotate-180"
+                  )} />
+                </Link>
+                
+                {/* Invisible bridge to prevent gap */}
+                {productsDropdownOpen && (
+                  <div className="absolute top-full left-0 w-full h-2" />
+                )}
+                
+                {/* Dropdown Menu */}
+                <div
+                  ref={productsDropdownRef}
+                  className={cn(
+                    "absolute top-full left-0 mt-0 w-56 bg-background border rounded-lg shadow-lg z-50",
+                    "transition-all duration-300 ease-out",
+                    productsDropdownOpen
+                      ? "opacity-100 translate-y-0 visible"
+                      : "opacity-0 -translate-y-2 invisible"
+                  )}
+                >
+                  <div className="py-2">
+                    <Link
+                      href="/products"
+                      className="block px-4 py-2 text-sm hover:bg-accent transition-colors"
+                      onClick={() => setProductsDropdownOpen(false)}
+                    >
+                      Tất cả sản phẩm
+                    </Link>
+                    {categories.length > 0 && (
+                      <>
+                        <div className="border-t my-1" />
+                        {categories.map((category) => (
+                          <Link
+                            key={category.id || category.name}
+                            href={`/products?category=${encodeURIComponent(category.name)}${category.id ? `&categoryId=${category.id}` : ''}`}
+                            className="block px-4 py-2 text-sm hover:bg-accent transition-colors cursor-pointer"
+                            onClick={() => setProductsDropdownOpen(false)}
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <Link href="/faq" className="text-sm font-medium hover:text-primary transition-colors">
                 FAQ
               </Link>
@@ -75,20 +157,37 @@ export function Header() {
               <Moon className="absolute h-[18px] w-[18px] md:h-5 md:w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative h-9 w-9 md:h-10 md:w-10"
-              onClick={() => setCartOpen(true)}
-              aria-label="Open cart"
+            <div 
+              className="relative"
+              onMouseEnter={() => setCartPopupOpen(true)}
+              onMouseLeave={() => setCartPopupOpen(false)}
             >
-              <ShoppingCart className="h-[18px] w-[18px] md:h-5 md:w-5" />
-              {totalItems > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]">
-                  {totalItems}
-                </Badge>
+              {/* Invisible bridge to prevent gap */}
+              {cartPopupOpen && (
+                <div className="absolute top-full right-0 w-full h-2" />
               )}
-            </Button>
+              
+              <Button
+                ref={cartButtonRef}
+                variant="ghost"
+                size="icon"
+                className="relative h-9 w-9 md:h-10 md:w-10"
+                onClick={() => setCartOpen(true)}
+                aria-label="Open cart"
+              >
+                <ShoppingCart className="h-[18px] w-[18px] md:h-5 md:w-5" />
+                {totalItems > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]">
+                    {totalItems}
+                  </Badge>
+                )}
+              </Button>
+              <CartPopup
+                open={cartPopupOpen}
+                onClose={() => setCartPopupOpen(false)}
+                triggerRef={cartButtonRef}
+              />
+            </div>
 
             {user ? (
               <DropdownMenu>
