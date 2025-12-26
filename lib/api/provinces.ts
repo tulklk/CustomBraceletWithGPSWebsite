@@ -259,14 +259,10 @@ export const provincesApi = {
       const province = await this.getProvinceWithDistricts(provinceCode)
       console.log("Province data for wards:", province)
       
-      // Extract wards from province (API v2 might return wards directly)
-      let wards = province.wards || []
-      
-      // If no wards in province, try to get from districts
-      if (wards.length === 0 && province.districts && province.districts.length > 0) {
-        console.log("No wards in province, collecting from districts...")
-        // Collect all wards from all districts
-        const allWards: Ward[] = []
+      // Collect all wards from all districts (Province doesn't have wards directly)
+      const allWards: Ward[] = []
+      if (province.districts && province.districts.length > 0) {
+        console.log("Collecting wards from districts...")
         for (const district of province.districts) {
           if (district.wards && district.wards.length > 0) {
             allWards.push(...district.wards)
@@ -274,9 +270,20 @@ export const provincesApi = {
             allWards.push(...district.w)
           }
         }
-        wards = allWards
-        console.log(`Collected ${wards.length} wards from ${province.districts.length} districts`)
       }
+      // Also check alternative property name
+      const districts = province.d || []
+      if (districts.length > 0) {
+        for (const district of districts) {
+          if (district.wards && district.wards.length > 0) {
+            allWards.push(...district.wards)
+          } else if (district.w && district.w.length > 0) {
+            allWards.push(...district.w)
+          }
+        }
+      }
+      const wards = allWards
+      console.log(`Collected ${wards.length} wards from districts`)
       
       console.log("Final wards count from province:", wards.length)
       return wards
