@@ -7,7 +7,7 @@ export interface ShippingAddress {
   phoneNumber: string
   addressLine: string
   ward: string
-  district: string
+  district: string // Required by backend, but can be empty string
   city: string
 }
 
@@ -121,6 +121,7 @@ export const ordersApi = {
   /**
    * Create a new order (with authentication)
    * POST /api/Orders
+   * Uses Next.js API proxy to bypass HTTP/2 protocol errors
    */
   async createOrder(
     data: CreateOrderRequest,
@@ -128,7 +129,8 @@ export const ordersApi = {
     refreshToken?: string,
     onTokenRefresh?: (newToken: string) => void
   ): Promise<Order> {
-    const response = await fetchWithAuth(`${API_BASE_URL}/api/Orders`, {
+    // Use proxy route to bypass HTTP/2 errors
+    const response = await fetchWithAuth("/api/orders/create", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

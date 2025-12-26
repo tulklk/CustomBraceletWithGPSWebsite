@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select"
 import { useCart } from "@/store/useCart"
 import { useUser } from "@/store/useUser"
+import { useAddresses } from "@/store/useAddresses"
 import { formatCurrency } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { CreditCard, Wallet, Building, ShoppingBag } from "lucide-react"
@@ -27,6 +28,7 @@ import Image from "next/image"
 import { productsApi, BackendProduct } from "@/lib/api/products"
 import { ordersApi, ShippingAddress, ApplyVoucherResponse } from "@/lib/api/orders"
 import { provincesApi, Province, District, Ward } from "@/lib/api/provinces"
+import { cartApi } from "@/lib/api/cart"
 
 const checkoutSchema = z.object({
   email: z.string().email("Email không hợp lệ").min(1, "Email là bắt buộc"),
@@ -47,6 +49,7 @@ interface ProductInfo {
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart } = useCart()
   const { user, makeAuthenticatedRequest } = useUser()
+  const { getDefaultAddress } = useAddresses()
   const { toast } = useToast()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -236,30 +239,50 @@ export default function CheckoutPage() {
     },
   })
 
-  // Update form values when user logs in (auto-fill email always, other fields only if empty)
+  // Update form values when user logs in or default address changes
   useEffect(() => {
+    const defaultAddress = getDefaultAddress()
+    const currentValues = form.getValues()
+    
     if (user) {
-      const currentValues = form.getValues()
       // Always update email from user account if user is logged in
-      // Only auto-fill other fields if they are empty
+      // Fill address from default address if available, otherwise from user profile
+      const newCity = defaultAddress?.city || currentValues.city || ""
+      const newWard = defaultAddress?.ward || currentValues.ward || ""
+      
       form.reset({
         email: user.email || currentValues.email || "",
-        fullName: currentValues.fullName || user.fullName || user.name || "",
-        phoneNumber: currentValues.phoneNumber || user.phoneNumber || "",
-        addressLine: currentValues.addressLine || "",
-        ward: currentValues.ward || "",
-        city: currentValues.city || "",
+        fullName: defaultAddress?.fullName || currentValues.fullName || user.fullName || user.name || "",
+        phoneNumber: defaultAddress?.phoneNumber || currentValues.phoneNumber || user.phoneNumber || "",
+        addressLine: defaultAddress?.addressLine || currentValues.addressLine || "",
+        ward: newWard,
+        city: newCity,
         paymentMethod: currentValues.paymentMethod || "COD",
       })
+
+      // If default address exists and city is set, load wards for the selected city
+      if (defaultAddress?.city && newCity) {
+        const loadWardsForCity = async () => {
+          setLoadingWards(true)
+          try {
+            const fetchedWards = await provincesApi.getWardsByProvince(newCity)
+            setWards(fetchedWards)
+          } catch (error) {
+            console.error("Error fetching wards:", error)
+          } finally {
+            setLoadingWards(false)
+          }
+        }
+        loadWardsForCity()
+      }
     } else {
       // If user logs out, keep form values but clear email if it was from account
-      const currentValues = form.getValues()
       if (currentValues.email && !currentValues.email.includes("@")) {
         // If email looks like it was auto-filled, clear it
         form.setValue("email", "")
       }
     }
-  }, [user, form]) // Run when user or form changes
+  }, [user, form, getDefaultAddress]) // Run when user, form, or default address changes
 
   const onSubmit = async (data: CheckoutFormData) => {
     setIsSubmitting(true)
@@ -281,13 +304,13 @@ export default function CheckoutPage() {
       const selectedProvince = provinces.find(p => p.code === data.city || p.code?.toString() === data.city)
       const selectedWard = wards.find(w => w.code === data.ward || w.code?.toString() === data.ward)
 
-      // Prepare shipping address (district is empty since we removed it)
+      // Prepare shipping address (district is required by backend, use ward name as district since we removed district selection)
       const shippingAddress: ShippingAddress = {
         fullName: data.fullName,
         phoneNumber: data.phoneNumber,
         addressLine: data.addressLine,
         ward: selectedWard?.name || data.ward,
-        district: "", // Empty since we removed district selection
+        district: selectedWard?.name || data.ward || "N/A", // Backend requires this field, use ward name as fallback
         city: selectedProvince?.name || data.city,
       }
 
@@ -301,21 +324,61 @@ export default function CheckoutPage() {
       let order: any
       
       if (user?.accessToken) {
-        // User is logged in, use authenticated request
-        order = await makeAuthenticatedRequest(async (token: string) => {
-          return await ordersApi.createOrder(
-            {
-              shippingAddress,
-              paymentMethod: data.paymentMethod, // "COD" or "PayOS"
-              voucherCode: discountApplied ? discountCode : undefined,
-            },
-            token,
-            user.refreshToken,
-            (newToken: string) => {
-              // Token refresh handled by makeAuthenticatedRequest
+        // User is logged in, sync cart to backend first, then create order
+        try {
+          // First, sync cart items to backend
+          await makeAuthenticatedRequest(async (token: string) => {
+            // Clear backend cart first to ensure it matches local cart
+            try {
+              await cartApi.clearCart(token, user.refreshToken, (newToken: string) => {
+                // Token refresh handled by makeAuthenticatedRequest
+              })
+            } catch (error: any) {
+              // Cart might not exist yet, that's okay
+              console.log("Cart not found or already empty, will add items:", error)
             }
-          )
-        })
+
+            // Add all local cart items to backend cart
+            for (const item of items) {
+              await cartApi.addItem(
+                {
+                  productId: item.design.productId,
+                  quantity: item.qty,
+                },
+                token,
+                user.refreshToken,
+                (newToken: string) => {
+                  // Token refresh handled by makeAuthenticatedRequest
+                }
+              )
+            }
+          })
+
+          // Now create order (cart should exist on backend now)
+          order = await makeAuthenticatedRequest(async (token: string) => {
+            return await ordersApi.createOrder(
+              {
+                shippingAddress,
+                paymentMethod: data.paymentMethod, // "COD" or "PayOS"
+                voucherCode: discountApplied ? discountCode : undefined,
+              },
+              token,
+              user.refreshToken,
+              (newToken: string) => {
+                // Token refresh handled by makeAuthenticatedRequest
+              }
+            )
+          })
+        } catch (error: any) {
+          console.error("Error syncing cart or creating order:", error)
+          toast({
+            title: "Có lỗi xảy ra",
+            description: error.message || "Không thể tạo đơn hàng. Vui lòng thử lại.",
+            variant: "destructive",
+          })
+          setIsSubmitting(false)
+          return
+        }
       } else {
         // User is not logged in, create order without authentication (guest checkout)
         order = await ordersApi.createOrderWithoutAuth({

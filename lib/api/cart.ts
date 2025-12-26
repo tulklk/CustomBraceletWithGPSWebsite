@@ -37,9 +37,11 @@ export interface UpdateCartItemRequest {
 export const cartApi = {
   /**
    * Get current user's cart
+   * Uses Next.js API proxy to bypass HTTP/2 protocol errors
    */
   async getCart(accessToken: string, refreshToken?: string, onTokenRefresh?: (newToken: string) => void): Promise<BackendCart> {
-    const response = await fetchWithAuth(`${API_BASE_URL}/api/Cart`, {
+    // Use proxy route to bypass HTTP/2 errors
+    const response = await fetchWithAuth("/api/cart", {
       method: "GET",
       accessToken,
       refreshToken,
@@ -51,6 +53,7 @@ export const cartApi = {
 
   /**
    * Add item to cart
+   * Uses Next.js API proxy to bypass HTTP/2 protocol errors
    */
   async addItem(
     data: AddCartItemRequest,
@@ -58,8 +61,12 @@ export const cartApi = {
     refreshToken?: string,
     onTokenRefresh?: (newToken: string) => void
   ): Promise<BackendCartItem> {
-    const response = await fetchWithAuth(`${API_BASE_URL}/api/Cart/items`, {
+    // Use proxy route to bypass HTTP/2 errors
+    const response = await fetchWithAuth("/api/cart/items", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(data),
       accessToken,
       refreshToken,
@@ -71,6 +78,7 @@ export const cartApi = {
 
   /**
    * Update cart item quantity
+   * Uses Next.js API proxy to bypass HTTP/2 protocol errors
    */
   async updateItem(
     cartItemId: string,
@@ -79,8 +87,12 @@ export const cartApi = {
     refreshToken?: string,
     onTokenRefresh?: (newToken: string) => void
   ): Promise<BackendCartItem> {
-    const response = await fetchWithAuth(`${API_BASE_URL}/api/Cart/items/${cartItemId}`, {
+    // Use proxy route to bypass HTTP/2 errors
+    const response = await fetchWithAuth(`/api/cart/items/${cartItemId}`, {
       method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(data),
       accessToken,
       refreshToken,
@@ -92,6 +104,7 @@ export const cartApi = {
 
   /**
    * Remove item from cart
+   * Uses Next.js API proxy to bypass HTTP/2 protocol errors
    */
   async removeItem(
     cartItemId: string,
@@ -99,7 +112,8 @@ export const cartApi = {
     refreshToken?: string,
     onTokenRefresh?: (newToken: string) => void
   ): Promise<void> {
-    const response = await fetchWithAuth(`${API_BASE_URL}/api/Cart/items/${cartItemId}`, {
+    // Use proxy route to bypass HTTP/2 errors
+    const response = await fetchWithAuth(`/api/cart/items/${cartItemId}`, {
       method: "DELETE",
       accessToken,
       refreshToken,
@@ -113,13 +127,15 @@ export const cartApi = {
 
   /**
    * Clear entire cart
+   * Uses Next.js API proxy to bypass HTTP/2 protocol errors
    */
   async clearCart(
     accessToken: string,
     refreshToken?: string,
     onTokenRefresh?: (newToken: string) => void
   ): Promise<void> {
-    const response = await fetchWithAuth(`${API_BASE_URL}/api/Cart`, {
+    // Use proxy route to bypass HTTP/2 errors
+    const response = await fetchWithAuth("/api/cart", {
       method: "DELETE",
       accessToken,
       refreshToken,
