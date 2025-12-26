@@ -8,6 +8,10 @@ import {
   AdminProduct,
   AdminUser,
   AdminReport,
+  OrderDetail,
+  OrderStatus,
+  UpdateOrderStatusRequest,
+  UpdateOrderStatusResponse,
 } from "@/lib/types"
 
 // Admin API Service
@@ -116,21 +120,59 @@ export const adminApi = {
       return handleResponse<AdminOrder[]>(response)
     },
 
-    async getById(accessToken: string, id: string): Promise<AdminOrder> {
+    async getById(accessToken: string, id: string): Promise<OrderDetail> {
       const response = await fetch(`${API_BASE_URL}/api/admin/AdminOrders/${id}`, {
         method: "GET",
         headers: createAuthHeaders(accessToken),
       })
-      return handleResponse<AdminOrder>(response)
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Order not found")
+        }
+        if (response.status === 401) {
+          throw new Error("Unauthorized - Please login as admin")
+        }
+        throw new Error(`Failed to fetch order: ${response.statusText}`)
+      }
+      
+      return handleResponse<OrderDetail>(response)
     },
 
-    async updateStatus(accessToken: string, id: string, status: string): Promise<AdminOrder> {
+    async updateStatus(
+      accessToken: string,
+      id: string,
+      status: OrderStatus
+    ): Promise<UpdateOrderStatusResponse> {
       const response = await fetch(`${API_BASE_URL}/api/admin/AdminOrders/${id}/status`, {
         method: "PUT",
         headers: createAuthHeaders(accessToken),
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status } as UpdateOrderStatusRequest),
       })
-      return handleResponse<AdminOrder>(response)
+      
+      if (!response.ok) {
+        let errorMessage = "Unknown error"
+        try {
+          const errorData: { message: string } = await response.json()
+          errorMessage = errorData.message || errorMessage
+        } catch {
+          // If response is not JSON, use status text
+          errorMessage = response.statusText
+        }
+        
+        if (response.status === 400) {
+          throw new Error(errorMessage || "Invalid order status")
+        }
+        if (response.status === 404) {
+          throw new Error(errorMessage || "Order not found")
+        }
+        if (response.status === 401) {
+          throw new Error("Unauthorized - Please login as admin")
+        }
+        throw new Error(errorMessage || `Failed to update order status: ${response.statusText}`)
+      }
+      
+      return handleResponse<UpdateOrderStatusResponse>(response)
     },
   },
 

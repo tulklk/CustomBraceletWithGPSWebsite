@@ -177,16 +177,95 @@ export type AdminVoucher = {
   updatedAt?: string
 }
 
+// Order Status Types
+export type OrderStatus = 
+  | "Processing"
+  | "Confirmed"
+  | "Preparing"
+  | "Shipped"
+  | "Completed"
+  | "Canceled"
+
+// Order Status Mapping (for display)
+export const ORDER_STATUS_MAP: Record<OrderStatus, { label: string; value: number }> = {
+  Processing: { label: "Đang xử lý", value: 0 },
+  Confirmed: { label: "Đã xác nhận", value: 1 },
+  Preparing: { label: "Đang chuẩn bị", value: 2 },
+  Shipped: { label: "Đã giao hàng", value: 3 },
+  Completed: { label: "Hoàn thành", value: 4 },
+  Canceled: { label: "Đã hủy", value: 5 },
+}
+
+// Order Item Interface
+export interface OrderItem {
+  id: string
+  orderId: string
+  productId: string
+  productVariantId: string | null
+  productNameSnapshot: string
+  variantInfoSnapshot: string | null
+  quantity: number
+  unitPrice: number
+  lineTotal: number
+}
+
+// Order Detail Interface (full order with all fields from API)
+export interface OrderDetail {
+  id: string
+  orderNumber: string
+  userId: string | null
+  userEmail: string | null
+  userFullName: string | null
+  guestEmail: string | null
+  guestFullName: string | null
+  totalAmount: number
+  paymentStatus: number // 0: Pending, 1: Paid, etc.
+  orderStatus: number // 0-5 (see ORDER_STATUS_MAP)
+  paymentMethod: number // 0: COD, 1: PayOS
+  paymentTransactionId: string | null
+  shippingFullName: string | null
+  shippingPhoneNumber: string | null
+  shippingAddressLine: string | null
+  shippingWard: string | null
+  shippingDistrict: string | null
+  shippingCity: string | null
+  voucherId: string | null
+  voucherCode: string | null
+  voucherDiscountAmount: number | null
+  items: OrderItem[]
+  createdAt: string
+  updatedAt: string | null
+}
+
+// Update Status Request
+export interface UpdateOrderStatusRequest {
+  status: OrderStatus
+}
+
+// Update Status Response
+export interface UpdateOrderStatusResponse {
+  message: string
+}
+
 export type AdminOrder = {
   id: string
-  orderCode: string
-  customerId: string
-  customerName?: string
-  customerEmail?: string
-  totalAmount: number
-  status: string
-  paymentStatus: string
-  createdAt: string
+  orderNumber: string // API trả về orderNumber, không phải orderCode
+  userId?: string | null
+  userEmail?: string | null
+  userFullName?: string | null
+  guestEmail?: string | null
+  guestFullName?: string | null
+  // Legacy fields for backward compatibility
+  orderCode?: string // Map từ orderNumber
+  customerId?: string
+  customerName?: string // Map từ userFullName hoặc guestEmail
+  customerEmail?: string // Map từ userEmail hoặc guestEmail
+  totalAmount?: number
+  status?: string
+  orderStatus?: number // Numeric status from API
+  paymentStatus?: number | string // Can be number or string
+  paymentMethod?: number
+  createdAt?: string
   updatedAt?: string
 }
 

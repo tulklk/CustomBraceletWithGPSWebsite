@@ -29,7 +29,7 @@ import { ordersApi, ShippingAddress, ApplyVoucherResponse } from "@/lib/api/orde
 import { provincesApi, Province, District, Ward } from "@/lib/api/provinces"
 
 const checkoutSchema = z.object({
-  email: z.string().email("Email không hợp lệ").optional().or(z.literal("")),
+  email: z.string().email("Email không hợp lệ").min(1, "Email là bắt buộc"),
   fullName: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
   phoneNumber: z.string().min(10, "Số điện thoại không hợp lệ"),
   addressLine: z.string().min(5, "Địa chỉ quá ngắn"),
@@ -236,21 +236,27 @@ export default function CheckoutPage() {
     },
   })
 
-  // Update form values when user logs in (only if fields are empty)
+  // Update form values when user logs in (auto-fill email always, other fields only if empty)
   useEffect(() => {
     if (user) {
       const currentValues = form.getValues()
-      // Only auto-fill if fields are empty
-      if (!currentValues.fullName || !currentValues.phoneNumber || !currentValues.email) {
-        form.reset({
-          email: currentValues.email || user.email || "",
-          fullName: currentValues.fullName || user.fullName || user.name || "",
-          phoneNumber: currentValues.phoneNumber || user.phoneNumber || "",
-          addressLine: currentValues.addressLine || "",
-          ward: currentValues.ward || "",
-          city: currentValues.city || "",
-          paymentMethod: currentValues.paymentMethod || "COD",
-        })
+      // Always update email from user account if user is logged in
+      // Only auto-fill other fields if they are empty
+      form.reset({
+        email: user.email || currentValues.email || "",
+        fullName: currentValues.fullName || user.fullName || user.name || "",
+        phoneNumber: currentValues.phoneNumber || user.phoneNumber || "",
+        addressLine: currentValues.addressLine || "",
+        ward: currentValues.ward || "",
+        city: currentValues.city || "",
+        paymentMethod: currentValues.paymentMethod || "COD",
+      })
+    } else {
+      // If user logs out, keep form values but clear email if it was from account
+      const currentValues = form.getValues()
+      if (currentValues.email && !currentValues.email.includes("@")) {
+        // If email looks like it was auto-filled, clear it
+        form.setValue("email", "")
       }
     }
   }, [user, form]) // Run when user or form changes
@@ -259,8 +265,9 @@ export default function CheckoutPage() {
     setIsSubmitting(true)
 
     try {
-      // Validate email for guest checkout
-      if (!user?.accessToken && !data.email) {
+      // Ensure email is set (from user account or form input)
+      const email = data.email || user?.email || ""
+      if (!email) {
         toast({
           title: "Email là bắt buộc",
           description: "Vui lòng nhập email để đặt hàng",
@@ -312,7 +319,7 @@ export default function CheckoutPage() {
       } else {
         // User is not logged in, create order without authentication (guest checkout)
         order = await ordersApi.createOrderWithoutAuth({
-          email: data.email || "",
+          email: email,
           fullName: data.fullName,
           shippingAddress,
           paymentMethod: data.paymentMethod, // "COD" or "PayOS"
@@ -432,22 +439,27 @@ export default function CheckoutPage() {
                 <CardTitle>Thông tin giao hàng</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {!user?.accessToken && (
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      {...form.register("email")}
-                      placeholder="user@example.com"
-                    />
-                    {form.formState.errors.email && (
-                      <p className="text-sm text-destructive">
-                        {form.formState.errors.email.message}
-                      </p>
-                    )}
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    {...form.register("email")}
+                    placeholder="user@example.com"
+                    disabled={!!user?.accessToken}
+                    className={user?.accessToken ? "bg-muted cursor-not-allowed" : ""}
+                  />
+                  {user?.accessToken && (
+                    <p className="text-xs text-muted-foreground">
+                      Email được lấy từ tài khoản của bạn
+                    </p>
+                  )}
+                  {form.formState.errors.email && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.email.message}
+                    </p>
+                  )}
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Họ và tên *</Label>

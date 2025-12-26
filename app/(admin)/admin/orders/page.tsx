@@ -21,10 +21,12 @@ import {
 } from "@/components/ui/select"
 import { useUser } from "@/store/useUser"
 import { adminApi } from "@/lib/api/admin"
-import { AdminOrder } from "@/lib/types"
+import { AdminOrder, OrderDetail, OrderStatus, ORDER_STATUS_MAP } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { formatCurrency } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import Image from "next/image"
 import dayjs from "dayjs"
 import "dayjs/locale/vi"
 dayjs.locale("vi")
@@ -34,10 +36,12 @@ export default function OrdersPage() {
   const { toast } = useToast()
   const [orders, setOrders] = useState<AdminOrder[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [productImages, setProductImages] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!user?.accessToken) return
@@ -49,7 +53,15 @@ export default function OrdersPage() {
     try {
       setLoading(true)
       const data = await makeAuthenticatedRequest((token) => adminApi.orders.getAll(token))
-      setOrders(data)
+      // Map API response để đảm bảo tương thích với code hiện tại
+      const mappedOrders = data.map((order) => ({
+        ...order,
+        orderCode: order.orderNumber || order.orderCode, // Sử dụng orderNumber từ API
+        customerName: order.userFullName || order.guestFullName || order.guestEmail || order.customerName,
+        customerEmail: order.userEmail || order.guestEmail || order.customerEmail,
+        customerId: order.userId || order.customerId,
+      }))
+      setOrders(mappedOrders)
     } catch (error: any) {
       console.error("Error fetching orders:", error)
       toast({
@@ -68,6 +80,31 @@ export default function OrdersPage() {
       const orderDetail = await makeAuthenticatedRequest((token) => adminApi.orders.getById(token, order.id))
       setSelectedOrder(orderDetail)
       setDialogOpen(true)
+      
+      // Fetch product images for all items in the order
+      const imageMap: Record<string, string> = {}
+      await Promise.all(
+        orderDetail.items.map(async (item) => {
+          try {
+            const product = await makeAuthenticatedRequest((token) => 
+              adminApi.products.getById(token, item.productId)
+            )
+            // Get first image from images, imageUrls array, or imageUrl field
+            // Priority: images[0] > imageUrls[0] > imageUrl
+            const imageUrl = 
+              (product.images && product.images.length > 0 && product.images[0]) ||
+              (product.imageUrls && product.imageUrls.length > 0 && product.imageUrls[0]) ||
+              product.imageUrl ||
+              ""
+            if (imageUrl) {
+              imageMap[item.productId] = imageUrl
+            }
+          } catch (error) {
+            console.error(`Error fetching product image for ${item.productId}:`, error)
+          }
+        })
+      )
+      setProductImages(imageMap)
     } catch (error: any) {
       toast({
         title: "Lỗi",
@@ -77,19 +114,23 @@ export default function OrdersPage() {
     }
   }
 
-  const handleUpdateStatus = async (newStatus: string) => {
+  const handleUpdateStatus = async (newStatus: OrderStatus) => {
     if (!user?.accessToken || !selectedOrder) return
     try {
-      const updatedOrder = await makeAuthenticatedRequest((token) => 
+      setUpdatingStatus(true)
+      await makeAuthenticatedRequest((token) => 
         adminApi.orders.updateStatus(token, selectedOrder.id, newStatus)
       )
-      setSelectedOrder(updatedOrder)
-      setOrders(orders.map((o) => (o.id === updatedOrder.id ? updatedOrder : o)))
       toast({
         title: "Thành công",
         description: "Đã cập nhật trạng thái đơn hàng",
       })
-      setDialogOpen(false)
+      // Refresh order detail
+      const refreshedOrder = await makeAuthenticatedRequest((token) => 
+        adminApi.orders.getById(token, selectedOrder.id)
+      )
+      setSelectedOrder(refreshedOrder)
+      // Refresh orders list
       fetchOrders()
     } catch (error: any) {
       toast({
@@ -97,6 +138,8 @@ export default function OrdersPage() {
         description: error.message || "Không thể cập nhật trạng thái",
         variant: "destructive",
       })
+    } finally {
+      setUpdatingStatus(false)
     }
   }
 
@@ -106,28 +149,35 @@ export default function OrdersPage() {
       label: "Mã đơn hàng",
       sortable: true,
       render: (order: AdminOrder) => (
-        <span className="font-mono font-medium">{order.orderCode}</span>
+        <span className="font-mono font-medium">{order.orderNumber || order.orderCode || "N/A"}</span>
       ),
     },
     {
       key: "customerName",
       label: "Khách hàng",
       sortable: true,
-      render: (order: AdminOrder) => (
-        <div>
-          <p className="font-medium">{order.customerName || order.customerEmail || "N/A"}</p>
-          {order.customerEmail && order.customerName && (
-            <p className="text-xs text-muted-foreground">{order.customerEmail}</p>
-          )}
-        </div>
-      ),
+      render: (order: AdminOrder) => {
+        // Ưu tiên hiển thị tên khách hàng
+        const customerName = order.userFullName || order.guestFullName || order.customerName
+        const customerEmail = order.userEmail || order.guestEmail || order.customerEmail
+        return (
+          <div>
+            <p className="font-medium">{customerName || customerEmail || "N/A"}</p>
+            {customerEmail && customerName && (
+              <p className="text-xs text-muted-foreground">{customerEmail}</p>
+            )}
+          </div>
+        )
+      },
     },
     {
       key: "totalAmount",
       label: "Tổng tiền",
       sortable: true,
       render: (order: AdminOrder) => (
-        <span className="font-medium">{formatCurrency(order.totalAmount)}</span>
+        <span className="font-medium">
+          {order.totalAmount ? formatCurrency(order.totalAmount) : "N/A"}
+        </span>
       ),
     },
     {
@@ -135,27 +185,58 @@ export default function OrdersPage() {
       label: "Trạng thái",
       sortable: true,
       render: (order: AdminOrder) => {
-        const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
-          "Đang xử lý": { label: "Đang xử lý", variant: "default" },
-          "Đã xác nhận": { label: "Đã xác nhận", variant: "default" },
-          "Đã giao": { label: "Đã giao", variant: "default" },
-          "Đã hủy": { label: "Đã hủy", variant: "destructive" },
+        // Sử dụng orderStatus (number) từ API, map sang label từ ORDER_STATUS_MAP
+        if (order.orderStatus !== undefined && order.orderStatus !== null) {
+          const statusEntry = Object.entries(ORDER_STATUS_MAP).find(
+            ([_, value]) => value.value === order.orderStatus
+          )
+          if (statusEntry) {
+            const statusLabel = ORDER_STATUS_MAP[statusEntry[0] as OrderStatus].label
+            const statusVariant = 
+              order.orderStatus === 5 ? "destructive" : // Canceled
+              order.orderStatus === 4 ? "default" : // Completed
+              "secondary" // Processing, Confirmed, Preparing, Shipped
+            return <Badge variant={statusVariant}>{statusLabel}</Badge>
+          }
         }
-        const status = statusMap[order.status] || { label: order.status, variant: "secondary" as const }
-        return <Badge variant={status.variant}>{status.label}</Badge>
+        // Fallback nếu không có orderStatus
+        if (order.status) {
+          const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
+            "Đang xử lý": { label: "Đang xử lý", variant: "default" },
+            "Đã xác nhận": { label: "Đã xác nhận", variant: "default" },
+            "Đã giao": { label: "Đã giao", variant: "default" },
+            "Đã hủy": { label: "Đã hủy", variant: "destructive" },
+          }
+          const status = statusMap[order.status] || { label: order.status, variant: "secondary" as const }
+          return <Badge variant={status.variant}>{status.label}</Badge>
+        }
+        return <Badge variant="secondary">N/A</Badge>
       },
     },
     {
       key: "paymentStatus",
       label: "Thanh toán",
       render: (order: AdminOrder) => {
-        const paymentMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
-          "Chờ thanh toán": { label: "Chờ thanh toán", variant: "secondary" },
-          "Đã thanh toán": { label: "Đã thanh toán", variant: "default" },
-          "Đã hoàn tiền": { label: "Đã hoàn tiền", variant: "destructive" },
+        // Sử dụng paymentStatus (number) từ API
+        // 0: Chờ thanh toán, 1: Đã thanh toán
+        if (typeof order.paymentStatus === "number") {
+          if (order.paymentStatus === 1) {
+            return <Badge variant="default">Đã thanh toán</Badge>
+          } else if (order.paymentStatus === 0) {
+            return <Badge variant="secondary">Chờ thanh toán</Badge>
+          }
         }
-        const payment = paymentMap[order.paymentStatus] || { label: order.paymentStatus, variant: "secondary" as const }
-        return <Badge variant={payment.variant}>{payment.label}</Badge>
+        // Fallback nếu paymentStatus là string
+        if (typeof order.paymentStatus === "string") {
+          const paymentMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
+            "Chờ thanh toán": { label: "Chờ thanh toán", variant: "secondary" },
+            "Đã thanh toán": { label: "Đã thanh toán", variant: "default" },
+            "Đã hoàn tiền": { label: "Đã hoàn tiền", variant: "destructive" },
+          }
+          const payment = paymentMap[order.paymentStatus] || { label: order.paymentStatus, variant: "secondary" as const }
+          return <Badge variant={payment.variant}>{payment.label}</Badge>
+        }
+        return <Badge variant="secondary">N/A</Badge>
       },
     },
     {
@@ -163,6 +244,9 @@ export default function OrdersPage() {
       label: "Ngày tạo",
       sortable: true,
       render: (order: AdminOrder) => {
+        if (!order.createdAt) {
+          return <span className="text-muted-foreground">N/A</span>
+        }
         const date = dayjs(order.createdAt)
         return date.format("DD [tháng] MM, YYYY")
       },
@@ -183,11 +267,17 @@ export default function OrdersPage() {
   ]
 
   const filteredOrders = orders.filter((order) => {
+    const searchLower = searchQuery.toLowerCase()
+    const orderCode = order.orderNumber || order.orderCode || ""
+    const customerName = order.userFullName || order.guestEmail || order.customerName || ""
+    const customerEmail = order.userEmail || order.guestEmail || order.customerEmail || ""
+    
     const matchesSearch =
-      order.orderCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerEmail?.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === "all" || order.status === statusFilter
+      orderCode.toLowerCase().includes(searchLower) ||
+      customerName.toLowerCase().includes(searchLower) ||
+      customerEmail.toLowerCase().includes(searchLower)
+    
+    const matchesStatus = statusFilter === "all" || !order.status || order.status === statusFilter
     return matchesSearch && matchesStatus
   })
 
@@ -239,10 +329,17 @@ export default function OrdersPage() {
       </Card>
 
       {/* Order Detail Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open)
+        if (!open) {
+          // Reset product images when dialog closes
+          setProductImages({})
+          setSelectedOrder(null)
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chi tiết đơn hàng {selectedOrder?.orderCode}</DialogTitle>
+            <DialogTitle>Chi tiết đơn hàng #{selectedOrder?.orderNumber}</DialogTitle>
           </DialogHeader>
           {selectedOrder && (
             <div className="space-y-6">
@@ -250,7 +347,7 @@ export default function OrdersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Mã đơn hàng</p>
-                  <p className="font-medium">{selectedOrder.orderCode}</p>
+                  <p className="font-medium font-mono">{selectedOrder.orderNumber}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Ngày tạo</p>
@@ -260,43 +357,169 @@ export default function OrdersPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Trạng thái</p>
-                  <Badge>{selectedOrder.status}</Badge>
+                  {(() => {
+                    const statusEntry = Object.entries(ORDER_STATUS_MAP).find(
+                      ([_, value]) => value.value === selectedOrder.orderStatus
+                    )
+                    const statusLabel = statusEntry ? ORDER_STATUS_MAP[statusEntry[0] as OrderStatus].label : "N/A"
+                    const statusVariant = selectedOrder.orderStatus === 5 ? "destructive" : 
+                                         selectedOrder.orderStatus === 4 ? "default" : "secondary"
+                    return <Badge variant={statusVariant}>{statusLabel}</Badge>
+                  })()}
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Thanh toán</p>
-                  <Badge variant="secondary">{selectedOrder.paymentStatus}</Badge>
+                  <Badge variant={selectedOrder.paymentStatus === 1 ? "default" : "secondary"}>
+                    {selectedOrder.paymentStatus === 1 ? "Đã thanh toán" : "Chờ thanh toán"}
+                  </Badge>
                 </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Phương thức thanh toán</p>
+                  <p className="font-medium">
+                    {selectedOrder.paymentMethod === 0 ? "COD" : selectedOrder.paymentMethod === 1 ? "PayOS" : "N/A"}
+                  </p>
+                </div>
+                {selectedOrder.paymentTransactionId && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Mã giao dịch</p>
+                    <p className="font-medium font-mono text-xs">{selectedOrder.paymentTransactionId}</p>
+                  </div>
+                )}
                 <div className="col-span-2">
-                  <p className="text-sm text-muted-foreground">Tổng tiền</p>
+                  <Separator />
+                  <p className="text-sm text-muted-foreground mt-4">Tổng tiền</p>
                   <p className="text-2xl font-bold">{formatCurrency(selectedOrder.totalAmount)}</p>
+                  {selectedOrder.voucherCode && selectedOrder.voucherDiscountAmount && (
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      <p>Voucher: {selectedOrder.voucherCode}</p>
+                      <p>Giảm giá: -{formatCurrency(selectedOrder.voucherDiscountAmount)}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Customer Info */}
               <div>
-                <h3 className="font-semibold mb-2">Thông tin khách hàng</h3>
+                <h3 className="font-semibold mb-3">Thông tin khách hàng</h3>
                 <div className="space-y-2 text-sm">
-                  <p><span className="text-muted-foreground">Tên:</span> {selectedOrder.customerName || "N/A"}</p>
-                  <p><span className="text-muted-foreground">Email:</span> {selectedOrder.customerEmail || "N/A"}</p>
+                  {selectedOrder.userId ? (
+                    <>
+                      <p><span className="text-muted-foreground">Tên:</span> {selectedOrder.userFullName || "N/A"}</p>
+                      <p><span className="text-muted-foreground">Email:</span> {selectedOrder.userEmail || "N/A"}</p>
+                      <p><span className="text-muted-foreground">Loại:</span> Khách hàng đã đăng ký</p>
+                    </>
+                  ) : (
+                    <>
+                      <p><span className="text-muted-foreground">Tên:</span> {selectedOrder.guestFullName || "N/A"}</p>
+                      <p><span className="text-muted-foreground">Email:</span> {selectedOrder.guestEmail || "N/A"}</p>
+                      <p><span className="text-muted-foreground">Loại:</span> Khách hàng guest</p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              {selectedOrder.shippingFullName && (
+                <div>
+                  <h3 className="font-semibold mb-3">Địa chỉ giao hàng</h3>
+                  <div className="space-y-1 text-sm">
+                    <p className="font-medium">{selectedOrder.shippingFullName}</p>
+                    <p>{selectedOrder.shippingPhoneNumber}</p>
+                    <p>{selectedOrder.shippingAddressLine}</p>
+                    <p>
+                      {[selectedOrder.shippingWard, selectedOrder.shippingDistrict, selectedOrder.shippingCity]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Order Items */}
+              <div>
+                <h3 className="font-semibold mb-3">Sản phẩm</h3>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="text-left p-3 text-sm font-medium">Sản phẩm</th>
+                        <th className="text-right p-3 text-sm font-medium">Số lượng</th>
+                        <th className="text-right p-3 text-sm font-medium">Đơn giá</th>
+                        <th className="text-right p-3 text-sm font-medium">Thành tiền</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedOrder.items.map((item) => {
+                        const productImage = productImages[item.productId]
+                        return (
+                          <tr key={item.id} className="border-t">
+                            <td className="p-3">
+                              <div className="flex items-center gap-3">
+                                {productImage ? (
+                                  <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+                                    <Image
+                                      src={productImage}
+                                      alt={item.productNameSnapshot}
+                                      fill
+                                      className="object-cover"
+                                      unoptimized
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="w-16 h-16 flex-shrink-0 rounded-md bg-muted flex items-center justify-center">
+                                    <span className="text-xs text-muted-foreground">No image</span>
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium">{item.productNameSnapshot}</p>
+                                  {item.variantInfoSnapshot && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {item.variantInfoSnapshot}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-3 text-sm text-right">{item.quantity}</td>
+                            <td className="p-3 text-sm text-right">{formatCurrency(item.unitPrice)}</td>
+                            <td className="p-3 text-sm text-right font-medium">
+                              {formatCurrency(item.lineTotal)}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
               {/* Status Update */}
-              <div className="flex gap-2">
+              <div>
+                <h3 className="font-semibold mb-3">Cập nhật trạng thái</h3>
                 <Select
-                  defaultValue={selectedOrder.status}
-                  onValueChange={handleUpdateStatus}
+                  value={(() => {
+                    const statusEntry = Object.entries(ORDER_STATUS_MAP).find(
+                      ([_, value]) => value.value === selectedOrder.orderStatus
+                    )
+                    return statusEntry ? (statusEntry[0] as OrderStatus) : undefined
+                  })()}
+                  onValueChange={(value) => handleUpdateStatus(value as OrderStatus)}
+                  disabled={updatingStatus}
                 >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue />
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn trạng thái" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Đang xử lý">Đang xử lý</SelectItem>
-                    <SelectItem value="Đã xác nhận">Đã xác nhận</SelectItem>
-                    <SelectItem value="Đã giao">Đã giao</SelectItem>
-                    <SelectItem value="Đã hủy">Đã hủy</SelectItem>
+                    {(Object.keys(ORDER_STATUS_MAP) as OrderStatus[]).map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {ORDER_STATUS_MAP[status].label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                {updatingStatus && (
+                  <p className="mt-2 text-sm text-muted-foreground">Đang cập nhật...</p>
+                )}
               </div>
             </div>
           )}
