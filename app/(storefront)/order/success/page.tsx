@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,7 +9,8 @@ import { useUser } from "@/store/useUser"
 import { ordersApi } from "@/lib/api/orders"
 import Link from "next/link"
 
-export default function OrderSuccessPage() {
+// Component to handle search params (needs Suspense boundary)
+function OrderSuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { user, makeAuthenticatedRequest } = useUser()
@@ -141,6 +142,24 @@ export default function OrderSuccessPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function OrderSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="container py-12">
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    }>
+      <OrderSuccessContent />
+    </Suspense>
   )
 }
 
