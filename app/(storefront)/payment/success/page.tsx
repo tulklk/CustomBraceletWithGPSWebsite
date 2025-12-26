@@ -12,7 +12,7 @@ import Link from "next/link"
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { user } = useUser()
+  const { user, makeAuthenticatedRequest } = useUser()
   const [orderId] = useState(searchParams.get("orderId"))
   const [status, setStatus] = useState<"loading" | "success" | "failed">("loading")
   const [order, setOrder] = useState<any>(null)
@@ -36,7 +36,7 @@ export default function PaymentSuccessPage() {
       try {
         let orderData: any
         if (user?.accessToken) {
-          orderData = await user.makeAuthenticatedRequest(async (token) => {
+          orderData = await makeAuthenticatedRequest(async (token: string) => {
             return await ordersApi.getOrderById(
               orderId,
               token,

@@ -12,7 +12,7 @@ import Link from "next/link"
 export default function OrderSuccessPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { user } = useUser()
+  const { user, makeAuthenticatedRequest } = useUser()
   const [orderId] = useState(searchParams.get("orderId"))
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -27,7 +27,7 @@ export default function OrderSuccessPage() {
       try {
         let orderData: any
         if (user?.accessToken) {
-          orderData = await user.makeAuthenticatedRequest(async (token) => {
+          orderData = await makeAuthenticatedRequest(async (token: string) => {
             return await ordersApi.getOrderById(
               orderId,
               token,
