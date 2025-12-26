@@ -20,6 +20,25 @@ import { useToast } from "@/hooks/use-toast"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ordersApi, Order, OrderStatus } from "@/lib/api/orders"
 
+// Convert orderStatus number to OrderStatus string
+// 0: Pending, 1: Paid/Confirmed, 2: Processing, 3: Shipped, 4: Delivered, 5: Cancelled
+const convertOrderStatus = (orderStatus: number): OrderStatus => {
+  const statusMap: Record<number, OrderStatus> = {
+    0: "Pending",
+    1: "Confirmed",
+    2: "Processing",
+    3: "Shipped",
+    4: "Delivered",
+    5: "Cancelled",
+  }
+  return statusMap[orderStatus] || "Pending"
+}
+
+// Get status from order (use status if available, otherwise convert from orderStatus)
+const getOrderStatus = (order: Order): OrderStatus => {
+  return order.status || convertOrderStatus(order.orderStatus)
+}
+
 // Map backend status to Vietnamese
 const getStatusLabel = (status: OrderStatus): string => {
   const statusMap: Record<OrderStatus, string> = {
@@ -320,8 +339,8 @@ export default function AccountPage() {
                                   <span className="font-semibold">
                                     {order.orderNumber || order.id}
                                   </span>
-                                  <Badge variant={getStatusVariant(order.status)}>
-                                    {getStatusLabel(order.status)}
+                                  <Badge variant={getStatusVariant(getOrderStatus(order))}>
+                                    {getStatusLabel(getOrderStatus(order))}
                                   </Badge>
                                 </div>
                                 <p className="text-sm text-muted-foreground">

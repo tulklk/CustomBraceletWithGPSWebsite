@@ -46,7 +46,7 @@ interface ProductInfo {
 
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart } = useCart()
-  const { user } = useUser()
+  const { user, makeAuthenticatedRequest } = useUser()
   const { toast } = useToast()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -125,7 +125,7 @@ export default function CheckoutPage() {
     }
 
     fetchProvinces()
-  }, [])
+  }, [toast])
 
   // Handle province change - load wards directly
   const handleProvinceChange = async (provinceCode: string) => {
@@ -177,12 +177,12 @@ export default function CheckoutPage() {
       
       // Try to apply voucher with auth if user is logged in, otherwise without auth
       if (user?.accessToken) {
-        result = await user.makeAuthenticatedRequest(async (token) => {
+        result = await makeAuthenticatedRequest(async (token: string) => {
           return await ordersApi.applyVoucher(
             { voucherCode: discountCode.trim() },
             token,
             user.refreshToken,
-            (newToken) => {
+            (newToken: string) => {
               // Token refresh handled by makeAuthenticatedRequest
             }
           )
@@ -253,7 +253,7 @@ export default function CheckoutPage() {
         })
       }
     }
-  }, [user?.id]) // Only run when user ID changes (user logs in)
+  }, [user, form]) // Run when user or form changes
 
   const onSubmit = async (data: CheckoutFormData) => {
     setIsSubmitting(true)
@@ -285,24 +285,17 @@ export default function CheckoutPage() {
       }
 
       // Map cart items to order items (only for guest checkout)
-      const orderItems = items.map(item => {
-        const itemData: { productId: string; quantity: number; productVariantId?: string } = {
-          productId: item.design.productId,
-          quantity: item.qty,
-        }
-        // Only include productVariantId if it exists
-        if (item.design.productVariantId) {
-          itemData.productVariantId = item.design.productVariantId
-        }
-        return itemData
-      })
+      const orderItems = items.map(item => ({
+        productId: item.design.productId,
+        quantity: item.qty,
+      }))
 
       // Create order using API (with or without auth)
       let order: any
       
       if (user?.accessToken) {
         // User is logged in, use authenticated request
-        order = await user.makeAuthenticatedRequest(async (token) => {
+        order = await makeAuthenticatedRequest(async (token: string) => {
           return await ordersApi.createOrder(
             {
               shippingAddress,
@@ -311,7 +304,7 @@ export default function CheckoutPage() {
             },
             token,
             user.refreshToken,
-            (newToken) => {
+            (newToken: string) => {
               // Token refresh handled by makeAuthenticatedRequest
             }
           )
@@ -354,7 +347,7 @@ export default function CheckoutPage() {
           let paymentResult: any
           
           if (user?.accessToken) {
-            paymentResult = await user.makeAuthenticatedRequest(async (token) => {
+            paymentResult = await makeAuthenticatedRequest(async (token: string) => {
               return await ordersApi.createPaymentLink(
                 order.id,
                 {
