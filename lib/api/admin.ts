@@ -381,7 +381,7 @@ export const adminApi = {
       const orders = await handleResponse<AdminOrder[]>(response)
       
       // Calculate stats from orders
-      const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0)
+      const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
       const totalOrders = orders.length
       
       // Get products count (would need separate API call in real scenario)
