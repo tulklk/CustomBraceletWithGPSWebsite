@@ -690,11 +690,11 @@ export default function AccountPage() {
                               Thành viên từ
                             </p>
                             <p className="text-sm font-medium">
-                              {new Date(profile.createdAt).toLocaleDateString("vi-VN", {
+                              {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString("vi-VN", {
                                 year: "numeric",
                                 month: "long",
                                 day: "numeric"
-                              })}
+                              }) : "N/A"}
                             </p>
                           </div>
                         </div>
@@ -737,8 +737,10 @@ export default function AccountPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {orders.map((order) => {
-                      const orderDate = new Date(order.createdAt).toLocaleDateString("vi-VN")
+                    {orders
+                      .filter(order => order.createdAt)
+                      .map((order) => {
+                      const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "N/A"
                       return (
                         <Card key={order.id}>
                           <CardContent className="p-4">

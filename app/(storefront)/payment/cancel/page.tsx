@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,7 +8,8 @@ import { XCircle } from "lucide-react"
 import { useUser } from "@/store/useUser"
 import Link from "next/link"
 
-export default function PaymentCancelPage() {
+// Component to handle search params (needs Suspense boundary)
+function PaymentCancelContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { user } = useUser()
@@ -56,6 +58,24 @@ export default function PaymentCancelPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function PaymentCancelPage() {
+  return (
+    <Suspense fallback={
+      <div className="container py-12">
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    }>
+      <PaymentCancelContent />
+    </Suspense>
   )
 }
 

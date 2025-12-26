@@ -212,6 +212,7 @@ export default function UsersPage() {
       label: "Ngày tạo",
       sortable: true,
       render: (user: AdminUser) => {
+        if (!user.createdAt) return "N/A"
         return dayjs(user.createdAt).format("DD [tháng] MM, YYYY")
       },
     },

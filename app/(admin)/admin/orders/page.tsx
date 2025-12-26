@@ -352,7 +352,7 @@ export default function OrdersPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Ngày tạo</p>
                   <p className="font-medium">
-                    {dayjs(selectedOrder.createdAt).format("DD/MM/YYYY HH:mm")}
+                    {selectedOrder.createdAt ? dayjs(selectedOrder.createdAt).format("DD/MM/YYYY HH:mm") : "N/A"}
                   </p>
                 </div>
                 <div>
@@ -388,7 +388,7 @@ export default function OrdersPage() {
                 <div className="col-span-2">
                   <Separator />
                   <p className="text-sm text-muted-foreground mt-4">Tổng tiền</p>
-                  <p className="text-2xl font-bold">{formatCurrency(selectedOrder.totalAmount)}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(selectedOrder.totalAmount || 0)}</p>
                   {selectedOrder.voucherCode && selectedOrder.voucherDiscountAmount && (
                     <div className="mt-2 text-sm text-muted-foreground">
                       <p>Voucher: {selectedOrder.voucherCode}</p>
