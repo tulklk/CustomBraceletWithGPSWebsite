@@ -22,6 +22,8 @@ export interface Province {
   }
   districts?: District[]
   d?: District[] // Alternative property name
+  wards?: Ward[] // Wards can be directly in province (when depth=2 or depth=3)
+  w?: Ward[] // Alternative property name for wards
 }
 
 export interface District {
@@ -249,44 +251,132 @@ export const provincesApi = {
   },
 
   /**
-   * Get wards directly by province code (for when district layer is skipped)
+   * Get wards directly by province code (skip district layer)
+   * Uses provinces.open-api.vn API to get all wards for a province
    */
   async getWardsByProvince(provinceCode: string): Promise<Ward[]> {
     try {
       console.log("Fetching wards for province code:", provinceCode)
       
-      // Get province with depth=2 to get all wards
-      const province = await this.getProvinceWithDistricts(provinceCode)
-      console.log("Province data for wards:", province)
-      
-      // Collect all wards from all districts (Province doesn't have wards directly)
       const allWards: Ward[] = []
-      if (province.districts && province.districts.length > 0) {
-        console.log("Collecting wards from districts...")
-        for (const district of province.districts) {
-          if (district.wards && district.wards.length > 0) {
-            allWards.push(...district.wards)
-          } else if (district.w && district.w.length > 0) {
-            allWards.push(...district.w)
-          }
-        }
-      }
-      // Also check alternative property name
-      const districts = province.d || []
-      if (districts.length > 0) {
-        for (const district of districts) {
-          if (district.wards && district.wards.length > 0) {
-            allWards.push(...district.wards)
-          } else if (district.w && district.w.length > 0) {
-            allWards.push(...district.w)
-          }
-        }
-      }
-      const wards = allWards
-      console.log(`Collected ${wards.length} wards from districts`)
+      const seenWardCodes = new Set<string | number>()
       
-      console.log("Final wards count from province:", wards.length)
-      return wards
+      // Helper function to add wards without duplicates
+      const addWards = (wards: any[]) => {
+        if (!wards || !Array.isArray(wards)) return
+        for (const ward of wards) {
+          const wardCode = ward.code || ward.codename
+          if (wardCode && !seenWardCodes.has(wardCode)) {
+            seenWardCodes.add(wardCode)
+            allWards.push(ward)
+          }
+        }
+      }
+      
+      // Method 1: Get province with depth=2 or depth=3 - check if province has wards directly
+      try {
+        console.log("Trying to get province with wards...")
+        const province = await this.getProvinceWithDistricts(provinceCode)
+        console.log("Province data:", province)
+        
+        // FIRST: Check if province has wards directly (some API responses include wards at province level)
+        if (province.wards && Array.isArray(province.wards) && province.wards.length > 0) {
+          console.log(`Found ${province.wards.length} wards directly in province object`)
+          addWards(province.wards)
+        } else if (province.w && Array.isArray(province.w) && province.w.length > 0) {
+          console.log(`Found ${province.w.length} wards directly in province object (w property)`)
+          addWards(province.w)
+        }
+        
+        // SECOND: If no direct wards, collect from districts
+        if (allWards.length === 0) {
+          console.log("No direct wards, collecting from districts...")
+          const districts = province.districts || province.d || []
+          for (const district of districts) {
+            const districtWards = district.wards || district.w || []
+            addWards(districtWards)
+          }
+          console.log(`Collected ${allWards.length} wards from districts`)
+        }
+      } catch (provinceError) {
+        console.warn("Province method failed:", provinceError)
+      }
+      
+      // Method 2: Try to get all provinces with depth=3 and filter
+      if (allWards.length === 0) {
+        try {
+          console.log("Trying to get all wards with depth=3...")
+          const response = await fetch(`${PROXY_API_BASE}?action=provinces&depth=3`)
+          if (response.ok) {
+            const allProvinces = await response.json()
+            const provinceCodeNum = typeof provinceCode === 'string' ? parseInt(provinceCode) : provinceCode
+            
+            // Find the province and collect all its wards
+            for (const province of allProvinces) {
+              const pCode = typeof province.code === 'number' ? province.code : parseInt(province.code || "0")
+              if (pCode === provinceCodeNum || province.code?.toString() === provinceCode) {
+                console.log(`Found province ${province.name}, collecting wards...`)
+                
+                // Check direct wards first
+                if (province.wards && Array.isArray(province.wards)) {
+                  addWards(province.wards)
+                  console.log(`Collected ${province.wards.length} wards directly from province`)
+                } else if (province.w && Array.isArray(province.w)) {
+                  addWards(province.w)
+                  console.log(`Collected ${province.w.length} wards directly from province (w property)`)
+                }
+                
+                // Then collect from districts if needed
+                if (allWards.length === 0) {
+                  const districts = province.districts || province.d || []
+                  for (const district of districts) {
+                    const districtWards = district.wards || district.w || []
+                    addWards(districtWards)
+                  }
+                }
+                
+                console.log(`Collected ${allWards.length} wards from province data`)
+                break
+              }
+            }
+          }
+        } catch (depth3Error) {
+          console.warn("Depth=3 method failed:", depth3Error)
+        }
+      }
+      
+      // Method 3: Try direct API endpoint /p/{code}/w (if available)
+      if (allWards.length === 0) {
+        try {
+          console.log("Trying direct wards endpoint /p/{code}/w...")
+          const directUrl = `https://provinces.open-api.vn/api/v2/p/${provinceCode}/w`
+          const directResponse = await fetch(directUrl, {
+            headers: {
+              "Accept": "application/json",
+            },
+          })
+          
+          if (directResponse.ok) {
+            const directData = await directResponse.json()
+            // Response might be an array of wards or an object with wards property
+            if (Array.isArray(directData)) {
+              addWards(directData)
+              console.log(`Got ${directData.length} wards from direct endpoint (array)`)
+            } else if (directData.wards && Array.isArray(directData.wards)) {
+              addWards(directData.wards)
+              console.log(`Got ${directData.wards.length} wards from direct endpoint (object)`)
+            } else if (directData.w && Array.isArray(directData.w)) {
+              addWards(directData.w)
+              console.log(`Got ${directData.w.length} wards from direct endpoint (w property)`)
+            }
+          }
+        } catch (directError) {
+          console.warn("Direct wards endpoint failed:", directError)
+        }
+      }
+      
+      console.log(`Final wards count for province ${provinceCode}: ${allWards.length}`)
+      return allWards
     } catch (error) {
       console.error("Error fetching wards by province:", error)
       return []

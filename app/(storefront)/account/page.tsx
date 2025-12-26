@@ -29,7 +29,8 @@ import {
 import { formatCurrency } from "@/lib/utils"
 import { 
   Trash2, ShoppingCart, Edit, LogOut, User, Package, 
-  MapPin, Save, Heart, Settings, Phone, Mail, Home, Lock, ShieldCheck, Upload, Loader2, X
+  MapPin, Save, Heart, Settings, Phone, Mail, Home, Lock, ShieldCheck, Upload, Loader2, X,
+  ChevronLeft, ChevronRight
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -41,6 +42,7 @@ import { UpdateProfileRequest, ChangePasswordRequest } from "@/types/user"
 import { uploadImageToCloudinary } from "@/lib/cloudinary"
 import { provincesApi, Province, Ward } from "@/lib/api/provinces"
 import { useAddresses, Address } from "@/store/useAddresses"
+import { productsApi } from "@/lib/api/products"
 import Image from "next/image"
 
 // Convert orderStatus number to OrderStatus string
@@ -105,6 +107,12 @@ export default function AccountPage() {
   const [activeTab, setActiveTab] = useState("overview")
   const [orders, setOrders] = useState<Order[]>([])
   const [loadingOrders, setLoadingOrders] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const ordersPerPage = 5
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [orderDetailDialogOpen, setOrderDetailDialogOpen] = useState(false)
+  const [loadingOrderDetail, setLoadingOrderDetail] = useState(false)
+  const [productImages, setProductImages] = useState<Record<string, string>>({})
   
   // User profile hooks
   const { profile, loading: loadingProfile, error: profileError, refetch: refetchProfile } = useUserProfile()
@@ -132,7 +140,7 @@ export default function AccountPage() {
     ward: "",
     city: "",
   })
-  
+
   // Form states
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     fullName: "",
@@ -213,6 +221,7 @@ export default function AccountPage() {
   useEffect(() => {
     if (user?.accessToken && activeTab === "orders") {
       fetchOrders()
+      setCurrentPage(1) // Reset to first page when fetching orders
     }
   }, [user?.accessToken, activeTab])
 
@@ -240,6 +249,74 @@ export default function AccountPage() {
       })
     } finally {
       setLoadingOrders(false)
+    }
+  }
+
+  const handleViewOrderDetail = async (orderId: string) => {
+    if (!user?.accessToken) return
+
+    setLoadingOrderDetail(true)
+    setOrderDetailDialogOpen(true)
+    setProductImages({}) // Reset product images
+    try {
+      const orderDetail = await makeAuthenticatedRequest(async (token) => {
+        return await ordersApi.getOrderById(
+          orderId,
+          token,
+          user.refreshToken,
+          (newToken) => {
+            // Token refresh handled by makeAuthenticatedRequest
+          }
+        )
+      })
+      setSelectedOrder(orderDetail)
+
+      // Fetch product images for all items in the order
+      const imageMap: Record<string, string> = {}
+      await Promise.all(
+        orderDetail.items.map(async (item) => {
+          try {
+            // Check if order item has imageUrl (from backend)
+            const itemWithImage = item as any
+            if (itemWithImage.productImageUrl || itemWithImage.imageUrl) {
+              imageMap[item.id] = itemWithImage.productImageUrl || itemWithImage.imageUrl
+              return
+            }
+
+            // Otherwise, fetch product by ID to get image
+            // Try to get product by ID (might need to use slug or other identifier)
+            // For now, we'll try to fetch product details
+            try {
+              const product = await productsApi.getBySlug(item.productId)
+              if (product) {
+                const imageUrl = 
+                  (product.images && product.images.length > 0 && product.images[0]) ||
+                  (product.imageUrls && product.imageUrls.length > 0 && product.imageUrls[0]) ||
+                  ""
+                if (imageUrl) {
+                  imageMap[item.id] = imageUrl
+                }
+              }
+            } catch (productError) {
+              // If product fetch fails, try using productId as slug
+              console.warn(`Could not fetch product ${item.productId}:`, productError)
+            }
+          } catch (error) {
+            console.error(`Error fetching image for item ${item.id}:`, error)
+          }
+        })
+      )
+      setProductImages(imageMap)
+    } catch (error: any) {
+      console.error("Error fetching order detail:", error)
+      toast({
+        title: "Lỗi khi tải chi tiết đơn hàng",
+        description: error.message || "Vui lòng thử lại sau",
+        variant: "destructive",
+      })
+      setOrderDetailDialogOpen(false)
+    } finally {
+      setLoadingOrderDetail(false)
     }
   }
 
@@ -299,9 +376,9 @@ export default function AccountPage() {
     
     const success = await updateProfile(formData)
     if (success) {
-      toast({
+    toast({
         title: "Cập nhật thành công!",
-        description: "Thông tin tài khoản đã được cập nhật",
+      description: "Thông tin tài khoản đã được cập nhật",
       })
       setEditMode(false)
       refetchProfile()
@@ -534,61 +611,61 @@ export default function AccountPage() {
               </Card>
             ) : (
               <>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Package className="h-4 w-4 text-primary" />
-                        Đơn hàng
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Package className="h-4 w-4 text-primary" />
+                    Đơn hàng
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                       <div className="text-2xl font-bold">
                         {profile?.stats?.totalOrders ?? orders.length}
                       </div>
-                      <p className="text-xs text-muted-foreground">Tổng số đơn</p>
-                    </CardContent>
-                  </Card>
+                  <p className="text-xs text-muted-foreground">Tổng số đơn</p>
+                </CardContent>
+              </Card>
 
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Heart className="h-4 w-4 text-primary" />
-                        Thiết kế đã lưu
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-primary" />
+                    Thiết kế đã lưu
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                       <div className="text-2xl font-bold">
                         {profile?.stats?.savedDesigns ?? user.savedDesigns.length}
                       </div>
-                      <p className="text-xs text-muted-foreground">Designs</p>
-                    </CardContent>
-                  </Card>
+                  <p className="text-xs text-muted-foreground">Designs</p>
+                </CardContent>
+              </Card>
 
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <ShoppingCart className="h-4 w-4 text-primary" />
-                        Tổng chi tiêu
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <ShoppingCart className="h-4 w-4 text-primary" />
+                    Tổng chi tiêu
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
                         {formatCurrency(
                           profile?.stats?.totalSpent ?? 
                           orders.reduce((sum, order) => sum + order.totalAmount, 0)
                         )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">VNĐ</p>
-                    </CardContent>
-                  </Card>
-                </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">VNĐ</p>
+                </CardContent>
+              </Card>
+            </div>
 
-                {/* Quick Info */}
-                <Card>
+            {/* Quick Info */}
+            <Card>
                   <CardHeader className="pb-4">
                     <CardTitle className="text-xl">Thông tin tài khoản</CardTitle>
-                  </CardHeader>
+              </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Profile Header */}
                     <div className="flex items-start gap-4 pb-6 border-b">
@@ -600,11 +677,11 @@ export default function AccountPage() {
                             fill
                             className="object-cover"
                           />
-                        </div>
+                  </div>
                       ) : (
                         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-3xl font-bold text-primary border-2 border-primary/20 flex-shrink-0">
                           {profile?.fullName?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || "U"}
-                        </div>
+                </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <h3 className="text-2xl font-bold mb-1">
@@ -618,8 +695,8 @@ export default function AccountPage() {
                             ✓ Đã xác thực
                           </Badge>
                         )}
-                      </div>
-                    </div>
+                  </div>
+                </div>
 
                     {/* Information Grid */}
                     <div className="grid md:grid-cols-2 gap-4">
@@ -627,7 +704,7 @@ export default function AccountPage() {
                       <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
                         <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
                           <Mail className="h-5 w-5 text-primary" />
-                        </div>
+                  </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
                             Email
@@ -699,9 +776,9 @@ export default function AccountPage() {
                           </div>
                         </div>
                       )}
-                    </div>
-                  </CardContent>
-                </Card>
+                </div>
+              </CardContent>
+            </Card>
               </>
             )}
           </TabsContent>
@@ -736,58 +813,123 @@ export default function AccountPage() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {orders
-                      .filter(order => order.createdAt)
-                      .map((order) => {
-                      const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "N/A"
-                      return (
-                        <Card key={order.id}>
-                          <CardContent className="p-4">
-                            <div className="flex flex-col md:flex-row justify-between gap-4">
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-semibold">
-                                    {order.orderNumber || order.id}
-                                  </span>
-                                  <Badge variant={getStatusVariant(getOrderStatus(order))}>
-                                    {getStatusLabel(getOrderStatus(order))}
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  Ngày đặt: {orderDate}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {order.items.length} sản phẩm
-                                </p>
-                                {order.shippingAddress && (
-                                  <p className="text-xs text-muted-foreground">
-                                    Giao đến: {order.shippingAddress.fullName} - {order.shippingAddress.phoneNumber}
+                  <>
+                    <div className="space-y-4">
+                      {orders
+                        .filter(order => order.createdAt)
+                        .slice((currentPage - 1) * ordersPerPage, currentPage * ordersPerPage)
+                        .map((order) => {
+                        const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "N/A"
+                        return (
+                          <Card key={order.id}>
+                            <CardContent className="p-4">
+                              <div className="flex flex-col md:flex-row justify-between gap-4">
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-semibold">
+                                      #{order.orderNumber || order.id}
+                                    </span>
+                                    <Badge variant={getStatusVariant(getOrderStatus(order))}>
+                                      {getStatusLabel(getOrderStatus(order))}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">
+                                    Ngày đặt: {orderDate}
                                   </p>
-                                )}
+                                  <p className="text-sm text-muted-foreground">
+                                    {order.items.length} sản phẩm
+                                  </p>
+                                  {order.shippingAddress && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Giao đến: {order.shippingAddress.fullName} - {order.shippingAddress.phoneNumber}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex flex-col justify-between items-end gap-2">
+                                  <p className="font-bold text-lg">{formatCurrency(order.totalAmount)}</p>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleViewOrderDetail(order.id)}
+                                  >
+                                    Xem chi tiết
+                                  </Button>
+                                </div>
                               </div>
-                              <div className="flex flex-col justify-between items-end gap-2">
-                                <p className="font-bold text-lg">{formatCurrency(order.totalAmount)}</p>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => {
-                                    // Could navigate to order detail page
-                                    toast({
-                                      title: "Chi tiết đơn hàng",
-                                      description: `Đơn hàng ${order.orderNumber || order.id}`,
-                                    })
-                                  }}
-                                >
-                                  Xem chi tiết
-                                </Button>
-                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                    </div>
+                    
+                    {/* Pagination */}
+                    {(() => {
+                      const filteredOrders = orders.filter(order => order.createdAt)
+                      const totalPages = Math.ceil(filteredOrders.length / ordersPerPage)
+                      
+                      if (totalPages <= 1) return null
+                      
+                      return (
+                        <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                          <div className="text-sm text-muted-foreground">
+                            Hiển thị {(currentPage - 1) * ordersPerPage + 1} - {Math.min(currentPage * ordersPerPage, filteredOrders.length)} trong tổng số {filteredOrders.length} đơn hàng
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                              disabled={currentPage === 1}
+                            >
+                              <ChevronLeft className="h-4 w-4 mr-1" />
+                              Trước
+                            </Button>
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                                // Show first page, last page, current page, and pages around current
+                                if (
+                                  page === 1 ||
+                                  page === totalPages ||
+                                  (page >= currentPage - 1 && page <= currentPage + 1)
+                                ) {
+                                  return (
+                                    <Button
+                                      key={page}
+                                      variant={currentPage === page ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => setCurrentPage(page)}
+                                      className="w-10"
+                                    >
+                                      {page}
+                                    </Button>
+                                  )
+                                } else if (
+                                  page === currentPage - 2 ||
+                                  page === currentPage + 2
+                                ) {
+                                  return (
+                                    <span key={page} className="px-2 text-muted-foreground">
+                                      ...
+                                    </span>
+                                  )
+                                }
+                                return null
+                              })}
                             </div>
-                          </CardContent>
-                        </Card>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                              disabled={currentPage === totalPages}
+                            >
+                              Sau
+                              <ChevronRight className="h-4 w-4 ml-1" />
+                            </Button>
+                          </div>
+                        </div>
                       )
-                    })}
-                  </div>
+                    })()}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -810,8 +952,8 @@ export default function AccountPage() {
                     >
                       Đổi mật khẩu
                     </Button>
-                  )}
-                </div>
+                              )}
+                            </div>
               </CardHeader>
               <CardContent>
                 {showPasswordForm ? (
@@ -847,10 +989,10 @@ export default function AccountPage() {
                         required
                         minLength={6}
                       />
-                      <p className="text-xs text-muted-foreground">
+                              <p className="text-xs text-muted-foreground">
                         Mật khẩu phải có ít nhất 6 ký tự
-                      </p>
-                    </div>
+                              </p>
+                          </div>
 
                     {passwordError && (
                       <div className="p-3 bg-red-100 text-red-700 rounded text-sm">
@@ -858,24 +1000,24 @@ export default function AccountPage() {
                       </div>
                     )}
 
-                    <div className="flex gap-2">
-                      <Button
+                          <div className="flex gap-2">
+                            <Button
                         type="submit"
                         disabled={changingPassword}
-                      >
+                            >
                         {changingPassword ? "Đang đổi..." : "Đổi mật khẩu"}
-                      </Button>
-                      <Button
+                            </Button>
+                            <Button
                         type="button"
-                        variant="outline"
+                              variant="outline"
                         onClick={() => {
                           setShowPasswordForm(false)
                           setPasswordData({ currentPassword: "", newPassword: "" })
                         }}
-                      >
+                            >
                         Hủy
-                      </Button>
-                    </div>
+                            </Button>
+                          </div>
                   </form>
                 ) : (
                   <div className="space-y-4">
@@ -906,21 +1048,21 @@ export default function AccountPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {addresses.length === 0 ? (
-                  <Card className="border-primary">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
+                <Card className="border-primary">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
                             <p className="font-semibold">{profile?.fullName || user?.name || "Chưa cập nhật"}</p>
-                            <Badge>Mặc định</Badge>
-                          </div>
+                          <Badge>Mặc định</Badge>
+                        </div>
                           <p className="text-sm text-muted-foreground">
                             {profile?.phoneNumber || user?.phoneNumber || "Chưa cập nhật"}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             Địa chỉ giao hàng sẽ được cập nhật trong quá trình thanh toán
                           </p>
-                        </div>
+                      </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -957,9 +1099,9 @@ export default function AccountPage() {
                                 variant="outline"
                                 onClick={() => handleEditAddress(address)}
                               >
-                                <Edit className="h-3 w-3 mr-1" />
-                                Sửa
-                              </Button>
+                        <Edit className="h-3 w-3 mr-1" />
+                        Sửa
+                      </Button>
                               {!address.isDefault && (
                                 <Button
                                   size="sm"
@@ -971,9 +1113,9 @@ export default function AccountPage() {
                                 </Button>
                               )}
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                    </div>
+                  </CardContent>
+                </Card>
                     ))}
                   </div>
                 )}
@@ -1129,7 +1271,7 @@ export default function AccountPage() {
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle>Thông tin cá nhân</CardTitle>
+                <CardTitle>Thông tin cá nhân</CardTitle>
                   {!editMode && (
                     <Button
                       variant="outline"
@@ -1165,22 +1307,22 @@ export default function AccountPage() {
                       )}
                     </div>
 
-                    <div className="space-y-2">
+                <div className="space-y-2">
                       <Label htmlFor="settings-fullName">Họ và tên</Label>
-                      <Input
+                  <Input
                         id="settings-fullName"
                         value={formData.fullName}
-                        onChange={(e) =>
+                    onChange={(e) =>
                           setFormData({ ...formData, fullName: e.target.value })
-                        }
+                    }
                         required
-                      />
-                    </div>
-                    <div className="space-y-2">
+                  />
+                </div>
+                <div className="space-y-2">
                       <Label htmlFor="settings-email">Email</Label>
-                      <Input
+                  <Input
                         id="settings-email"
-                        type="email"
+                    type="email"
                         value={profile?.email || user?.email || ""}
                         disabled
                         className="bg-muted"
@@ -1188,18 +1330,18 @@ export default function AccountPage() {
                       <p className="text-xs text-muted-foreground">
                         Email không thể thay đổi
                       </p>
-                    </div>
-                    <div className="space-y-2">
+                </div>
+                <div className="space-y-2">
                       <Label htmlFor="settings-phone">Số điện thoại</Label>
-                      <Input
+                  <Input
                         id="settings-phone"
                         value={formData.phoneNumber || ""}
-                        onChange={(e) =>
+                    onChange={(e) =>
                           setFormData({ ...formData, phoneNumber: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
                       <Label htmlFor="settings-avatar">Ảnh đại diện</Label>
                       
                       {/* Avatar Preview */}
@@ -1212,8 +1354,8 @@ export default function AccountPage() {
                                 alt="Avatar preview"
                                 fill
                                 className="object-cover"
-                              />
-                            </div>
+                  />
+                </div>
                             <Button
                               type="button"
                               variant="destructive"
@@ -1279,9 +1421,9 @@ export default function AccountPage() {
                         type="submit"
                         disabled={updatingProfile}
                       >
-                        <Save className="h-4 w-4 mr-2" />
+                  <Save className="h-4 w-4 mr-2" />
                         {updatingProfile ? "Đang lưu..." : "Lưu thay đổi"}
-                      </Button>
+                </Button>
                       <Button
                         type="button"
                         variant="outline"
@@ -1365,6 +1507,152 @@ export default function AccountPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Order Detail Dialog */}
+      <Dialog open={orderDetailDialogOpen} onOpenChange={setOrderDetailDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chi tiết đơn hàng</DialogTitle>
+            <DialogDescription>
+              #{selectedOrder?.orderNumber || selectedOrder?.id}
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingOrderDetail ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-muted-foreground">Đang tải chi tiết đơn hàng...</p>
+              </div>
+            </div>
+          ) : selectedOrder ? (
+            <div className="space-y-6">
+              {/* Order Info */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm text-muted-foreground">Mã đơn hàng</Label>
+                  <p className="font-semibold">#{selectedOrder.orderNumber || selectedOrder.id}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Trạng thái</Label>
+                  <div className="mt-1">
+                    <Badge variant={getStatusVariant(getOrderStatus(selectedOrder))}>
+                      {getStatusLabel(getOrderStatus(selectedOrder))}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Ngày đặt</Label>
+                  <p className="text-sm">
+                    {selectedOrder.createdAt 
+                      ? new Date(selectedOrder.createdAt).toLocaleDateString("vi-VN", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        })
+                      : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Phương thức thanh toán</Label>
+                  <p className="text-sm">
+                    {selectedOrder.paymentMethod === 0 ? "COD" : selectedOrder.paymentMethod === 1 ? "PayOS" : "N/A"}
+                  </p>
+                </div>
+                {(selectedOrder as any).paymentTransactionId && (
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Mã giao dịch</Label>
+                    <p className="text-xs font-mono">{(selectedOrder as any).paymentTransactionId}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Shipping Address */}
+              {selectedOrder.shippingAddress && (
+                <>
+                  <div>
+                    <Label className="text-sm font-semibold mb-2 block">Địa chỉ giao hàng</Label>
+                    <div className="p-4 bg-muted/50 rounded-lg space-y-1">
+                      <p className="font-medium">{selectedOrder.shippingAddress.fullName}</p>
+                      <p className="text-sm text-muted-foreground">{selectedOrder.shippingAddress.phoneNumber}</p>
+                      <p className="text-sm">
+                        {selectedOrder.shippingAddress.addressLine}, {selectedOrder.shippingAddress.ward}, {selectedOrder.shippingAddress.city}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Order Items */}
+              <div>
+                <Label className="text-sm font-semibold mb-3 block">Sản phẩm</Label>
+                <div className="space-y-3">
+                  {selectedOrder.items.map((item) => {
+                    const itemImageUrl = productImages[item.id] || (item as any).productImageUrl || (item as any).imageUrl
+                    return (
+                      <div key={item.id} className="flex gap-4 p-4 border rounded-lg">
+                        {/* Product Image */}
+                        {itemImageUrl ? (
+                          <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                            <Image
+                              src={itemImageUrl}
+                              alt={item.productNameSnapshot || "Sản phẩm"}
+                              fill
+                              className="object-cover"
+                              sizes="80px"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-20 h-20 flex-shrink-0 rounded-lg bg-muted flex items-center justify-center">
+                            <Package className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium">{item.productNameSnapshot || "Sản phẩm"}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Số lượng: {item.quantity} × {formatCurrency(item.unitPrice)}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="font-semibold">{formatCurrency(item.lineTotal)}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Order Summary */}
+              <div className="space-y-2">
+                {selectedOrder.subtotal && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Tạm tính:</span>
+                    <span>{formatCurrency(selectedOrder.subtotal)}</span>
+                  </div>
+                )}
+                {selectedOrder.voucherCode && selectedOrder.discountAmount && (
+                  <>
+                    <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Mã giảm giá ({selectedOrder.voucherCode}):</span>
+                    <span className="text-green-600">-{formatCurrency(selectedOrder.discountAmount)}</span>
+                  </div>
+                  </>
+                )}
+                <div className="flex justify-between text-lg font-bold mt-4">
+                  <span>Tổng cộng:</span>
+                  <span className="text-primary">{formatCurrency(selectedOrder.totalAmount)}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Không tìm thấy thông tin đơn hàng</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

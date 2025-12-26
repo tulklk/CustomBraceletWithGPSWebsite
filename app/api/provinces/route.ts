@@ -39,11 +39,12 @@ export async function GET(request: NextRequest) {
         url = `${PROVINCES_API_BASE}/d/${code}?depth=2`
         break
       case "wards":
-        // Get wards by district code
+        // Get wards by province code (skip district)
         if (!code) {
           return NextResponse.json({ error: "Code is required" }, { status: 400 })
         }
-        url = `${PROVINCES_API_BASE}/d/${code}?depth=2`
+        // Try direct endpoint first: /p/{code}/w
+        url = `${PROVINCES_API_BASE}/p/${code}/w`
         break
       default:
         return NextResponse.json({ error: "Invalid action" }, { status: 400 })
@@ -150,8 +151,15 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // For wards action, extract wards from district response
+    // For wards action, handle both district code and province code
     if (action === "wards") {
+      // If response is an array, it's likely wards directly
+      if (Array.isArray(data)) {
+        return NextResponse.json({
+          wards: data,
+        })
+      }
+      // If response is an object, extract wards
       return NextResponse.json({
         wards: data.wards || data.w || [],
       })

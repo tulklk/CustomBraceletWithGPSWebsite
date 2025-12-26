@@ -70,15 +70,6 @@ export function AnimatedText({ text, className = "" }: AnimatedTextProps) {
           </motion.span>
         )
       })}
-      {currentPhase === "typing" && visibleChars < text.length && (
-        <motion.span
-          animate={{ opacity: [1, 0] }}
-          transition={{ duration: 0.8, repeat: Infinity, repeatType: "reverse" }}
-          className="inline-block ml-1"
-        >
-          |
-        </motion.span>
-      )}
     </h1>
   )
 }

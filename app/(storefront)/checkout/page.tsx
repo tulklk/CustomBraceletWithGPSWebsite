@@ -224,7 +224,8 @@ export default function CheckoutPage() {
     }
   }
 
-  const finalTotal = getTotalPrice() - discountAmount
+  const shippingFee = 30000 // Phí vận chuyển: 30.000 VNĐ
+  const finalTotal = getTotalPrice() - discountAmount + shippingFee
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -802,7 +803,7 @@ export default function CheckoutPage() {
                       Phí vận chuyển:
                     </span>
                     <span className="text-primary font-medium">
-                      Miễn phí
+                      {formatCurrency(shippingFee)}
                     </span>
                   </div>
                 </div>
