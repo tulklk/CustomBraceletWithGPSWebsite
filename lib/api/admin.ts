@@ -403,8 +403,9 @@ export const adminApi = {
       // Calculate daily revenue
       const dailyRevenueMap = new Map<string, number>()
       orders.forEach(order => {
+        if (!order.createdAt) return
         const date = order.createdAt.split('T')[0]
-        dailyRevenueMap.set(date, (dailyRevenueMap.get(date) || 0) + order.totalAmount)
+        dailyRevenueMap.set(date, (dailyRevenueMap.get(date) || 0) + (order.totalAmount || 0))
       })
       const dailyRevenue = Array.from(dailyRevenueMap.entries())
         .map(([date, revenue]) => ({ date, revenue }))
