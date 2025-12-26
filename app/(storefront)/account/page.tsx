@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { useUser } from "@/store/useUser"
 import { useCustomizer } from "@/store/useCustomizer"
 import { useCart } from "@/store/useCart"
@@ -81,13 +81,27 @@ const getStatusVariant = (status: OrderStatus): "default" | "secondary" | "destr
   return "secondary"
 }
 
+// Component to handle search params (needs Suspense boundary)
+function AccountPageContent({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
+  const searchParams = useSearchParams()
+  
+  // Check if we should open orders tab from URL
+  useEffect(() => {
+    const orderId = searchParams?.get("order")
+    if (orderId) {
+      setActiveTab("orders")
+    }
+  }, [searchParams, setActiveTab])
+  
+  return null
+}
+
 export default function AccountPage() {
   const { user, logout, removeDesign, makeAuthenticatedRequest } = useUser()
   const { setTemplate, setColor, setEngrave } = useCustomizer()
   const { addItem } = useCart()
   const { toast } = useToast()
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState("overview")
   const [orders, setOrders] = useState<Order[]>([])
   const [loadingOrders, setLoadingOrders] = useState(false)
@@ -194,13 +208,6 @@ export default function AccountPage() {
     }
   }
 
-  // Check if we should open orders tab from URL
-  useEffect(() => {
-    const orderId = searchParams?.get("order")
-    if (orderId) {
-      setActiveTab("orders")
-    }
-  }, [searchParams])
 
   // Fetch orders when user is logged in and orders tab is active
   useEffect(() => {
@@ -469,6 +476,9 @@ export default function AccountPage() {
 
   return (
     <div className="container py-8 md:py-12">
+      <Suspense fallback={null}>
+        <AccountPageContent setActiveTab={setActiveTab} />
+      </Suspense>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
