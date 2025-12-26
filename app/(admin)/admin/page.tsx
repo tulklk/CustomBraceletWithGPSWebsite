@@ -92,7 +92,7 @@ export default function AdminDashboard() {
       sortable: true,
       render: (order: AdminOrder) => (
         <span className="font-medium">
-          {formatCurrency(order.totalAmount)}
+          {formatCurrency(order.totalAmount || 0)}
         </span>
       ),
     },
