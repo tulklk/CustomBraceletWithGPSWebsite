@@ -106,7 +106,8 @@ export default function AdminDashboard() {
           "Đã giao": { label: "Đã giao", variant: "default" },
           "Đã hủy": { label: "Đã hủy", variant: "destructive" },
         }
-        const status = statusMap[order.status] || { label: order.status, variant: "secondary" as const }
+        const orderStatus = order.status || "N/A"
+        const status = statusMap[orderStatus] || { label: orderStatus, variant: "secondary" as const }
         return <Badge variant={status.variant}>{status.label}</Badge>
       },
     },
