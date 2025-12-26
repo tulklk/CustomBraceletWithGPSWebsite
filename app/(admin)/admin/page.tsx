@@ -51,7 +51,12 @@ export default function AdminDashboard() {
         setStats(reportData)
         // Get recent 5 orders
         const sortedOrders = ordersData
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .filter((order): order is AdminOrder & { createdAt: string } => !!order.createdAt)
+          .sort((a, b) => {
+            const dateA = new Date(a.createdAt).getTime()
+            const dateB = new Date(b.createdAt).getTime()
+            return dateB - dateA
+          })
           .slice(0, 5)
         setRecentOrders(sortedOrders)
       } catch (error: any) {
@@ -110,6 +115,7 @@ export default function AdminDashboard() {
       label: "Ngày đặt",
       sortable: true,
       render: (order: AdminOrder) => {
+        if (!order.createdAt) return "N/A"
         const date = new Date(order.createdAt)
         return date.toLocaleDateString("vi-VN")
       },
