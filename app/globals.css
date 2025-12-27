@@ -69,6 +69,15 @@
 }
 
 @layer utilities {
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Toast animations */
   @keyframes toast-in {
     from {

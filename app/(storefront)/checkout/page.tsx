@@ -227,7 +227,18 @@ export default function CheckoutPage() {
   }
 
   const shippingFee = 30000 // Phí vận chuyển: 30.000 VNĐ
-  const finalTotal = getTotalPrice() - discountAmount + shippingFee
+  
+  // Calculate subtotal from actual product prices
+  const calculateSubtotal = () => {
+    return items.reduce((total, item) => {
+      const product = products[item.design.productId]
+      const currentPrice = product?.price || item.design.unitPrice || 0
+      return total + (currentPrice * item.qty)
+    }, 0)
+  }
+  
+  const subtotal = calculateSubtotal()
+  const finalTotal = subtotal - discountAmount + shippingFee
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -854,7 +865,7 @@ export default function CheckoutPage() {
                       Tạm tính ({items.length} {items.length === 1 ? "sản phẩm" : "sản phẩm"}):
                     </span>
                     <span className="text-gray-900 dark:text-gray-100">
-                      {formatCurrency(getTotalPrice())}
+                      {formatCurrency(subtotal)}
                     </span>
                   </div>
                   {discountApplied && (

@@ -84,13 +84,6 @@ function PaymentStatusContent() {
                 </p>
               </div>
 
-              {orderCode && (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Mã đơn hàng PayOS:</p>
-                  <p className="text-lg font-semibold">{orderCode}</p>
-                </div>
-              )}
-
               {loadingOrder ? (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -120,10 +113,19 @@ function PaymentStatusContent() {
 
               <div className="flex gap-4 pt-4">
                 {orderId && (
-                  <Button asChild variant="outline">
-                    <Link href={user?.accessToken ? `/account?order=${orderId}` : `/?order=${orderId}`}>
-                      Xem đơn hàng
-                    </Link>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      // Smooth navigation to account page with orderId
+                      // Add openOrder=true to signal that user wants to view order details
+                      if (user?.accessToken) {
+                        router.push(`/account?order=${orderId}&tab=orders&openOrder=true`, { scroll: false })
+                      } else {
+                        router.push(`/?order=${orderId}`, { scroll: false })
+                      }
+                    }}
+                  >
+                    Xem đơn hàng
                   </Button>
                 )}
                 <Button asChild>
@@ -173,10 +175,19 @@ function PaymentStatusContent() {
 
               <div className="flex gap-4 pt-4">
                 {orderId && (
-                  <Button asChild variant="outline">
-                    <Link href={user?.accessToken ? `/account?order=${orderId}` : `/?order=${orderId}`}>
-                      Xem đơn hàng
-                    </Link>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      // Smooth navigation to account page with orderId
+                      // Add openOrder=true to signal that user wants to view order details
+                      if (user?.accessToken) {
+                        router.push(`/account?order=${orderId}&tab=orders&openOrder=true`, { scroll: false })
+                      } else {
+                        router.push(`/?order=${orderId}`, { scroll: false })
+                      }
+                    }}
+                  >
+                    Xem đơn hàng
                   </Button>
                 )}
                 <Button asChild>
@@ -230,10 +241,19 @@ function PaymentStatusContent() {
 
               <div className="flex gap-4 pt-4">
                 {orderId && (
-                  <Button asChild variant="outline">
-                    <Link href={user?.accessToken ? `/account?order=${orderId}` : `/?order=${orderId}`}>
-                      Xem đơn hàng
-                    </Link>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      // Smooth navigation to account page with orderId
+                      // Add openOrder=true to signal that user wants to view order details
+                      if (user?.accessToken) {
+                        router.push(`/account?order=${orderId}&tab=orders&openOrder=true`, { scroll: false })
+                      } else {
+                        router.push(`/?order=${orderId}`, { scroll: false })
+                      }
+                    }}
+                  >
+                    Xem đơn hàng
                   </Button>
                 )}
                 <Button asChild>

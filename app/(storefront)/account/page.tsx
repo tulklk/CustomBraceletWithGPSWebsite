@@ -97,20 +97,29 @@ function AccountPageContent({
   useEffect(() => {
     const orderId = searchParams?.get("order")
     const tab = searchParams?.get("tab")
+    const openOrder = searchParams?.get("openOrder")
     
     if (tab) {
       setActiveTab(tab)
     } else if (orderId) {
       setActiveTab("orders")
-      // Only auto-open order detail if not from payment flow
-      // Check referrer to see if we came from payment pages
+    }
+    
+    // Auto-open order detail if:
+    // 1. openOrder=true is explicitly set (user clicked "Xem đơn hàng" button)
+    // 2. OR not from payment flow (to avoid auto-opening when redirected from payment)
+    if (orderId) {
       const referrer = typeof window !== 'undefined' ? document.referrer : ''
       const isFromPayment = referrer.includes('/payment/') || 
                            (typeof window !== 'undefined' && window.location.pathname.includes('payment'))
       
-      if (!isFromPayment) {
-        // Notify parent to handle order detail
-        onOrderIdFound(orderId)
+      // If openOrder=true, always open regardless of referrer
+      // Otherwise, only open if not from payment flow
+      if (openOrder === 'true' || !isFromPayment) {
+        // Small delay to ensure orders are loaded first
+        setTimeout(() => {
+          onOrderIdFound(orderId)
+        }, 300)
       }
     }
   }, [searchParams, setActiveTab, onOrderIdFound])
@@ -1616,15 +1625,13 @@ export default function AccountPage() {
                 <div>
                   <Label className="text-sm text-muted-foreground">Phương thức thanh toán</Label>
                   <p className="text-sm">
-                    {selectedOrder.paymentMethod === 0 ? "COD" : selectedOrder.paymentMethod === 1 ? "PayOS" : "N/A"}
+                    {selectedOrder.paymentMethod === 0 
+                      ? "COD" 
+                      : selectedOrder.paymentMethod === 1 
+                        ? "Chuyển khoản qua Ngân Hàng" 
+                        : "N/A"}
                   </p>
                 </div>
-                {(selectedOrder as any).paymentTransactionId && (
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Mã giao dịch</Label>
-                    <p className="text-xs font-mono">{(selectedOrder as any).paymentTransactionId}</p>
-                  </div>
-                )}
               </div>
 
               {/* Shipping Address */}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ProductCard } from "@/components/ProductCard"
@@ -18,12 +18,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { useFilterContext } from "@/contexts/FilterContext"
 
 const ITEMS_PER_PAGE = 6
 
 export function ProductsContent() {
   const searchParams = useSearchParams()
   const categoryParam = searchParams.get("category")
+  const filterContext = useFilterContext()
   
   const [products, setProducts] = useState<Product[]>([])
   const [backendProducts, setBackendProducts] = useState<BackendProduct[]>([])
@@ -40,6 +42,74 @@ export function ProductsContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+  
+  // Use refs to track previous values and prevent infinite loops
+  const prevFiltersRef = useRef<FilterState | null>(null)
+  const prevPriceRangeRef = useRef<[number, number] | null>(null)
+  const prevProductCountRef = useRef<number>(0)
+  const priceRangeRef = useRef<[number, number]>([0, 10000000])
+
+  // Update priceRangeRef whenever priceRange changes
+  useEffect(() => {
+    priceRangeRef.current = priceRange
+  }, [priceRange])
+
+  const handleReset = useCallback(() => {
+    setFilters({
+      priceRange: priceRangeRef.current || [0, 10000000],
+      productTypes: [],
+      sortBy: "default",
+    })
+    setCurrentPage(1)
+  }, [])
+
+  // Memoize the filter change callback to prevent infinite loops
+  const handleFilterChange = useCallback((newFilters: FilterState | null) => {
+    // Ensure newFilters is not null and priceRange exists, fallback to priceRange if missing
+    if (newFilters) {
+      const currentPriceRange = priceRangeRef.current || [0, 10000000]
+      setFilters({
+        priceRange: newFilters.priceRange || currentPriceRange,
+        productTypes: newFilters.productTypes || [],
+        sortBy: newFilters.sortBy || "default",
+      })
+    } else {
+      // If newFilters is null, use current priceRange or default
+      const currentPriceRange = priceRangeRef.current || [0, 10000000]
+      setFilters({
+        priceRange: currentPriceRange,
+        productTypes: [],
+        sortBy: "default",
+      })
+    }
+  }, [])
+
+  // Set callbacks only once on mount
+  useEffect(() => {
+    filterContext.setOnReset(handleReset)
+    filterContext.setOnFilterChange(handleFilterChange)
+  }, [filterContext, handleReset, handleFilterChange])
+
+  // Update filter context when filters change (only if values actually changed)
+  useEffect(() => {
+    // Only update if values are different to avoid infinite loops
+    const filtersChanged = JSON.stringify(prevFiltersRef.current) !== JSON.stringify(filters)
+    const priceRangeChanged = JSON.stringify(prevPriceRangeRef.current) !== JSON.stringify(priceRange)
+    const productCountChanged = prevProductCountRef.current !== filteredProducts.length
+    
+    if (filtersChanged) {
+      filterContext.setFilters(filters)
+      prevFiltersRef.current = filters
+    }
+    if (priceRangeChanged) {
+      filterContext.setPriceRange(priceRange)
+      prevPriceRangeRef.current = priceRange
+    }
+    if (productCountChanged) {
+      filterContext.setProductCount(filteredProducts.length)
+      prevProductCountRef.current = filteredProducts.length
+    }
+  }, [filters, priceRange, filteredProducts.length, filterContext])
 
   // Fetch categories and products
   useEffect(() => {
@@ -76,8 +146,9 @@ export function ProductsContent() {
             setPriceRange(calculatedRange)
             // Update filters with calculated range
             setFilters(prev => ({
-              ...prev,
               priceRange: calculatedRange,
+              productTypes: prev?.productTypes || [],
+              sortBy: prev?.sortBy || "default",
             }))
           }
         }
@@ -105,11 +176,12 @@ export function ProductsContent() {
     } else {
       setSelectedCategory(null)
       // When no category param, reset filters to show all products
-      if (priceRange[0] !== 0 || priceRange[1] !== 10000000) {
+      if (priceRange && Array.isArray(priceRange) && priceRange.length === 2 && 
+          (priceRange[0] !== 0 || priceRange[1] !== 10000000)) {
         setFilters(prev => ({
-          ...prev,
           priceRange: priceRange,
           productTypes: [],
+          sortBy: prev?.sortBy || "default",
         }))
       }
     }
@@ -118,6 +190,21 @@ export function ProductsContent() {
   // Apply filters including category filter
   useEffect(() => {
     let result = [...products]
+
+    // Ensure filters and priceRange have valid default values
+    const safeFilters = filters || {
+      priceRange: [0, 10000000] as [number, number],
+      productTypes: [],
+      sortBy: "default",
+    }
+    const safePriceRange: [number, number] = 
+      (priceRange && Array.isArray(priceRange) && priceRange.length === 2) 
+        ? priceRange 
+        : [0, 10000000]
+    const safeFiltersPriceRange: [number, number] = 
+      (safeFilters.priceRange && Array.isArray(safeFilters.priceRange) && safeFilters.priceRange.length === 2)
+        ? safeFilters.priceRange
+        : safePriceRange
 
     // Category filter - only apply if a category is selected
     // If no category selected (selectedCategory is null), show all products
@@ -139,26 +226,27 @@ export function ProductsContent() {
     // If selectedCategory is null, don't filter by category (show all)
 
     // Price filter - only apply if price range is not the full range
-    if (filters.priceRange[0] !== priceRange[0] || filters.priceRange[1] !== priceRange[1]) {
+    if (safeFiltersPriceRange[0] !== safePriceRange[0] || safeFiltersPriceRange[1] !== safePriceRange[1]) {
       result = result.filter(
         (p) =>
-          p.priceFrom >= filters.priceRange[0] &&
-          p.priceFrom <= filters.priceRange[1]
+          p.priceFrom >= safeFiltersPriceRange[0] &&
+          p.priceFrom <= safeFiltersPriceRange[1]
       )
     }
 
     // Product type filter
-    if (filters.productTypes.length > 0) {
+    if (safeFilters.productTypes && Array.isArray(safeFilters.productTypes) && safeFilters.productTypes.length > 0) {
       result = result.filter((p) => {
         const productType = p.id.startsWith('necklace-') ? 'necklace' 
           : p.id.startsWith('clip-') ? 'clip'
           : 'bracelet'
-        return filters.productTypes.includes(productType)
+        return safeFilters.productTypes.includes(productType)
       })
     }
 
     // Sort
-    switch (filters.sortBy) {
+    const sortBy = safeFilters.sortBy || "default"
+    switch (sortBy) {
       case "price-asc":
         result.sort((a, b) => a.priceFrom - b.priceFrom)
         break
@@ -179,15 +267,6 @@ export function ProductsContent() {
     setFilteredProducts(result)
     setCurrentPage(1) // Reset to first page when filters change
   }, [filters, products, selectedCategory, backendProducts, priceRange])
-
-  const handleReset = () => {
-    setFilters({
-      priceRange: priceRange,
-      productTypes: [],
-      sortBy: "default",
-    })
-    setCurrentPage(1)
-  }
 
   // Pagination logic
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)
@@ -283,9 +362,17 @@ export function ProductsContent() {
               </SheetHeader>
               <div className="p-4">
                 <ProductFilter
-                  filters={filters}
+                  filters={filters || {
+                    priceRange: [0, 10000000],
+                    productTypes: [],
+                    sortBy: "default",
+                  }}
                   onFilterChange={(newFilters) => {
-                    setFilters(newFilters)
+                    setFilters({
+                      priceRange: newFilters?.priceRange || [0, 10000000],
+                      productTypes: newFilters?.productTypes || [],
+                      sortBy: newFilters?.sortBy || "default",
+                    })
                     // Optionally close sheet after applying filter
                     // setFilterSheetOpen(false)
                   }}
@@ -295,7 +382,7 @@ export function ProductsContent() {
                     // setFilterSheetOpen(false)
                   }}
                   productCount={filteredProducts.length}
-                  priceRange={priceRange}
+                  priceRange={priceRange || [0, 10000000]}
                 />
               </div>
             </SheetContent>
@@ -307,11 +394,21 @@ export function ProductsContent() {
         {/* Sidebar Filter - Desktop Only */}
         <div className="hidden lg:block lg:col-span-1">
           <ProductFilter
-            filters={filters}
-            onFilterChange={setFilters}
+            filters={filters || {
+              priceRange: [0, 10000000],
+              productTypes: [],
+              sortBy: "default",
+            }}
+            onFilterChange={(newFilters) => {
+              setFilters({
+                priceRange: newFilters?.priceRange || [0, 10000000],
+                productTypes: newFilters?.productTypes || [],
+                sortBy: newFilters?.sortBy || "default",
+              })
+            }}
             onReset={handleReset}
             productCount={filteredProducts.length}
-            priceRange={priceRange}
+            priceRange={priceRange || [0, 10000000]}
           />
         </div>
 
@@ -319,7 +416,7 @@ export function ProductsContent() {
         <div className="lg:col-span-3">
           {filteredProducts.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
                 {currentProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

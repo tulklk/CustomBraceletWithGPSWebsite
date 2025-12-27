@@ -41,24 +41,40 @@ export function ProductFilter({
 }: ProductFilterProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   
+  // Ensure filters has valid default values
+  const safeFilters = filters || {
+    priceRange: [0, 10000000] as [number, number],
+    productTypes: [] as string[],
+    sortBy: "default",
+  }
+  
+  // Ensure productTypes is always an array
+  const safeProductTypes = safeFilters.productTypes || []
+  
+  // Ensure priceRange is always valid
+  const safePriceRange: [number, number] = 
+    (safeFilters.priceRange && Array.isArray(safeFilters.priceRange) && safeFilters.priceRange.length === 2)
+      ? safeFilters.priceRange
+      : [0, 10000000]
+  
   // Use provided priceRange or fallback to default
   const minPrice = priceRange[0]
   const maxPrice = priceRange[1]
 
   const handlePriceChange = (value: number[]) => {
-    onFilterChange({ ...filters, priceRange: [value[0], value[1]] })
+    onFilterChange({ ...safeFilters, priceRange: [value[0], value[1]], productTypes: safeProductTypes })
   }
 
   const handleProductTypeToggle = (value: string) => {
-    const newProductTypes = filters.productTypes.includes(value)
-      ? filters.productTypes.filter((t) => t !== value)
-      : [...filters.productTypes, value]
-    onFilterChange({ ...filters, productTypes: newProductTypes })
+    const newProductTypes = safeProductTypes.includes(value)
+      ? safeProductTypes.filter((t) => t !== value)
+      : [...safeProductTypes, value]
+    onFilterChange({ ...safeFilters, productTypes: newProductTypes, priceRange: safePriceRange })
   }
 
   const activeFiltersCount =
-    (filters.productTypes.length > 0 ? 1 : 0) +
-    (filters.priceRange[0] !== minPrice || filters.priceRange[1] !== maxPrice ? 1 : 0)
+    (safeProductTypes.length > 0 ? 1 : 0) +
+    (safePriceRange[0] !== minPrice || safePriceRange[1] !== maxPrice ? 1 : 0)
 
   return (
     <Card className="lg:sticky lg:top-20">
@@ -88,7 +104,7 @@ export function ProductFilter({
           <div className="space-y-3">
             <Label className="text-sm font-semibold">Sắp xếp</Label>
             <Select
-              value={filters.sortBy}
+              value={safeFilters.sortBy || "default"}
               onValueChange={(value) =>
                 onFilterChange({ ...filters, sortBy: value })
               }
@@ -116,17 +132,17 @@ export function ProductFilter({
                 min={minPrice}
                 max={maxPrice}
                 step={Math.max(10000, Math.floor((maxPrice - minPrice) / 20))} // Dynamic step based on range
-                value={[Math.max(minPrice, filters.priceRange[0]), Math.min(maxPrice, filters.priceRange[1])]}
+                value={[Math.max(minPrice, safePriceRange[0]), Math.min(maxPrice, safePriceRange[1])]}
                 onValueChange={handlePriceChange}
                 className="w-full"
               />
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {formatCurrency(Math.max(minPrice, filters.priceRange[0]))}
+                {formatCurrency(Math.max(minPrice, safePriceRange[0]))}
               </span>
               <span className="text-muted-foreground">
-                {formatCurrency(Math.min(maxPrice, filters.priceRange[1]))}
+                {formatCurrency(Math.min(maxPrice, safePriceRange[1]))}
               </span>
             </div>
           </div>
@@ -140,7 +156,7 @@ export function ProductFilter({
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="bracelet"
-                  checked={filters.productTypes.includes("bracelet")}
+                  checked={safeProductTypes.includes("bracelet")}
                   onCheckedChange={() => handleProductTypeToggle("bracelet")}
                 />
                 <label
@@ -153,7 +169,7 @@ export function ProductFilter({
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="necklace"
-                  checked={filters.productTypes.includes("necklace")}
+                  checked={safeProductTypes.includes("necklace")}
                   onCheckedChange={() => handleProductTypeToggle("necklace")}
                 />
                 <label
@@ -166,7 +182,7 @@ export function ProductFilter({
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="clip"
-                  checked={filters.productTypes.includes("clip")}
+                  checked={safeProductTypes.includes("clip")}
                   onCheckedChange={() => handleProductTypeToggle("clip")}
                 />
                 <label

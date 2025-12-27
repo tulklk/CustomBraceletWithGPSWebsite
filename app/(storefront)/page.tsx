@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -17,6 +18,8 @@ import {
   MapPin,
   Sparkles,
   Heart,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { Product, Template } from "@/lib/types"
 
@@ -426,6 +429,140 @@ export default function HomePage() {
     products.find(p => p.id === 'clip-baby-pink'),
   ].filter(Boolean)
 
+  // Carousel ref and state
+  const carouselRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
+  const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const [isPaused, setIsPaused] = useState(false)
+  const isScrollingRef = useRef(false)
+
+  // Duplicate products for infinite loop
+  const duplicatedProducts = [...featuredProducts, ...featuredProducts, ...featuredProducts]
+
+  // Check scroll position
+  const checkScrollButtons = () => {
+    if (carouselRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current
+      setCanScrollLeft(scrollLeft > 0)
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
+    }
+  }
+
+  // Reset scroll position seamlessly for infinite loop
+  const resetScrollPosition = () => {
+    if (carouselRef.current && !isScrollingRef.current) {
+      const { scrollLeft, scrollWidth } = carouselRef.current
+      const singleSetWidth = scrollWidth / 3 // We have 3 sets of products
+      
+      // If we're in the third set (near the end), reset to first set seamlessly
+      if (scrollLeft >= singleSetWidth * 2) {
+        isScrollingRef.current = true
+        carouselRef.current.scrollLeft = scrollLeft - singleSetWidth
+        isScrollingRef.current = false
+      }
+      // If we're before the first set (scrolled left), reset to last set
+      else if (scrollLeft < singleSetWidth) {
+        isScrollingRef.current = true
+        carouselRef.current.scrollLeft = scrollLeft + singleSetWidth
+        isScrollingRef.current = false
+      }
+    }
+  }
+
+  // Scroll functions
+  const scrollLeft = () => {
+    if (carouselRef.current && !isScrollingRef.current) {
+      const cardWidth = carouselRef.current.querySelector('.product-card')?.clientWidth || 300
+      const gap = 24 // gap-6 = 24px
+      carouselRef.current.scrollBy({
+        left: -(cardWidth + gap),
+        behavior: 'smooth'
+      })
+      setTimeout(() => {
+        checkScrollButtons()
+        resetScrollPosition()
+      }, 300)
+    }
+  }
+
+  const scrollRight = () => {
+    if (carouselRef.current && !isScrollingRef.current) {
+      const cardWidth = carouselRef.current.querySelector('.product-card')?.clientWidth || 300
+      const gap = 24 // gap-6 = 24px
+      carouselRef.current.scrollBy({
+        left: cardWidth + gap,
+        behavior: 'smooth'
+      })
+      setTimeout(() => {
+        checkScrollButtons()
+        resetScrollPosition()
+      }, 300)
+    }
+  }
+
+  // Initialize scroll position to middle set for seamless infinite loop
+  useEffect(() => {
+    if (carouselRef.current && featuredProducts.length > 0) {
+      // Wait for layout to calculate
+      setTimeout(() => {
+        if (carouselRef.current) {
+          const cardWidth = carouselRef.current.querySelector('.product-card')?.clientWidth || 300
+          const gap = 24
+          const singleSetWidth = (cardWidth + gap) * featuredProducts.length
+          // Start at the middle set (second set)
+          carouselRef.current.scrollLeft = singleSetWidth
+        }
+        checkScrollButtons()
+      }, 100)
+    }
+    
+    const handleResize = () => {
+      checkScrollButtons()
+      resetScrollPosition()
+    }
+    window.addEventListener('resize', handleResize)
+    
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [featuredProducts])
+
+  // Auto-scroll effect
+  useEffect(() => {
+    if (isPaused) {
+      // Clear interval when paused
+      if (autoScrollIntervalRef.current) {
+        clearInterval(autoScrollIntervalRef.current)
+        autoScrollIntervalRef.current = null
+      }
+      return
+    }
+
+    // Start auto-scroll
+    autoScrollIntervalRef.current = setInterval(() => {
+      if (carouselRef.current && !isScrollingRef.current) {
+        const cardWidth = carouselRef.current.querySelector('.product-card')?.clientWidth || 300
+        const gap = 24
+        carouselRef.current.scrollBy({
+          left: cardWidth + gap,
+          behavior: 'smooth'
+        })
+        setTimeout(() => {
+          checkScrollButtons()
+          resetScrollPosition()
+        }, 300)
+      }
+    }, 3000) // Scroll every 3 seconds
+    
+    return () => {
+      if (autoScrollIntervalRef.current) {
+        clearInterval(autoScrollIntervalRef.current)
+        autoScrollIntervalRef.current = null
+      }
+    }
+  }, [isPaused, featuredProducts])
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -459,7 +596,7 @@ export default function HomePage() {
                     className="w-full sm:w-auto"
                   >
                     <Button asChild size="lg" className="w-full sm:w-auto text-sm sm:text-base">
-                      <Link href="/products">Bắt đầu thiết kế</Link>
+                      <Link href="/products">Bắt đầu mua hàng</Link>
                     </Button>
                   </motion.div>
                   <motion.div
@@ -793,16 +930,57 @@ export default function HomePage() {
             </div>
           </ScrollAnimation>
 
-          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 max-w-5xl mx-auto">
-            {featuredProducts.map((product: any, index: number) => (
-              <StaggerItem key={product.id}>
-                <ProductCard
-                  product={product}
-                  featured={index === 0}
-                />
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
+          <div className="relative max-w-7xl mx-auto">
+            {/* Left Arrow */}
+            {canScrollLeft && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-900/90 shadow-lg hover:bg-white dark:hover:bg-gray-900 h-10 w-10 rounded-full hidden sm:flex"
+                onClick={scrollLeft}
+                aria-label="Scroll left"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+            )}
+
+            {/* Carousel Container */}
+            <div
+              ref={carouselRef}
+              className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide scroll-smooth px-2 sm:px-0"
+              onScroll={() => {
+                checkScrollButtons()
+                resetScrollPosition()
+              }}
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
+              {duplicatedProducts.map((product: any, index: number) => (
+                <div
+                  key={`${product.id}-${index}`}
+                  className="product-card flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]"
+                >
+                  <ProductCard
+                    product={product}
+                    featured={index % featuredProducts.length === 0}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Right Arrow */}
+            {canScrollRight && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-900/90 shadow-lg hover:bg-white dark:hover:bg-gray-900 h-10 w-10 rounded-full hidden sm:flex"
+                onClick={scrollRight}
+                aria-label="Scroll right"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            )}
+          </div>
 
           <ScrollAnimation direction="fade" delay={0.3}>
             <div className="text-center mt-8 sm:mt-10 md:mt-12">

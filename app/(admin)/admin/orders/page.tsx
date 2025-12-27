@@ -376,15 +376,13 @@ export default function OrdersPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Phương thức thanh toán</p>
                   <p className="font-medium">
-                    {selectedOrder.paymentMethod === 0 ? "COD" : selectedOrder.paymentMethod === 1 ? "PayOS" : "N/A"}
+                    {selectedOrder.paymentMethod === 0 
+                      ? "COD" 
+                      : selectedOrder.paymentMethod === 1 
+                        ? "Chuyển khoản qua Ngân Hàng" 
+                        : "N/A"}
                   </p>
                 </div>
-                {selectedOrder.paymentTransactionId && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Mã giao dịch</p>
-                    <p className="font-medium font-mono text-xs">{selectedOrder.paymentTransactionId}</p>
-                  </div>
-                )}
                 <div className="col-span-2">
                   <Separator />
                   <p className="text-sm text-muted-foreground mt-4">Tổng tiền</p>
