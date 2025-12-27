@@ -380,7 +380,11 @@ export const ordersApi = {
     console.log(JSON.stringify(result, null, 2))
     
     // Validate response structure
-    if (!result.paymentUrl && !result.payment_url && !result.url) {
+    // Normalize paymentUrl field (handle different response formats)
+    const paymentUrl = result.paymentUrl || 
+                      (result as { payment_url?: string }).payment_url || 
+                      (result as { url?: string }).url
+    if (!paymentUrl) {
       console.error("❌ [ordersApi] Invalid payment response - missing paymentUrl:", result)
       throw {
         message: "Invalid payment response: missing paymentUrl",
@@ -388,7 +392,11 @@ export const ordersApi = {
       }
     }
     
-    return result
+    // Return normalized result
+    return {
+      ...result,
+      paymentUrl,
+    }
   },
 
   /**
@@ -461,7 +469,11 @@ export const ordersApi = {
       console.log(JSON.stringify(result, null, 2))
       
       // Validate response structure
-      if (!result.paymentUrl && !result.payment_url && !result.url) {
+      // Normalize paymentUrl field (handle different response formats)
+      const paymentUrl = result.paymentUrl || 
+                        (result as { payment_url?: string }).payment_url || 
+                        (result as { url?: string }).url
+      if (!paymentUrl) {
         console.error("❌ [ordersApi] Invalid payment response - missing paymentUrl:", result)
         throw {
           message: "Invalid payment response: missing paymentUrl",
@@ -469,7 +481,11 @@ export const ordersApi = {
         }
       }
       
-      return result as PaymentResponse
+      // Return normalized result
+      return {
+        ...result,
+        paymentUrl,
+      } as PaymentResponse
     } else {
       const textData = await response.text()
       console.error("❌ [ordersApi] Unexpected response format (not JSON):", textData.substring(0, 200))
