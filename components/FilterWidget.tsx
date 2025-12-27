@@ -18,6 +18,7 @@ import { useFilterContext } from "@/contexts/FilterContext"
 export function FilterWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const { filters, priceRange, productCount, onReset, onFilterChange } = useFilterContext()
   
   // Only show on products page
   const isProductsPage = pathname?.startsWith('/products')
@@ -25,8 +26,6 @@ export function FilterWidget() {
   if (!isProductsPage) {
     return null
   }
-
-  const { filters, priceRange, productCount, onReset, onFilterChange } = useFilterContext()
   
   if (!filters || !priceRange || !onFilterChange) {
     return null

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { X, Upload, Loader2 } from "lucide-react"
 import { uploadImageToCloudinary, uploadMultipleImages } from "@/lib/cloudinary"
@@ -135,11 +136,13 @@ export function ImageUpload({ value = [], onChange, maxImages = 5, multiple = tr
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {value.map((url, index) => (
             <div key={index} className="relative group">
-              <div className="aspect-square rounded-lg overflow-hidden bg-muted border-2 border-border">
-                <img
+              <div className="relative aspect-square rounded-lg overflow-hidden bg-muted border-2 border-border">
+                <Image
                   src={url}
                   alt={`Preview ${index + 1}`}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
               </div>
               <Button
