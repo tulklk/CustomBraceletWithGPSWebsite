@@ -429,36 +429,36 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background py-12 md:py-20 lg:py-32">
-        <div className="container px-4">
-          <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
-            <div className="space-y-4 md:space-y-6">
+      <section className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background py-8 sm:py-12 md:py-20 lg:py-32">
+        <div className="container px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center">
+            <div className="space-y-3 sm:space-y-4 md:space-y-6 order-2 lg:order-1">
               <ScrollAnimation direction="fade" delay={0.1}>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Badge className="w-fit text-xs md:text-sm">✨ Tùy biến theo cá tính</Badge>
+                  <Badge className="w-fit text-xs sm:text-sm">✨ Tùy biến theo cá tính</Badge>
                 </motion.div>
               </ScrollAnimation>
               <AnimatedText
                 text="An tâm theo dõi con yêu mọi lúc mọi nơi"
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-pink-500"
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight text-pink-500"
               />
               <ScrollAnimation direction="up" delay={0.2}>
-                <p className="text-base md:text-lg lg:text-xl text-muted-foreground">
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed">
                   Thiết kế vòng tay GPS độc nhất cho bé với hàng trăm tùy chọn màu sắc,
                   phụ kiện và khắc tên. Công nghệ định vị hiện đại, an toàn tuyệt đối.
                 </p>
               </ScrollAnimation>
               <ScrollAnimation direction="up" delay={0.3}>
-                <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="w-full sm:w-auto"
                   >
-                    <Button asChild size="lg" className="w-full sm:w-auto">
+                    <Button asChild size="lg" className="w-full sm:w-auto text-sm sm:text-base">
                       <Link href="/products">Bắt đầu thiết kế</Link>
                     </Button>
                   </motion.div>
@@ -467,7 +467,7 @@ export default function HomePage() {
                     whileTap={{ scale: 0.95 }}
                     className="w-full sm:w-auto"
                   >
-                    <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+                    <Button asChild variant="outline" size="lg" className="w-full sm:w-auto text-sm sm:text-base">
                       <Link href="/guides">Tìm hiểu thêm</Link>
                     </Button>
                   </motion.div>
@@ -475,9 +475,9 @@ export default function HomePage() {
               </ScrollAnimation>
             </div>
             <ScrollAnimation direction="right" delay={0.2}>
-              <div className="relative order-first lg:order-last">
+              <div className="relative order-1 lg:order-2 mb-4 sm:mb-0">
                 <motion.div 
-                  className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl flex items-center justify-center p-8 md:p-12 relative overflow-hidden"
+                  className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl sm:rounded-3xl flex items-center justify-center p-6 sm:p-8 md:p-12 relative overflow-hidden max-w-md mx-auto lg:max-w-none"
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -485,6 +485,7 @@ export default function HomePage() {
                     src="/images/templates/bunny-baby-pink.png"
                     alt="ARTEMIS Bunny Baby Pink"
                     fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 50vw"
                     className="object-contain"
                     priority
                   />
@@ -496,17 +497,17 @@ export default function HomePage() {
       </section>
 
       {/* 3D Experience Section - Emotional Connection */}
-      <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        <div className="container px-4">
+      <section className="py-8 sm:py-12 md:py-16 lg:py-20 bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="container px-4 sm:px-6">
           <ScrollAnimation direction="fade">
-            <div className="text-center mb-8 md:mb-12">
-              <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white">
+            <div className="text-center mb-6 sm:mb-8 md:mb-12">
+              <Badge className="mb-3 sm:mb-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs sm:text-sm">
                 ❤️ Trải nghiệm đặc biệt
               </Badge>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 text-pink-500 px-2">
                 Hiểu nỗi sợ hãi của con bạn
               </h2>
-              <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+              <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2">
                 Một trải nghiệm 3D cảm động giúp ba mẹ đồng cảm với cảm xúc của con 
                 khi bị lạc - và hiểu tại sao vòng tay GPS là cần thiết.
               </p>
@@ -514,46 +515,46 @@ export default function HomePage() {
           </ScrollAnimation>
 
           <ScrollAnimation direction="up" delay={0.2}>
-            <div className="max-w-5xl mx-auto mb-8">
+            <div className="max-w-5xl mx-auto mb-6 sm:mb-8">
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="p-4 md:p-6 bg-gradient-to-br from-white to-pink-50 dark:from-gray-800 dark:to-gray-900 border-pink-200 dark:border-pink-900">
+                <Card className="p-4 sm:p-5 md:p-6 bg-gradient-to-br from-white to-pink-50 dark:from-gray-800 dark:to-gray-900 border-pink-200 dark:border-pink-900">
                   <StaggerContainer>
-                    <div className="grid md:grid-cols-3 gap-6 mb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
                       <StaggerItem>
                         <motion.div 
-                          className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg"
+                          className="text-center p-3 sm:p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg"
                           whileHover={{ scale: 1.05, y: -5 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <p className="text-3xl md:text-4xl font-bold text-red-500 mb-1">8 triệu</p>
-                          <p className="text-xs md:text-sm text-muted-foreground">
+                          <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-red-500 mb-1">8 triệu</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             trẻ em bị lạc mỗi năm
                           </p>
                         </motion.div>
                       </StaggerItem>
                       <StaggerItem>
                         <motion.div 
-                          className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg"
+                          className="text-center p-3 sm:p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg"
                           whileHover={{ scale: 1.05, y: -5 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <p className="text-3xl md:text-4xl font-bold text-orange-500 mb-1">90 phút</p>
-                          <p className="text-xs md:text-sm text-muted-foreground">
+                          <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-orange-500 mb-1">90 phút</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             thời gian trung bình tìm lại
                           </p>
                         </motion.div>
                       </StaggerItem>
                       <StaggerItem>
                         <motion.div 
-                          className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg"
+                          className="text-center p-3 sm:p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg"
                           whileHover={{ scale: 1.05, y: -5 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <p className="text-3xl md:text-4xl font-bold text-green-500 mb-1">99.9%</p>
-                          <p className="text-xs md:text-sm text-muted-foreground">
+                          <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-500 mb-1">99.9%</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             tìm thấy nhanh với GPS
                           </p>
                         </motion.div>
@@ -562,13 +563,13 @@ export default function HomePage() {
                   </StaggerContainer>
 
                   <div className="text-center">
-                    <Button asChild size="lg" className="gap-2">
+                    <Button asChild size="lg" className="gap-2 w-full sm:w-auto text-sm sm:text-base">
                       <Link href="/experience">
-                        <Sparkles className="h-5 w-5" />
+                        <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
                         Trải nghiệm 3D ngay
                       </Link>
                     </Button>
-                    <p className="text-xs text-muted-foreground mt-3">
+                    <p className="text-xs text-muted-foreground mt-2 sm:mt-3 px-2">
                       ⏱️ Chỉ mất 2 phút • 🎧 Nên dùng tai nghe để trải nghiệm tốt nhất
                     </p>
                   </div>
@@ -577,32 +578,32 @@ export default function HomePage() {
             </div>
           </ScrollAnimation>
 
-          <StaggerContainer className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <StaggerContainer className="grid sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
             <StaggerItem>
               <motion.div
                 whileHover={{ scale: 1.03, y: -5 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="p-6">
-                  <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                    <Heart className="h-5 w-5 text-red-500" />
+                <Card className="p-4 sm:p-5 md:p-6">
+                  <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3 flex items-center gap-2">
+                    <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
                     Không có GPS
                   </h3>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
+                  <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
-                      <span className="text-red-500 mt-0.5">✗</span>
+                      <span className="text-red-500 mt-0.5 flex-shrink-0">✗</span>
                       <span>Hoảng loạn không biết con ở đâu</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-red-500 mt-0.5">✗</span>
+                      <span className="text-red-500 mt-0.5 flex-shrink-0">✗</span>
                       <span>Mất 1-2 tiếng mới tìm thấy (nếu may mắn)</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-red-500 mt-0.5">✗</span>
+                      <span className="text-red-500 mt-0.5 flex-shrink-0">✗</span>
                       <span>Con hoảng sợ, khóc lóc, stress tâm lý</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-red-500 mt-0.5">✗</span>
+                      <span className="text-red-500 mt-0.5 flex-shrink-0">✗</span>
                       <span>Nguy cơ mất mát vĩnh viễn</span>
                     </li>
                   </ul>
@@ -615,26 +616,26 @@ export default function HomePage() {
                 whileHover={{ scale: 1.03, y: -5 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-900">
-                  <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-green-500" />
+                <Card className="p-4 sm:p-5 md:p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-900">
+                  <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3 flex items-center gap-2">
+                    <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                     Với ARTEMIS GPS
                   </h3>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
+                  <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
-                      <span className="text-green-500 mt-0.5">✓</span>
+                      <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
                       <span>Biết chính xác vị trí con mọi lúc</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-green-500 mt-0.5">✓</span>
+                      <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
                       <span>Tìm thấy con trong vài phút</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-green-500 mt-0.5">✓</span>
+                      <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
                       <span>Con bấm SOS, ba mẹ nhận cảnh báo ngay</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-green-500 mt-0.5">✓</span>
+                      <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
                       <span>An tâm, yên tâm, hạnh phúc mỗi ngày</span>
                     </li>
                   </ul>
@@ -646,36 +647,36 @@ export default function HomePage() {
       </section>
 
       {/* Benefits */}
-      <section className="py-12 md:py-16 lg:py-20 bg-muted/40">
-        <div className="container px-4">
+      <section className="py-8 sm:py-12 md:py-16 lg:py-20 bg-muted/40">
+        <div className="container px-4 sm:px-6">
           <ScrollAnimation direction="fade">
-            <div className="text-center mb-8 md:mb-12">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-primary">
+            <div className="text-center mb-6 sm:mb-8 md:mb-12">
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 text-primary px-2">
                 Tại sao chọn ARTEMIS?
               </h2>
-              <p className="text-muted-foreground text-base md:text-lg">
+              <p className="text-muted-foreground text-sm sm:text-base md:text-lg px-2">
                 An toàn - Thời trang - Công nghệ
               </p>
             </div>
           </ScrollAnimation>
 
-          <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
             <StaggerItem>
               <motion.div
                 whileHover={{ scale: 1.05, y: -5 }}
                 transition={{ duration: 0.2 }}
               >
                 <Card className="bg-gray-50 dark:bg-gray-900 shadow-sm">
-                  <CardContent className="p-6 space-y-3">
+                  <CardContent className="p-4 sm:p-5 md:p-6 space-y-2 sm:space-y-3">
                     <motion.div 
-                      className="h-12 w-12 rounded-lg flex items-center justify-center"
+                      className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg flex items-center justify-center"
                       whileHover={{ rotate: 360 }}
                       transition={{ duration: 0.5 }}
                     >
-                      <MapPin className="h-6 w-6 text-primary" />
+                      <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                     </motion.div>
-                    <h3 className="font-bold text-lg">Định vị GPS chính xác</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="font-bold text-base sm:text-lg">Định vị GPS chính xác</h3>
+                    <p className="text-muted-foreground text-sm sm:text-base">
                       Theo dõi vị trí thời gian thực, lịch sử di chuyển, vùng an toàn
                     </p>
                   </CardContent>
@@ -689,16 +690,16 @@ export default function HomePage() {
                 transition={{ duration: 0.2 }}
               >
                 <Card className="bg-gray-50 dark:bg-gray-900 shadow-sm">
-                  <CardContent className="p-6 space-y-3">
+                  <CardContent className="p-4 sm:p-5 md:p-6 space-y-2 sm:space-y-3">
                     <motion.div 
-                      className="h-12 w-12 rounded-lg flex items-center justify-center"
+                      className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg flex items-center justify-center"
                       whileHover={{ rotate: 360 }}
                       transition={{ duration: 0.5 }}
                     >
-                      <Droplet className="h-6 w-6 text-primary" />
+                      <Droplet className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                     </motion.div>
-                    <h3 className="font-bold text-lg">Chống nước IP67/IP68</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="font-bold text-base sm:text-lg">Chống nước IP67/IP68</h3>
+                    <p className="text-muted-foreground text-sm sm:text-base">
                       Thoải mái rửa tay, đi mưa, thậm chí bơi lội (IP68)
                     </p>
                   </CardContent>
@@ -712,16 +713,16 @@ export default function HomePage() {
                 transition={{ duration: 0.2 }}
               >
                 <Card className="bg-gray-50 dark:bg-gray-900 shadow-sm">
-                  <CardContent className="p-6 space-y-3">
+                  <CardContent className="p-4 sm:p-5 md:p-6 space-y-2 sm:space-y-3">
                     <motion.div 
-                      className="h-12 w-12 rounded-lg flex items-center justify-center"
+                      className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg flex items-center justify-center"
                       whileHover={{ rotate: 360 }}
                       transition={{ duration: 0.5 }}
                     >
-                      <Battery className="h-6 w-6 text-primary" />
+                      <Battery className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                     </motion.div>
-                    <h3 className="font-bold text-lg">Pin bền 1 năm</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="font-bold text-base sm:text-lg">Pin bền 1 năm</h3>
+                    <p className="text-muted-foreground text-sm sm:text-base">
                       Không lo hết pin giữa chừng.
                     </p>
                   </CardContent>
@@ -735,16 +736,16 @@ export default function HomePage() {
                 transition={{ duration: 0.2 }}
               >
                 <Card className="bg-gray-50 dark:bg-gray-900 shadow-sm">
-                  <CardContent className="p-6 space-y-3">
+                  <CardContent className="p-4 sm:p-5 md:p-6 space-y-2 sm:space-y-3">
                     <motion.div 
-                      className="h-12 w-12 rounded-lg flex items-center justify-center"
+                      className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg flex items-center justify-center"
                       whileHover={{ rotate: 360 }}
                       transition={{ duration: 0.5 }}
                     >
-                      <Sparkles className="h-6 w-6 text-primary" />
+                      <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                     </motion.div>
-                    <h3 className="font-bold text-lg">Tùy biến không giới hạn</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="font-bold text-base sm:text-lg">Tùy biến không giới hạn</h3>
+                    <p className="text-muted-foreground text-sm sm:text-base">
                       Hàng trăm tùy chọn màu, phụ kiện, khắc tên theo sở thích
                     </p>
                   </CardContent>
@@ -758,16 +759,16 @@ export default function HomePage() {
                 transition={{ duration: 0.2 }}
               >
                 <Card className="bg-gray-50 dark:bg-gray-900 shadow-sm">
-                  <CardContent className="p-6 space-y-3">
+                  <CardContent className="p-4 sm:p-5 md:p-6 space-y-2 sm:space-y-3">
                     <motion.div 
-                      className="h-12 w-12 rounded-lg flex items-center justify-center"
+                      className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg flex items-center justify-center"
                       whileHover={{ rotate: 360 }}
                       transition={{ duration: 0.5 }}
                     >
-                      <Heart className="h-6 w-6 text-primary" />
+                      <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                     </motion.div>
-                    <h3 className="font-bold text-lg">Bảo hành 6 tháng</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="font-bold text-base sm:text-lg">Bảo hành 6 tháng</h3>
+                    <p className="text-muted-foreground text-sm sm:text-base">
                       Hỗ trợ kỹ thuật trọn đời, đổi trả miễn phí trong 7 ngày
                     </p>
                   </CardContent>
@@ -779,20 +780,20 @@ export default function HomePage() {
       </section>
 
       {/* Products */}
-      <section className="py-12 md:py-16 lg:py-20">
-        <div className="container px-4">
+      <section className="py-8 sm:py-12 md:py-16 lg:py-20">
+        <div className="container px-4 sm:px-6">
           <ScrollAnimation direction="fade">
-            <div className="text-center mb-8 md:mb-12">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">
+            <div className="text-center mb-6 sm:mb-8 md:mb-12">
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 text-pink-500 px-2">
                 Sản phẩm của chúng tôi
               </h2>
-              <p className="text-muted-foreground text-base md:text-lg">
+              <p className="text-muted-foreground text-sm sm:text-base md:text-lg px-2">
                 Chọn mẫu phù hợp rồi bắt đầu thiết kế
               </p>
             </div>
           </ScrollAnimation>
 
-          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-5xl mx-auto">
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 max-w-5xl mx-auto">
             {featuredProducts.map((product: any, index: number) => (
               <StaggerItem key={product.id}>
                 <ProductCard
@@ -804,8 +805,8 @@ export default function HomePage() {
           </StaggerContainer>
 
           <ScrollAnimation direction="fade" delay={0.3}>
-            <div className="text-center mt-12">
-              <Button asChild size="lg" variant="outline">
+            <div className="text-center mt-8 sm:mt-10 md:mt-12">
+              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto text-sm sm:text-base">
                 <Link href="/products">
                   Xem tất cả {products.length} sản phẩm
                 </Link>
@@ -816,20 +817,20 @@ export default function HomePage() {
       </section>
 
       {/* Featured Designs */}
-      <section className="py-12 md:py-16 lg:py-20 bg-muted/40">
-        <div className="container px-4">
+      <section className="py-8 sm:py-12 md:py-16 lg:py-20 bg-muted/40">
+        <div className="container px-4 sm:px-6">
           <ScrollAnimation direction="fade">
-            <div className="text-center mb-8 md:mb-12">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">
+            <div className="text-center mb-6 sm:mb-8 md:mb-12">
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 text-pink-500 px-2">
                 Mẫu thiết kế nổi bật
               </h2>
-              <p className="text-muted-foreground text-base md:text-lg">
+              <p className="text-muted-foreground text-sm sm:text-base md:text-lg px-2">
                 Cảm hứng từ cộng đồng ARTEMIS
               </p>
             </div>
           </ScrollAnimation>
 
-          <StaggerContainer className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+          <StaggerContainer className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
             {templates.slice(0, 4).map((template: any) => (
               <StaggerItem key={template.id}>
                 <motion.div
@@ -838,17 +839,18 @@ export default function HomePage() {
                 >
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
                     <Link href={`/products`}>
-                      <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center p-6 relative">
+                      <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center p-4 sm:p-6 relative">
                         <Image 
                           src={template.preview} 
                           alt={template.name}
                           fill
-                          className="object-contain p-4"
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 25vw"
+                          className="object-contain p-2 sm:p-4"
                         />
                       </div>
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold mb-1 text-pink-500">{template.name}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                      <CardContent className="p-3 sm:p-4">
+                        <h3 className="font-semibold mb-1 text-pink-500 text-sm sm:text-base">{template.name}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                           {template.description}
                         </p>
                       </CardContent>
@@ -860,8 +862,8 @@ export default function HomePage() {
           </StaggerContainer>
 
           <ScrollAnimation direction="fade" delay={0.3}>
-            <div className="text-center mt-8">
-              <Button asChild size="lg">
+            <div className="text-center mt-6 sm:mt-8">
+              <Button asChild size="lg" className="w-full sm:w-auto text-sm sm:text-base">
                 <Link href="/products">Xem tất cả mẫu</Link>
               </Button>
             </div>
@@ -870,17 +872,17 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-12 md:py-16 lg:py-20">
-        <div className="container px-4">
+      <section className="py-8 sm:py-12 md:py-16 lg:py-20">
+        <div className="container px-4 sm:px-6">
           <ScrollAnimation direction="fade">
-            <div className="text-center mb-8 md:mb-12">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">
+            <div className="text-center mb-6 sm:mb-8 md:mb-12">
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 text-pink-500 px-2">
                 Phụ huynh nói gì về chúng tôi
               </h2>
             </div>
           </ScrollAnimation>
 
-          <StaggerContainer className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+          <StaggerContainer className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
             {[
               {
                 name: "Chị Hương",
@@ -907,13 +909,13 @@ export default function HomePage() {
                   transition={{ duration: 0.2 }}
                 >
                   <Card>
-                    <CardContent className="p-6">
-                      <p className="text-muted-foreground mb-4">
+                    <CardContent className="p-4 sm:p-5 md:p-6">
+                      <p className="text-muted-foreground mb-3 sm:mb-4 text-sm sm:text-base">
                         &ldquo;{testimonial.content}&rdquo;
                       </p>
                       <div>
-                        <p className="font-semibold">{testimonial.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-semibold text-sm sm:text-base">{testimonial.name}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {testimonial.role}
                         </p>
                       </div>
@@ -927,20 +929,21 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-primary text-primary-foreground">
-        <div className="container text-center">
+      <section className="py-12 sm:py-16 md:py-20 bg-primary text-primary-foreground">
+        <div className="container text-center px-4 sm:px-6">
           <ScrollAnimation direction="fade">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-pink-500">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-pink-500 px-2">
               Sẵn sàng bảo vệ con yêu?
             </h2>
-            <p className="text-lg mb-8 opacity-90">
+            <p className="text-sm sm:text-base md:text-lg mb-6 sm:mb-8 opacity-90 px-2">
               Bắt đầu thiết kế vòng tay độc nhất ngay hôm nay
             </p>
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              className="inline-block"
             >
-              <Button asChild size="lg" variant="secondary">
+              <Button asChild size="lg" variant="secondary" className="w-full sm:w-auto text-sm sm:text-base">
                 <Link href="/products">Khám phá ngay</Link>
               </Button>
             </motion.div>

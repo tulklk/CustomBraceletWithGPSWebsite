@@ -29,6 +29,8 @@ import { productsApi, BackendProduct } from "@/lib/api/products"
 import { ordersApi, ShippingAddress, ApplyVoucherResponse } from "@/lib/api/orders"
 import { provincesApi, Province, District, Ward } from "@/lib/api/provinces"
 import { cartApi } from "@/lib/api/cart"
+import { FRONTEND_BASE_URL } from "@/lib/constants"
+import { paymentService } from "@/lib/services/paymentService"
 
 const checkoutSchema = z.object({
   email: z.string().email("Email không hợp lệ").min(1, "Email là bắt buộc"),
@@ -411,55 +413,122 @@ export default function CheckoutPage() {
       } else if (data.paymentMethod === "PayOS") {
         // PayOS: Create payment link and redirect to PayOS
         try {
-          const baseUrl = window.location.origin
+          // Use environment variable for PayOS return/cancel URLs
+          // Falls back to production URL if not set
+          // In Next.js, NEXT_PUBLIC_* variables are available on both server and client
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || FRONTEND_BASE_URL
           const returnUrl = `${baseUrl}/payment/success?orderId=${order.id}`
           const cancelUrl = `${baseUrl}/payment/cancel?orderId=${order.id}`
+          
+          // Debug log
+          console.log("[Checkout] Using base URL:", baseUrl)
+          console.log("[Checkout] NEXT_PUBLIC_BASE_URL from env:", process.env.NEXT_PUBLIC_BASE_URL)
+
+          // ========== LOG PAYMENT REQUEST DETAILS ==========
+          console.log("========== PAYOS PAYMENT REQUEST ==========")
+          console.log("📦 Order Information:")
+          console.log("  - Order ID:", order.id)
+          console.log("  - Order Number:", order.orderNumber || "N/A")
+          console.log("  - Order Total Amount:", order.totalAmount || "N/A")
+          console.log("")
+          console.log("🔗 Payment URLs:")
+          console.log("  - Return URL:", returnUrl)
+          console.log("  - Cancel URL:", cancelUrl)
+          console.log("")
+          console.log("👤 User Information:")
+          console.log("  - Is Authenticated:", !!user?.accessToken)
+          console.log("  - User ID:", user?.id || "N/A")
+          console.log("  - User Email:", user?.email || "N/A")
+          console.log("")
+          console.log("📤 Using paymentService.createPayment")
+          console.log("===========================================")
 
           let paymentResult: any
           
           if (user?.accessToken) {
+            console.log("🔐 Creating payment link WITH authentication")
             paymentResult = await makeAuthenticatedRequest(async (token: string) => {
-              return await ordersApi.createPaymentLink(
-                order.id,
-                {
-                  provider: "PayOS",
-                  returnUrl: returnUrl,
-                  cancelUrl: cancelUrl,
-                },
-                token,
-                user.refreshToken
-              )
+              console.log("🔑 Using access token (length):", token?.length || 0)
+              try {
+                const result = await paymentService.createPayment(
+                  order.id,
+                  returnUrl,
+                  cancelUrl,
+                  token,
+                  user.refreshToken,
+                  (newToken: string) => {
+                    // Token refresh handled by makeAuthenticatedRequest
+                  }
+                )
+                console.log("✅ Payment link response (authenticated):", result)
+                return result
+              } catch (error: any) {
+                console.error("❌ Payment service error (authenticated):", error)
+                console.error("Error message:", error.message)
+                console.error("Error statusCode:", error.statusCode)
+                throw error
+              }
             })
           } else {
-            paymentResult = await ordersApi.createPaymentLinkWithoutAuth(
-              order.id,
-              {
-                provider: "PayOS",
-                returnUrl: returnUrl,
-                cancelUrl: cancelUrl,
-              }
-            )
+            console.log("👻 Creating payment link WITHOUT authentication (Guest)")
+            try {
+              paymentResult = await paymentService.createPayment(
+                order.id,
+                returnUrl,
+                cancelUrl
+              )
+              console.log("✅ Payment link response (guest):", paymentResult)
+            } catch (error: any) {
+              console.error("❌ Payment service error (guest):", error)
+              console.error("Error message:", error.message)
+              console.error("Error statusCode:", error.statusCode)
+              throw error
+            }
           }
           
-          if (paymentResult.paymentUrl) {
-            // Redirect to PayOS checkout page
-            window.location.href = paymentResult.paymentUrl
-            return
+          // Check if paymentResult is valid
+          if (!paymentResult) {
+            throw new Error("Không nhận được response từ server")
+          }
+
+          // Check for paymentUrl in response
+          // paymentService already normalizes paymentUrl field
+          const paymentUrl = paymentResult.paymentUrl
+          
+          if (paymentUrl && typeof paymentUrl === "string") {
+            console.log("Redirecting to PayOS payment page:", paymentUrl)
+            // Redirect to PayOS checkout page (external URL, use window.location.href)
+            // This will show the QR code page
+            window.location.href = paymentUrl
+            return // Important: return immediately to prevent any further execution
           } else {
-            throw new Error("Không nhận được payment URL từ PayOS")
+            console.error("Invalid payment result structure:", paymentResult)
+            throw new Error(`Không nhận được payment URL từ PayOS. Response: ${JSON.stringify(paymentResult)}`)
           }
         } catch (paymentError: any) {
           console.error("Payment processing error:", paymentError)
+          console.error("Error details:", {
+            message: paymentError.message,
+            originalMessage: paymentError.originalMessage,
+            statusCode: paymentError.statusCode,
+            response: paymentError,
+          })
+          
+          // paymentService already converts errors to user-friendly messages
+          // Use the error message directly (it's already user-friendly)
+          const errorMessage = paymentError.message || "Không thể tạo link thanh toán. Vui lòng thử lại sau."
+          
           toast({
-            title: "Lỗi khi tạo payment link",
-            description: paymentError.message || "Vui lòng thử lại sau",
+            title: "Lỗi khi tạo link thanh toán",
+            description: errorMessage,
             variant: "destructive",
           })
-          // Still redirect to order page even if payment link creation fails
+          // Redirect to account page to view order details if payment link creation fails
+          // But don't auto-open order detail dialog - let user click manually
           if (user?.accessToken) {
-            router.push(`/account?order=${order.id}`)
+            router.push(`/account?tab=orders`)
           } else {
-            router.push(`/?order=${order.id}`)
+            router.push(`/`)
           }
         }
       }

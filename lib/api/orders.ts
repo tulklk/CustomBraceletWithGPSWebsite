@@ -338,6 +338,29 @@ export const ordersApi = {
     refreshToken?: string,
     onTokenRefresh?: (newToken: string) => void
   ): Promise<PaymentResponse> {
+    // ========== LOG AUTHENTICATED PAYMENT REQUEST ==========
+    console.log("========== [ordersApi] AUTHENTICATED PAYMENT REQUEST ==========")
+    console.log("📍 API Endpoint:", `${API_BASE_URL}/api/Orders/${orderId}/payment`)
+    console.log("🔧 HTTP Method: POST")
+    console.log("")
+    console.log("📦 Request Details:")
+    console.log("  - Order ID:", orderId)
+    console.log("  - Provider:", data.provider)
+    console.log("  - Return URL:", data.returnUrl)
+    console.log("  - Cancel URL:", data.cancelUrl)
+    console.log("")
+    console.log("🔐 Authentication:")
+    console.log("  - Access Token (length):", accessToken?.length || 0)
+    console.log("  - Has Refresh Token:", !!refreshToken)
+    console.log("")
+    console.log("📤 Request Headers:")
+    console.log("  - Content-Type: application/json")
+    console.log("  - Authorization: Bearer [TOKEN]")
+    console.log("")
+    console.log("📋 Request Body:")
+    console.log(JSON.stringify(data, null, 2))
+    console.log("=============================================================")
+    
     const response = await fetchWithAuth(`${API_BASE_URL}/api/Orders/${orderId}/payment`, {
       method: "POST",
       headers: {
@@ -349,7 +372,23 @@ export const ordersApi = {
       onTokenRefresh,
     })
 
-    return handleResponse<PaymentResponse>(response)
+    console.log("📥 Response Status:", response.status)
+    console.log("📥 Response Headers:", Object.fromEntries(response.headers.entries()))
+
+    const result = await handleResponse<PaymentResponse>(response)
+    console.log("✅ [ordersApi] Authenticated payment link creation success:")
+    console.log(JSON.stringify(result, null, 2))
+    
+    // Validate response structure
+    if (!result.paymentUrl && !result.payment_url && !result.url) {
+      console.error("❌ [ordersApi] Invalid payment response - missing paymentUrl:", result)
+      throw {
+        message: "Invalid payment response: missing paymentUrl",
+        statusCode: 500,
+      }
+    }
+    
+    return result
   },
 
   /**
@@ -360,6 +399,27 @@ export const ordersApi = {
     orderId: string,
     data: PaymentRequest
   ): Promise<PaymentResponse> {
+    // ========== LOG GUEST PAYMENT REQUEST ==========
+    console.log("========== [ordersApi] GUEST PAYMENT REQUEST ==========")
+    console.log("📍 API Endpoint:", `/api/guest/orders/${orderId}/payment`)
+    console.log("🔧 HTTP Method: POST")
+    console.log("")
+    console.log("📦 Request Details:")
+    console.log("  - Order ID:", orderId)
+    console.log("  - Provider:", data.provider)
+    console.log("  - Return URL:", data.returnUrl)
+    console.log("  - Cancel URL:", data.cancelUrl)
+    console.log("")
+    console.log("🔐 Authentication: NONE (Guest)")
+    console.log("")
+    console.log("📤 Request Headers:")
+    console.log("  - Content-Type: application/json")
+    console.log("  - accept: application/json")
+    console.log("")
+    console.log("📋 Request Body:")
+    console.log(JSON.stringify(data, null, 2))
+    console.log("=====================================================")
+    
     // Use Next.js API route as proxy to bypass HTTP/2 protocol errors
     const response = await fetch(`/api/guest/orders/${orderId}/payment`, {
       method: "POST",
@@ -370,12 +430,54 @@ export const ordersApi = {
       body: JSON.stringify(data),
     })
 
+    console.log("📥 [ordersApi] Payment link API response status:", response.status)
+    console.log("📥 [ordersApi] Payment link API response headers:", Object.fromEntries(response.headers.entries()))
+
     if (!response.ok) {
-      const errorData = await response.json()
+      let errorData: any
+      try {
+        const errorText = await response.text()
+        console.error("❌ [ordersApi] Payment link error response text:", errorText)
+        try {
+          errorData = JSON.parse(errorText)
+        } catch {
+          errorData = { message: errorText || `HTTP error! status: ${response.status}` }
+        }
+      } catch (e) {
+        errorData = { 
+          message: `Failed to parse error response: ${e instanceof Error ? e.message : String(e)}`,
+          statusCode: response.status 
+        }
+      }
+      console.error("❌ [ordersApi] Payment link creation error:", errorData)
       throw { ...errorData, statusCode: response.status }
     }
 
-    return await response.json()
+    // Parse response
+    const contentType = response.headers.get("content-type")
+    if (contentType && contentType.includes("application/json")) {
+      const result = await response.json()
+      console.log("✅ [ordersApi] Payment link creation success:")
+      console.log(JSON.stringify(result, null, 2))
+      
+      // Validate response structure
+      if (!result.paymentUrl && !result.payment_url && !result.url) {
+        console.error("❌ [ordersApi] Invalid payment response - missing paymentUrl:", result)
+        throw {
+          message: "Invalid payment response: missing paymentUrl",
+          statusCode: 500,
+        }
+      }
+      
+      return result as PaymentResponse
+    } else {
+      const textData = await response.text()
+      console.error("❌ [ordersApi] Unexpected response format (not JSON):", textData.substring(0, 200))
+      throw {
+        message: `Unexpected response format from server: ${textData.substring(0, 100)}`,
+        statusCode: 500,
+      }
+    }
   },
 
   /**

@@ -399,50 +399,50 @@ export default function ProductDetailPage() {
     : 0
 
   return (
-    <div className="container py-6">
+    <div className="container py-4 sm:py-6 px-4 sm:px-6">
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-        <Link href="/" className="hover:text-primary">Trang chủ</Link>
-        <ChevronRight className="h-4 w-4" />
-        <Link href="/products" className="hover:text-primary">Sản phẩm</Link>
-        <ChevronRight className="h-4 w-4" />
-        <span className="text-primary font-medium">{product.name}</span>
+      <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 overflow-x-auto">
+        <Link href="/" className="hover:text-primary whitespace-nowrap">Trang chủ</Link>
+        <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+        <Link href="/products" className="hover:text-primary whitespace-nowrap">Sản phẩm</Link>
+        <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+        <span className="text-primary font-medium truncate">{product.name}</span>
       </div>
 
       {/* Product Detail Layout */}
-      <div className="grid lg:grid-cols-2 gap-8 mb-12">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12">
         {/* Left: Image Gallery or 2D/3D Preview */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {/* Toggle Header - Show for all products if has images */}
           {images.length > 0 && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors bg-primary text-primary-foreground">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <span className="inline-flex items-center rounded-full border px-2 sm:px-2.5 py-0.5 text-xs font-semibold transition-colors bg-primary text-primary-foreground">
                   {previewMode === "2d" ? "2D Preview" : "3D Preview"}
                 </span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">
                   {previewMode === "2d" ? "Xem thiết kế 2D" : "Trải nghiệm 3D tương tác"}
                 </span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <Button
                   variant={previewMode === "2d" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setPreviewMode("2d")}
-                  className={previewMode === "2d" ? "bg-primary" : ""}
+                  className={`flex-1 sm:flex-initial ${previewMode === "2d" ? "bg-primary" : ""}`}
                 >
-                  <ImageIcon className="h-4 w-4 mr-2" />
-                  2D
+                  <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">2D</span>
                 </Button>
                 {hasCustomizer && (
                   <Button
                     variant={previewMode === "3d" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setPreviewMode("3d")}
-                    className={previewMode === "3d" ? "bg-primary" : ""}
+                    className={`flex-1 sm:flex-initial ${previewMode === "3d" ? "bg-primary" : ""}`}
                   >
-                    <Box className="h-4 w-4 mr-2" />
-                    3D
+                    <Box className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">3D</span>
                   </Button>
                 )}
               </div>
@@ -453,7 +453,7 @@ export default function ProductDetailPage() {
           <div className="relative">
             {previewMode === "2d" ? (
               /* 2D Preview: Show images from Cloudinary (imageUrls) */
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Main Image */}
                 <div className="relative aspect-square bg-transparent rounded-lg overflow-hidden">
                   {images.length > 0 ? (
@@ -461,12 +461,13 @@ export default function ProductDetailPage() {
                       src={images[selectedImageIndex]}
                       alt={product.name}
                       fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 50vw"
                       className="object-contain"
                       priority
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <ImageIcon className="h-24 w-24 text-muted-foreground" />
+                      <ImageIcon className="h-16 w-16 sm:h-24 sm:w-24 text-muted-foreground" />
                     </div>
                   )}
                   {images.length > 1 && (
@@ -474,24 +475,24 @@ export default function ProductDetailPage() {
                       <Button
                         variant="outline"
                         size="icon"
-                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm"
+                        className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm h-8 w-8 sm:h-10 sm:w-10"
                         onClick={() => setSelectedImageIndex((prev) => 
                           prev > 0 ? prev - 1 : images.length - 1
                         )}
                       >
-                        <ArrowLeft className="h-4 w-4" />
+                        <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm"
+                        className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm h-8 w-8 sm:h-10 sm:w-10"
                         onClick={() => setSelectedImageIndex((prev) => 
                           prev < images.length - 1 ? prev + 1 : 0
                         )}
                       >
-                        <ArrowLeft className="h-4 w-4 rotate-180" />
+                        <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 rotate-180" />
                       </Button>
-                      <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                      <div className="absolute bottom-2 sm:bottom-4 right-2 sm:right-4 bg-black/50 text-white px-2 py-1 rounded text-xs sm:text-sm">
                         {selectedImageIndex + 1}/{images.length}
                       </div>
                     </>
@@ -500,7 +501,7 @@ export default function ProductDetailPage() {
                 
                 {/* Thumbnails */}
                 {images.length > 1 && (
-                  <div className="flex gap-2 overflow-x-auto pb-2">
+                  <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 sm:mx-0 px-4 sm:px-0">
                     {images.map((image, index) => (
                       <button
                         key={index}
@@ -508,7 +509,7 @@ export default function ProductDetailPage() {
                           setSelectedImageIndex(index)
                           setPreviewMode("2d")
                         }}
-                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                        className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-colors ${
                           selectedImageIndex === index 
                             ? "border-primary" 
                             : "border-transparent hover:border-muted-foreground"
@@ -553,17 +554,17 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Right: Product Info */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Product Name */}
-          <h1 className="text-3xl md:text-4xl font-bold">{product.name}</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">{product.name}</h1>
           
           {/* Rating */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  className={`h-5 w-5 ${
+                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
                     star <= Math.floor(rating.average)
                       ? "fill-yellow-400 text-yellow-400"
                       : star <= rating.average
@@ -573,10 +574,10 @@ export default function ProductDetailPage() {
                 />
               ))}
             </div>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs sm:text-sm text-muted-foreground">
               ({rating.count} đánh giá)
             </span>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs sm:text-sm text-muted-foreground">
               Đã bán {rating.sold}
             </span>
           </div>
@@ -584,9 +585,9 @@ export default function ProductDetailPage() {
           {/* Color Selection */}
           {colors.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="font-medium">Màu sắc:</span>
-                <span className="text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                <span className="font-medium text-sm sm:text-base">Màu sắc:</span>
+                <span className="text-xs sm:text-sm text-muted-foreground">
                   {selectedColor || colors[0]}
                 </span>
               </div>
@@ -597,7 +598,7 @@ export default function ProductDetailPage() {
                     variant={selectedColor === color ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedColor(color)}
-                    className={selectedColor === color ? "bg-primary" : ""}
+                    className={`text-xs sm:text-sm ${selectedColor === color ? "bg-primary" : ""}`}
                   >
                     {color}
                   </Button>
@@ -607,19 +608,19 @@ export default function ProductDetailPage() {
           )}
           
           {/* Price */}
-          <div className="space-y-2">
-            <div className="text-sm text-muted-foreground">Giá khuyến mãi:</div>
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-primary">
+          <div className="space-y-1 sm:space-y-2">
+            <div className="text-xs sm:text-sm text-muted-foreground">Giá khuyến mãi:</div>
+            <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+              <span className="text-2xl sm:text-3xl font-bold text-primary">
                 {formatCurrency(product.price)}
               </span>
               {product.originalPrice && product.originalPrice > product.price && (
                 <>
-                  <span className="text-xl text-muted-foreground line-through">
+                  <span className="text-lg sm:text-xl text-muted-foreground line-through">
                     {formatCurrency(product.originalPrice)}
                   </span>
                   {discount > 0 && (
-                    <span className="text-sm text-green-600">
+                    <span className="text-xs sm:text-sm text-green-600">
                       Tiết kiệm: {formatCurrency(discount)}
                     </span>
                   )}
@@ -630,15 +631,15 @@ export default function ProductDetailPage() {
           
           {/* Additional Benefits */}
           <div>
-            <div className="text-sm font-medium mb-2">Ưu đãi thêm:</div>
-            <div className="flex items-center gap-2 text-sm text-green-600">
+            <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2">Ưu đãi thêm:</div>
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600">
               <span>✓</span>
               <span>Freeship khi thanh toán trước đơn hàng</span>
             </div>
           </div>
           
           {/* Brand & Status */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
             {product.brand && (
               <div>
                 <span className="text-muted-foreground">Thương hiệu: </span>
@@ -657,15 +658,16 @@ export default function ProductDetailPage() {
           
           {/* Quantity */}
           <div>
-            <div className="text-sm font-medium mb-2">Số lượng:</div>
-            <div className="flex items-center gap-3">
+            <div className="text-xs sm:text-sm font-medium mb-2">Số lượng:</div>
+            <div className="flex items-center gap-2 sm:gap-3">
               <Button
                 variant="outline"
                 size="icon"
+                className="h-9 w-9 sm:h-10 sm:w-10"
                 onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
                 disabled={quantity <= 1}
               >
-                <Minus className="h-4 w-4" />
+                <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
               <Input
                 type="number"
@@ -676,56 +678,58 @@ export default function ProductDetailPage() {
                   const val = parseInt(e.target.value) || 1
                   setQuantity(Math.max(1, Math.min(val, product.stockQuantity)))
                 }}
-                className="w-20 text-center"
+                className="w-16 sm:w-20 text-center text-sm sm:text-base"
               />
               <Button
                 variant="outline"
                 size="icon"
+                className="h-9 w-9 sm:h-10 sm:w-10"
                 onClick={() => setQuantity((prev) => 
                   Math.min(product.stockQuantity, prev + 1)
                 )}
                 disabled={quantity >= product.stockQuantity}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>
           
           {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 pt-2 sm:pt-4">
             <Button
               onClick={handleBuyNow}
-              className="w-full bg-white border-2 border-primary text-primary hover:bg-pink-50 hover:border-primary/90"
+              className="w-full bg-white border-2 border-primary text-primary hover:bg-pink-50 hover:border-primary/90 text-sm sm:text-base"
               size="lg"
             >
               MUA NGAY
             </Button>
             <Button
               onClick={handleAddToCart}
-              className="w-full bg-primary hover:bg-primary/90"
+              className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base"
               size="lg"
             >
-              <ShoppingCart className="h-5 w-5 mr-2" />
-              THÊM VÀO GIỎ HÀNG
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+              <span className="hidden sm:inline">THÊM VÀO GIỎ HÀNG</span>
+              <span className="sm:hidden">THÊM VÀO GIỎ</span>
             </Button>
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full text-xs sm:text-sm"
               onClick={() => {
                 window.open("https://zalo.me/your-zalo-id", "_blank")
               }}
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
+              <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
               Tư vấn qua Zalo
             </Button>
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full text-xs sm:text-sm"
               onClick={() => {
                 window.open("https://facebook.com/your-page", "_blank")
               }}
             >
-              <Facebook className="h-4 w-4 mr-2" />
+              <Facebook className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
               Tư vấn qua Facebook
             </Button>
           </div>
@@ -734,10 +738,10 @@ export default function ProductDetailPage() {
 
       {/* Product Images Gallery */}
       {product.images && product.images.length > 0 && (
-        <div className="mb-8">
-          <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-4 sm:mx-0 px-4 sm:px-0">
             {product.images.map((image, index) => (
-              <div key={index} className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border-2 border-border">
+              <div key={index} className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border-2 border-border">
                 <Image
                   src={image}
                   alt={`${product.name} ${index + 1}`}
@@ -751,27 +755,28 @@ export default function ProductDetailPage() {
         </div>
       )}
 
-      <Tabs defaultValue="details" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="details">CHI TIẾT SẢN PHẨM</TabsTrigger>
-          <TabsTrigger value="reviews">ĐÁNH GIÁ ({reviews.length})</TabsTrigger>
+      <Tabs defaultValue="details" className="space-y-4 sm:space-y-6">
+        <TabsList className="grid w-full max-w-full sm:max-w-md grid-cols-2">
+          <TabsTrigger value="details" className="text-xs sm:text-sm">CHI TIẾT SẢN PHẨM</TabsTrigger>
+          <TabsTrigger value="reviews" className="text-xs sm:text-sm">ĐÁNH GIÁ ({reviews.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="space-y-6">
+        <TabsContent value="details" className="space-y-4 sm:space-y-6">
           <div className="prose max-w-none">
-            <h2 className="text-2xl font-semibold mb-4">1. Giới thiệu {product.name}</h2>
-            <div className="text-muted-foreground whitespace-pre-line">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 sm:mb-4">1. Giới thiệu {product.name}</h2>
+            <div className="text-sm sm:text-base text-muted-foreground whitespace-pre-line leading-relaxed">
               {product.description || "Không có mô tả chi tiết."}
             </div>
           </div>
           
           {product.images && product.images.length > 0 && (
-            <div className="flex justify-center my-8">
+            <div className="flex justify-center my-6 sm:my-8">
               <div className="relative w-full max-w-2xl aspect-square">
                 <Image
                   src={product.images[0]}
                   alt={product.name}
                   fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 768px"
                   className="object-contain rounded-lg"
                 />
               </div>
@@ -780,37 +785,37 @@ export default function ProductDetailPage() {
           
           {/* Only show specs/features if product has them (for customizer products) */}
           {(product as any).specs || (product as any).features ? (
-            <div className="grid md:grid-cols-2 gap-8 mt-8">
+            <div className="grid sm:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
               {(product as any).specs && (
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4 text-primary">Thông số kỹ thuật</h2>
-                  <div className="space-y-3">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 sm:mb-4 text-primary">Thông số kỹ thuật</h2>
+                  <div className="space-y-2 sm:space-y-3">
                     {(product as any).specs.waterproof && (
-                      <div className="flex justify-between py-2 border-b">
+                      <div className="flex justify-between items-center py-2 border-b text-sm sm:text-base">
                         <span className="text-muted-foreground">Chống nước:</span>
-                        <Badge>{(product as any).specs.waterproof}</Badge>
+                        <Badge className="text-xs sm:text-sm">{(product as any).specs.waterproof}</Badge>
                       </div>
                     )}
                     {(product as any).specs.battery && (
-                      <div className="flex justify-between py-2 border-b">
+                      <div className="flex justify-between items-center py-2 border-b text-sm sm:text-base">
                         <span className="text-muted-foreground">Pin:</span>
                         <span>{(product as any).specs.battery}</span>
                       </div>
                     )}
                     {(product as any).specs.gps !== undefined && (
-                      <div className="flex justify-between py-2 border-b">
+                      <div className="flex justify-between items-center py-2 border-b text-sm sm:text-base">
                         <span className="text-muted-foreground">GPS:</span>
                         <span>{(product as any).specs.gps ? "Có" : "Không"}</span>
                       </div>
                     )}
                     {(product as any).specs.simCard !== undefined && (
-                      <div className="flex justify-between py-2 border-b">
+                      <div className="flex justify-between items-center py-2 border-b text-sm sm:text-base">
                         <span className="text-muted-foreground">SIM:</span>
                         <span>{(product as any).specs.simCard ? "Có" : "Không"}</span>
                       </div>
                     )}
                     {(product as any).specs.weight && (
-                      <div className="flex justify-between py-2 border-b">
+                      <div className="flex justify-between items-center py-2 border-b text-sm sm:text-base">
                         <span className="text-muted-foreground">Trọng lượng:</span>
                         <span>{(product as any).specs.weight}</span>
                       </div>
@@ -821,11 +826,11 @@ export default function ProductDetailPage() {
 
               {(product as any).features && (product as any).features.length > 0 && (
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4">Tính năng</h2>
-                  <ul className="space-y-2">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 sm:mb-4">Tính năng</h2>
+                  <ul className="space-y-1.5 sm:space-y-2">
                     {(product as any).features.map((feature: string, index: number) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="text-primary mt-1">✓</span>
+                      <li key={index} className="flex items-start gap-2 text-sm sm:text-base">
+                        <span className="text-primary mt-1 flex-shrink-0">✓</span>
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -858,36 +863,36 @@ export default function ProductDetailPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="reviews" className="space-y-6">
-          <div className="grid md:grid-cols-3 gap-8">
+        <TabsContent value="reviews" className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {/* Rating Summary */}
-            <div className="text-center">
-              <div className="text-5xl font-bold mb-2">0.0</div>
-              <div className="flex justify-center gap-1 mb-2">
+            <div className="text-center sm:col-span-2 md:col-span-1">
+              <div className="text-4xl sm:text-5xl font-bold mb-2">0.0</div>
+              <div className="flex justify-center gap-0.5 sm:gap-1 mb-2">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="h-6 w-6 text-muted fill-muted" />
+                  <Star key={star} className="h-5 w-5 sm:h-6 sm:w-6 text-muted fill-muted" />
                 ))}
               </div>
-              <div className="text-sm text-muted-foreground mb-1">ĐÁNH GIÁ TRUNG BÌNH</div>
-              <div className="text-sm text-muted-foreground">{reviews.length} đánh giá</div>
+              <div className="text-xs sm:text-sm text-muted-foreground mb-1">ĐÁNH GIÁ TRUNG BÌNH</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">{reviews.length} đánh giá</div>
             </div>
 
             {/* Rating Breakdown */}
-            <div className="space-y-2">
+            <div className="space-y-2 sm:col-span-2 md:col-span-1">
               {[5, 4, 3, 2, 1].map((rating) => {
                 const count = reviews.filter((r) => r.rating === rating).length
                 const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
                 return (
                   <div key={rating} className="flex items-center gap-2">
-                    <span className="w-8 text-sm">{rating}★</span>
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                    <span className="w-6 sm:w-8 text-xs sm:text-sm flex-shrink-0">{rating}★</span>
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden min-w-0">
                       <div
                         className="h-full bg-primary"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
-                    <span className="text-sm text-muted-foreground w-16 text-right">
-                      {percentage.toFixed(0)}% | {count} đánh giá
+                    <span className="text-xs sm:text-sm text-muted-foreground w-20 sm:w-24 text-right flex-shrink-0">
+                      {percentage.toFixed(0)}% | {count}
                     </span>
                   </div>
                 )
@@ -895,15 +900,15 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Rate Button */}
-            <div className="flex items-center justify-center">
-              <Button className="bg-primary hover:bg-primary/90">
+            <div className="flex items-center justify-center sm:col-span-2 md:col-span-1">
+              <Button className="bg-primary hover:bg-primary/90 w-full sm:w-auto text-xs sm:text-sm">
                 ĐÁNH GIÁ NGAY
               </Button>
             </div>
           </div>
 
           {reviews.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-8 sm:py-12 text-sm sm:text-base text-muted-foreground">
               Chưa có đánh giá nào cho sản phẩm này.
             </div>
           )}
@@ -912,16 +917,16 @@ export default function ProductDetailPage() {
 
       {/* Similar Products */}
       {similarProducts.length > 0 && (
-        <div className="mt-16">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">SẢN PHẨM TƯƠNG TỰ</h2>
-            <Button variant="outline" asChild>
+        <div className="mt-8 sm:mt-12 md:mt-16">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold">SẢN PHẨM TƯƠNG TỰ</h2>
+            <Button variant="outline" asChild size="sm" className="w-full sm:w-auto text-xs sm:text-sm">
               <Link href="/products">
-                Xem thêm <ChevronUp className="h-4 w-4 ml-2 rotate-[-90deg]" />
+                Xem thêm <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 ml-2 rotate-[-90deg]" />
               </Link>
             </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
             {similarProducts.map((similarProduct) => (
               <ProductCard key={similarProduct.id} product={similarProduct} />
             ))}
@@ -930,18 +935,18 @@ export default function ProductDetailPage() {
       )}
 
       {/* Comments Section */}
-      <div className="mt-16">
-        <h2 className="text-2xl font-bold mb-6">Bình luận</h2>
+      <div className="mt-8 sm:mt-12 md:mt-16">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Bình luận</h2>
         
         {/* Comment Form */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
+        <Card className="mb-4 sm:mb-6">
+          <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
             <Textarea
               placeholder={user ? "Viết bình luận của bạn..." : "Đăng nhập để bình luận"}
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               disabled={!user}
-              className="min-h-[100px] mb-4"
+              className="min-h-[80px] sm:min-h-[100px] mb-3 sm:mb-4 text-sm sm:text-base"
             />
             <div className="flex justify-end">
               <Button
@@ -972,8 +977,10 @@ export default function ProductDetailPage() {
                   })
                 }}
                 disabled={!commentText.trim()}
+                size="sm"
+                className="text-xs sm:text-sm"
               >
-                <Send className="h-4 w-4 mr-2" />
+                <Send className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                 Gửi bình luận
               </Button>
             </div>
@@ -981,7 +988,7 @@ export default function ProductDetailPage() {
         </Card>
 
         {/* Comments List */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {comments.map((comment) => (
             <CommentItem
               key={comment.id}
@@ -997,24 +1004,24 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Newsletter Subscription */}
-      <Card className="mt-16 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-        <CardContent className="pt-12 pb-12 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <Mail className="h-8 w-8 text-primary" />
+      <Card className="mt-8 sm:mt-12 md:mt-16 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+        <CardContent className="pt-8 sm:pt-12 pb-8 sm:pb-12 text-center px-4 sm:px-6">
+          <div className="flex justify-center mb-3 sm:mb-4">
+            <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Mail className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-2">Đăng ký nhận thông tin</h2>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+          <h2 className="text-xl sm:text-2xl font-bold mb-2">Đăng ký nhận thông tin</h2>
+          <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto">
             Nhận các chương trình khuyến mãi, thông báo sản phẩm mới và các ưu đãi khác dành riêng cho bạn.
           </p>
-          <div className="flex gap-2 max-w-md mx-auto">
+          <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
             <Input
               type="email"
               placeholder="Nhập Email của bạn"
               value={newsletterEmail}
               onChange={(e) => setNewsletterEmail(e.target.value)}
-              className="flex-1"
+              className="flex-1 text-sm sm:text-base"
             />
             <Button
               onClick={() => {
@@ -1031,7 +1038,7 @@ export default function ProductDetailPage() {
                 })
                 setNewsletterEmail("")
               }}
-              className="bg-primary hover:bg-primary/90"
+              className="bg-primary hover:bg-primary/90 w-full sm:w-auto text-xs sm:text-sm"
             >
               ĐĂNG KÝ
             </Button>

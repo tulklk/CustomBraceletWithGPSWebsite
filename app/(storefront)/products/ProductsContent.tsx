@@ -9,13 +9,15 @@ import { Pagination } from "@/components/Pagination"
 import { Product } from "@/lib/types"
 import { productsApi, BackendProduct } from "@/lib/api/products"
 import { categoriesApi, Category } from "@/lib/api/categories"
-import { ChevronRight } from "lucide-react"
-
-const initialFilters: FilterState = {
-  priceRange: [500000, 600000],
-  productTypes: [],
-  sortBy: "default",
-}
+import { ChevronRight, SlidersHorizontal } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 
 const ITEMS_PER_PAGE = 6
 
@@ -28,10 +30,16 @@ export function ProductsContent() {
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
-  const [filters, setFilters] = useState<FilterState>(initialFilters)
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]) // Will be calculated from products
+  const [filters, setFilters] = useState<FilterState>({
+    priceRange: [0, 10000000], // Will be updated after products load
+    productTypes: [],
+    sortBy: "default",
+  })
   const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
 
   // Fetch categories and products
   useEffect(() => {
@@ -57,6 +65,22 @@ export function ProductsContent() {
         setBackendProducts(backendProductsData.filter((p: BackendProduct) => p.isActive))
         
         setProducts(productsData)
+        
+        // Calculate price range from all products
+        if (productsData.length > 0) {
+          const prices = productsData.map(p => p.priceFrom).filter(p => p > 0)
+          if (prices.length > 0) {
+            const minPrice = Math.floor(Math.min(...prices) / 10000) * 10000 // Round down to nearest 10k
+            const maxPrice = Math.ceil(Math.max(...prices) / 10000) * 10000 // Round up to nearest 10k
+            const calculatedRange: [number, number] = [Math.max(0, minPrice - 50000), maxPrice + 50000] // Add some padding
+            setPriceRange(calculatedRange)
+            // Update filters with calculated range
+            setFilters(prev => ({
+              ...prev,
+              priceRange: calculatedRange,
+            }))
+          }
+        }
       } catch (err: any) {
         console.error("Error fetching data:", err)
         setError(err.message || "Không thể tải dữ liệu")
@@ -80,34 +104,48 @@ export function ProductsContent() {
       setSelectedCategory(category || null)
     } else {
       setSelectedCategory(null)
+      // When no category param, reset filters to show all products
+      if (priceRange[0] !== 0 || priceRange[1] !== 10000000) {
+        setFilters(prev => ({
+          ...prev,
+          priceRange: priceRange,
+          productTypes: [],
+        }))
+      }
     }
-  }, [categoryParam, categories])
+  }, [categoryParam, categories, priceRange])
 
   // Apply filters including category filter
   useEffect(() => {
     let result = [...products]
 
-    // Category filter - filter by categoryId from backend products
-    if (selectedCategory && selectedCategory.id) {
-      const categoryProductIds = backendProducts
-        .filter((p) => p.categoryId === selectedCategory.id)
-        .map((p) => p.id)
-      result = result.filter((p) => categoryProductIds.includes(p.id))
-    } else if (selectedCategory && !selectedCategory.id) {
-      // Fallback: filter by category name if no id
-      // This is a workaround - ideally categories should have ids
-      result = result.filter((p) => {
-        const backendProduct = backendProducts.find((bp) => bp.id === p.id)
-        return backendProduct?.categoryId === selectedCategory.name
-      })
+    // Category filter - only apply if a category is selected
+    // If no category selected (selectedCategory is null), show all products
+    if (selectedCategory) {
+      if (selectedCategory.id) {
+        const categoryProductIds = backendProducts
+          .filter((p) => p.categoryId === selectedCategory.id)
+          .map((p) => p.id)
+        result = result.filter((p) => categoryProductIds.includes(p.id))
+      } else {
+        // Fallback: filter by category name if no id
+        // This is a workaround - ideally categories should have ids
+        result = result.filter((p) => {
+          const backendProduct = backendProducts.find((bp) => bp.id === p.id)
+          return backendProduct?.categoryId === selectedCategory.name
+        })
+      }
     }
+    // If selectedCategory is null, don't filter by category (show all)
 
-    // Price filter
-    result = result.filter(
-      (p) =>
-        p.priceFrom >= filters.priceRange[0] &&
-        p.priceFrom <= filters.priceRange[1]
-    )
+    // Price filter - only apply if price range is not the full range
+    if (filters.priceRange[0] !== priceRange[0] || filters.priceRange[1] !== priceRange[1]) {
+      result = result.filter(
+        (p) =>
+          p.priceFrom >= filters.priceRange[0] &&
+          p.priceFrom <= filters.priceRange[1]
+      )
+    }
 
     // Product type filter
     if (filters.productTypes.length > 0) {
@@ -140,10 +178,14 @@ export function ProductsContent() {
 
     setFilteredProducts(result)
     setCurrentPage(1) // Reset to first page when filters change
-  }, [filters, products, selectedCategory, backendProducts])
+  }, [filters, products, selectedCategory, backendProducts, priceRange])
 
   const handleReset = () => {
-    setFilters(initialFilters)
+    setFilters({
+      priceRange: priceRange,
+      productTypes: [],
+      sortBy: "default",
+    })
     setCurrentPage(1)
   }
 
@@ -207,26 +249,69 @@ export function ProductsContent() {
         )}
       </div>
 
-      <div className="mb-8 md:mb-12">
-        <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-pink-500">
-          {selectedCategory ? selectedCategory.name.toUpperCase() : "Sản phẩm vòng tay ARTEMIS"}
-        </h1>
-        <p className="text-muted-foreground text-base md:text-lg">
-          {selectedCategory 
-            ? `Danh sách sản phẩm thuộc danh mục ${selectedCategory.name}`
-            : "Chọn sản phẩm phù hợp và bắt đầu tùy biến theo phong cách của bé"
-          }
-        </p>
+      <div className="mb-6 md:mb-12">
+        <div className="flex items-start justify-between gap-4 mb-4 md:mb-6">
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 text-pink-500">
+              {selectedCategory ? selectedCategory.name.toUpperCase() : "Sản phẩm vòng tay ARTEMIS"}
+            </h1>
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg">
+              {selectedCategory 
+                ? `Danh sách sản phẩm thuộc danh mục ${selectedCategory.name}`
+                : "Chọn sản phẩm phù hợp và bắt đầu tùy biến theo phong cách của bé"
+              }
+            </p>
+          </div>
+          
+          {/* Filter Button - Mobile Only */}
+          <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                className="lg:hidden flex items-center gap-2"
+                aria-label="Mở bộ lọc"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <span className="hidden sm:inline">Lọc</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[85vw] sm:w-[400px] p-0 overflow-y-auto">
+              <SheetHeader className="px-4 py-4 border-b">
+                <SheetTitle className="text-lg font-bold text-pink-500">
+                  Bộ lọc
+                </SheetTitle>
+              </SheetHeader>
+              <div className="p-4">
+                <ProductFilter
+                  filters={filters}
+                  onFilterChange={(newFilters) => {
+                    setFilters(newFilters)
+                    // Optionally close sheet after applying filter
+                    // setFilterSheetOpen(false)
+                  }}
+                  onReset={() => {
+                    handleReset()
+                    // Optionally close sheet after reset
+                    // setFilterSheetOpen(false)
+                  }}
+                  productCount={filteredProducts.length}
+                  priceRange={priceRange}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-4 gap-6 md:gap-8">
-        {/* Sidebar Filter */}
-        <div className="lg:col-span-1">
+        {/* Sidebar Filter - Desktop Only */}
+        <div className="hidden lg:block lg:col-span-1">
           <ProductFilter
             filters={filters}
             onFilterChange={setFilters}
             onReset={handleReset}
             productCount={filteredProducts.length}
+            priceRange={priceRange}
           />
         </div>
 

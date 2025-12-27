@@ -84,16 +84,36 @@ const getStatusVariant = (status: OrderStatus): "default" | "secondary" | "destr
 }
 
 // Component to handle search params (needs Suspense boundary)
-function AccountPageContent({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
+function AccountPageContent({ 
+  setActiveTab, 
+  onOrderIdFound 
+}: { 
+  setActiveTab: (tab: string) => void
+  onOrderIdFound: (orderId: string) => void
+}) {
   const searchParams = useSearchParams()
   
   // Check if we should open orders tab from URL
   useEffect(() => {
     const orderId = searchParams?.get("order")
-    if (orderId) {
+    const tab = searchParams?.get("tab")
+    
+    if (tab) {
+      setActiveTab(tab)
+    } else if (orderId) {
       setActiveTab("orders")
+      // Only auto-open order detail if not from payment flow
+      // Check referrer to see if we came from payment pages
+      const referrer = typeof window !== 'undefined' ? document.referrer : ''
+      const isFromPayment = referrer.includes('/payment/') || 
+                           (typeof window !== 'undefined' && window.location.pathname.includes('payment'))
+      
+      if (!isFromPayment) {
+        // Notify parent to handle order detail
+        onOrderIdFound(orderId)
+      }
     }
-  }, [searchParams, setActiveTab])
+  }, [searchParams, setActiveTab, onOrderIdFound])
   
   return null
 }
@@ -225,6 +245,24 @@ export default function AccountPage() {
     }
   }, [user?.accessToken, activeTab])
 
+  // Handle order ID from URL - only auto-open if explicitly requested (not from payment flow)
+  const handleOrderIdFromUrl = (orderId: string) => {
+    if (user?.accessToken && orderId) {
+      // Check if this is from payment flow - if so, don't auto-open
+      // Check referrer to see if we came from payment pages
+      const referrer = typeof window !== 'undefined' ? document.referrer : ''
+      const isFromPayment = referrer.includes('/payment/') || 
+                           (typeof window !== 'undefined' && window.location.pathname.includes('payment'))
+      
+      if (!isFromPayment) {
+        // Small delay to ensure orders are loaded first
+        setTimeout(() => {
+          handleViewOrderDetail(orderId)
+        }, 500)
+      }
+    }
+  }
+
   const fetchOrders = async () => {
     if (!user?.accessToken) return
 
@@ -269,6 +307,12 @@ export default function AccountPage() {
           }
         )
       })
+      
+      // Validate orderDetail is not null
+      if (!orderDetail) {
+        throw new Error("Không tìm thấy thông tin đơn hàng")
+      }
+      
       setSelectedOrder(orderDetail)
 
       // Fetch product images for all items in the order
@@ -309,12 +353,26 @@ export default function AccountPage() {
       setProductImages(imageMap)
     } catch (error: any) {
       console.error("Error fetching order detail:", error)
-      toast({
-        title: "Lỗi khi tải chi tiết đơn hàng",
-        description: error.message || "Vui lòng thử lại sau",
-        variant: "destructive",
-      })
+      
+      // Check if error is related to payment link creation
+      const errorMessage = error.message || ""
+      if (errorMessage.includes("payment") || errorMessage.includes("Payment") || errorMessage.includes("payment link")) {
+        // This is a payment-related error, but we're just viewing order details
+        // Don't show payment error, just show generic error
+        toast({
+          title: "Lỗi khi tải chi tiết đơn hàng",
+          description: "Vui lòng thử lại sau",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Lỗi khi tải chi tiết đơn hàng",
+          description: error.message || "Vui lòng thử lại sau",
+          variant: "destructive",
+        })
+      }
       setOrderDetailDialogOpen(false)
+      setSelectedOrder(null)
     } finally {
       setLoadingOrderDetail(false)
     }
@@ -554,7 +612,7 @@ export default function AccountPage() {
   return (
     <div className="container py-8 md:py-12">
       <Suspense fallback={null}>
-        <AccountPageContent setActiveTab={setActiveTab} />
+        <AccountPageContent setActiveTab={setActiveTab} onOrderIdFound={handleOrderIdFromUrl} />
       </Suspense>
       <div className="max-w-6xl mx-auto">
         {/* Header */}

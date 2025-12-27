@@ -30,3 +30,17 @@ export const QUICK_CHAT_CHIPS = [
 // API Configuration
 export const API_BASE_URL = "https://customerbraceletwithgpswebsite-backend.fly.dev"
 
+// Frontend Base URL for PayOS return/cancel URLs
+// Use environment variable or fallback to production URL
+export const FRONTEND_BASE_URL = 
+  (typeof window !== 'undefined' 
+    ? process.env.NEXT_PUBLIC_BASE_URL 
+    : process.env.NEXT_PUBLIC_BASE_URL) || 
+  "https://custom-bracelet-with-gps-website.vercel.app"
+
+// Log for debugging (only in development)
+if (process.env.NODE_ENV === 'development') {
+  console.log('[Constants] FRONTEND_BASE_URL:', FRONTEND_BASE_URL)
+  console.log('[Constants] NEXT_PUBLIC_BASE_URL from env:', process.env.NEXT_PUBLIC_BASE_URL)
+}
+

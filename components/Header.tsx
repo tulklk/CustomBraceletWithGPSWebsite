@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ShoppingCart, Menu, Moon, Sun, User, ChevronDown, Settings, History, Heart, LogOut, Shield } from "lucide-react"
+import { ShoppingCart, Menu, Moon, Sun, User, ChevronDown, Settings, History, Heart, LogOut, Shield, X, Plus, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/store/useCart"
 import { useUser } from "@/store/useUser"
@@ -14,6 +14,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { useState, useEffect, useRef } from "react"
 import { CartDrawer } from "./CartDrawer"
 import { CartPopup } from "./CartPopup"
@@ -42,6 +49,7 @@ export function Header() {
   const [categories, setCategories] = useState<Category[]>([])
   const [productsDropdownOpen, setProductsDropdownOpen] = useState(false)
   const [cartPopupOpen, setCartPopupOpen] = useState(false)
+  const [mobileProductsExpanded, setMobileProductsExpanded] = useState(false)
   const [mounted, setMounted] = useState(false)
   const productsDropdownRef = useRef<HTMLDivElement>(null)
   const productsNavRef = useRef<HTMLDivElement>(null)
@@ -86,7 +94,128 @@ export function Header() {
     <>
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 md:h-20 items-center justify-between px-4">
-          <div className="flex items-center gap-3 md:gap-6">
+          <div className="flex items-center gap-0 md:gap-6">
+            {/* Burger Menu - Left Side (Mobile Only) */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 md:hidden"
+                  aria-label="Menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[85vw] sm:w-[400px] p-0">
+                <SheetHeader className="bg-primary text-primary-foreground px-4 py-4">
+                  <div className="flex items-center justify-between">
+                    <SheetTitle className="text-white font-bold text-base sm:text-lg">
+                      DANH MỤC SẢN PHẨM
+                    </SheetTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="h-8 w-8 text-white hover:bg-white/20"
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </SheetHeader>
+                <nav className="flex flex-col py-4">
+                  <Link
+                    href="/"
+                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    TRANG CHỦ
+                  </Link>
+                  {/* SẢN PHẨM với expandable categories */}
+                  <div>
+                    <button
+                      className="w-full px-4 py-3 text-sm font-medium hover:bg-accent transition-colors flex items-center justify-between text-left"
+                      onClick={() => setMobileProductsExpanded(!mobileProductsExpanded)}
+                    >
+                      <span>SẢN PHẨM</span>
+                      {mobileProductsExpanded ? (
+                        <Minus className="h-4 w-4" />
+                      ) : (
+                        <Plus className="h-4 w-4" />
+                      )}
+                    </button>
+                    {mobileProductsExpanded && categories.length > 0 && (
+                      <div className="bg-muted/50">
+                        {categories.map((category) => (
+                          <Link
+                            key={category.id || category.name}
+                            href={`/products?category=${encodeURIComponent(category.name)}${category.id ? `&categoryId=${category.id}` : ''}`}
+                            className="block px-8 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            onClick={() => {
+                              setMobileMenuOpen(false)
+                              setMobileProductsExpanded(false)
+                            }}
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <Link
+                    href="/products?sort=sale"
+                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    SALE OFF
+                  </Link>
+                  <Link
+                    href="/news"
+                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    TIN TỨC
+                  </Link>
+                  <Link
+                    href="/franchise"
+                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    CHÍNH SÁCH NHƯỢNG QUYỀN
+                  </Link>
+                  <Link
+                    href="/guides"
+                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors flex items-center justify-between"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <span>HƯỚNG DẪN</span>
+                    <Plus className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="/technology"
+                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    CÔNG NGHỆ SẢN PHẨM
+                  </Link>
+                  <Link
+                    href="/about"
+                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    GIỚI THIỆU
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    LIÊN HỆ
+                  </Link>
+                </nav>
+              </SheetContent>
+            </Sheet>
+            
             <Logo className="scale-75 md:scale-100" />
             
             <nav className="hidden md:flex gap-6">
@@ -160,7 +289,7 @@ export function Header() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-1 md:gap-2">
+          <div className="flex items-center gap-0.5 md:gap-1">
             <Button
               variant="ghost"
               size="icon"
@@ -211,9 +340,9 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost" 
-                    className="h-auto px-2 py-1.5 md:px-3 md:py-2 hover:bg-accent rounded-lg"
+                    className="h-auto px-1 py-1.5 md:px-2 md:py-2 hover:bg-accent rounded-lg"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 md:gap-2">
                       {/* Avatar */}
                       <div className="relative w-8 h-8 md:w-9 md:h-9 rounded-full border-2 border-pink-400 dark:border-pink-500 overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
                         {user.avatar && !avatarError ? (
@@ -290,58 +419,8 @@ export function Header() {
               </Button>
             )}
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden h-9 w-9"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Menu"
-            >
-              <Menu className="h-[18px] w-[18px]" />
-            </Button>
           </div>
         </div>
-
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t bg-background">
-            <nav className="container py-4 px-4 flex flex-col gap-3">
-              <Link
-                href="/products"
-                className="text-sm font-medium hover:text-primary transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Sản phẩm
-              </Link>
-              <Link
-                href="/faq"
-                className="text-sm font-medium hover:text-primary transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                FAQ
-              </Link>
-              <Link
-                href="/guides"
-                className="text-sm font-medium hover:text-primary transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Hướng dẫn
-              </Link>
-              {!user && (
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start mt-2" 
-                  onClick={() => {
-                    setAuthOpen(true)
-                    setMobileMenuOpen(false)
-                  }}
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Đăng nhập
-                </Button>
-              )}
-            </nav>
-          </div>
-        )}
       </header>
 
       <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />

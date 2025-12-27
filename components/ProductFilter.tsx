@@ -29,6 +29,7 @@ interface ProductFilterProps {
   onFilterChange: (filters: FilterState) => void
   onReset: () => void
   productCount: number
+  priceRange?: [number, number] // Min and max price from all products
 }
 
 export function ProductFilter({
@@ -36,8 +37,13 @@ export function ProductFilter({
   onFilterChange,
   onReset,
   productCount,
+  priceRange = [500000, 600000], // Default fallback
 }: ProductFilterProps) {
   const [isExpanded, setIsExpanded] = useState(true)
+  
+  // Use provided priceRange or fallback to default
+  const minPrice = priceRange[0]
+  const maxPrice = priceRange[1]
 
   const handlePriceChange = (value: number[]) => {
     onFilterChange({ ...filters, priceRange: [value[0], value[1]] })
@@ -52,7 +58,7 @@ export function ProductFilter({
 
   const activeFiltersCount =
     (filters.productTypes.length > 0 ? 1 : 0) +
-    (filters.priceRange[0] !== 500000 || filters.priceRange[1] !== 600000 ? 1 : 0)
+    (filters.priceRange[0] !== minPrice || filters.priceRange[1] !== maxPrice ? 1 : 0)
 
   return (
     <Card className="lg:sticky lg:top-20">
@@ -107,20 +113,20 @@ export function ProductFilter({
             <Label className="text-sm font-semibold">Khoảng giá</Label>
             <div className="px-2 py-4">
               <Slider
-                min={500000}
-                max={600000}
-                step={50000}
-                value={filters.priceRange}
+                min={minPrice}
+                max={maxPrice}
+                step={Math.max(10000, Math.floor((maxPrice - minPrice) / 20))} // Dynamic step based on range
+                value={[Math.max(minPrice, filters.priceRange[0]), Math.min(maxPrice, filters.priceRange[1])]}
                 onValueChange={handlePriceChange}
                 className="w-full"
               />
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {formatCurrency(filters.priceRange[0])}
+                {formatCurrency(Math.max(minPrice, filters.priceRange[0]))}
               </span>
               <span className="text-muted-foreground">
-                {formatCurrency(filters.priceRange[1])}
+                {formatCurrency(Math.min(maxPrice, filters.priceRange[1]))}
               </span>
             </div>
           </div>
