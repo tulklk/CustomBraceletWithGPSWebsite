@@ -5,10 +5,11 @@ import { CreatePaymentRequest, PaymentResponse, ApiError } from "@/types/payment
 /**
  * Check if error is a PayOS signature error (Code: 201)
  */
-function isSignatureError(error: any): boolean {
+function isSignatureError(error: unknown): boolean {
   if (!error) return false
   
-  const message = error.message || error.error?.message || ""
+  const message = (error as { message?: string; error?: { message?: string } }).message || 
+                  (error as { error?: { message?: string } }).error?.message || ""
   return (
     message.includes("signature") ||
     message.includes("Code: 201") ||
@@ -19,7 +20,7 @@ function isSignatureError(error: any): boolean {
 /**
  * Convert payment error to user-friendly message
  */
-function getUserFriendlyErrorMessage(error: any): string {
+function getUserFriendlyErrorMessage(error: unknown): string {
   // Handle signature error (Code: 201) - already fixed in backend
   if (isSignatureError(error)) {
     return "Không thể tạo link thanh toán. Vui lòng thử lại sau."
@@ -98,7 +99,10 @@ class PaymentService {
         const result = await handleResponse<PaymentResponse>(response)
         
         // Validate response structure
-        if (!result.paymentUrl && !(result as any).payment_url && !(result as any).url) {
+        const paymentUrl = result.paymentUrl || 
+                          (result as { payment_url?: string }).payment_url || 
+                          (result as { url?: string }).url
+        if (!paymentUrl) {
           const error: ApiError = {
             message: "Invalid payment response: missing paymentUrl",
             statusCode: 500,
@@ -109,7 +113,7 @@ class PaymentService {
         // Normalize paymentUrl field
         const normalizedResult: PaymentResponse = {
           ...result,
-          paymentUrl: result.paymentUrl || (result as any).payment_url || (result as any).url,
+          paymentUrl,
         }
 
         return normalizedResult
@@ -142,9 +146,12 @@ class PaymentService {
         const result = await response.json() as PaymentResponse
 
         // Normalize paymentUrl field
+        const paymentUrl = result.paymentUrl || 
+                          (result as { payment_url?: string }).payment_url || 
+                          (result as { url?: string }).url
         const normalizedResult: PaymentResponse = {
           ...result,
-          paymentUrl: result.paymentUrl || (result as any).payment_url || (result as any).url,
+          paymentUrl: paymentUrl || "",
         }
 
         return normalizedResult
