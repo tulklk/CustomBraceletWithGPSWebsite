@@ -27,14 +27,16 @@ function getUserFriendlyErrorMessage(error: unknown): string {
   }
   
   // Handle other PayOS errors
-  const message = error.message || error.error?.message || ""
+  // Type-safe error message extraction
+  const errorObj = error as { message?: string; error?: { message?: string } }
+  const message = errorObj.message || errorObj.error?.message || ""
   if (message.includes("PayOS error")) {
     // Generic PayOS error - show user-friendly message
     return "Đã xảy ra lỗi khi xử lý thanh toán. Vui lòng thử lại."
   }
   
   // Default error message
-  return error.message || "Không thể tạo link thanh toán. Vui lòng thử lại sau."
+  return errorObj.message || "Không thể tạo link thanh toán. Vui lòng thử lại sau."
 }
 
 /**
