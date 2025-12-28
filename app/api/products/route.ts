@@ -326,6 +326,9 @@ const MOCK_PRODUCTS: Product[] = [
   },
 ]
 
+// Cache products for 5 minutes
+export const revalidate = 300 // 5 minutes in seconds
+
 export async function GET() {
   return NextResponse.json(MOCK_PRODUCTS)
 }

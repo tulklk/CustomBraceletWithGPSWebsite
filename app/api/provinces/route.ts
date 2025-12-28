@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 
 const PROVINCES_API_BASE = "https://provinces.open-api.vn/api/v2"
 
+// Cache provinces data for 24 hours
+export const revalidate = 86400 // 24 hours in seconds
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const action = searchParams.get("action")

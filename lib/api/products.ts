@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "@/lib/constants"
 import { Product } from "@/lib/types"
 import { handleResponse } from "./auth"
+import { cachedFetch, cacheConfigs, invalidateCache } from "@/lib/cache"
 
 // Backend Product Response Type
 export interface BackendProduct {
@@ -25,17 +26,19 @@ export interface BackendProduct {
 // Public Products API Service
 export const productsApi = {
   /**
-   * Get all products (public endpoint)
+   * Get all products (public endpoint) - with caching
    */
   async getAll(): Promise<Product[]> {
-    const response = await fetch(`${API_BASE_URL}/api/Products`, {
-      method: "GET",
-      headers: {
-        "accept": "*/*",
+    const backendProducts = await cachedFetch<BackendProduct[]>(
+      `${API_BASE_URL}/api/Products`,
+      {
+        method: "GET",
+        headers: {
+          "accept": "*/*",
+        },
       },
-    })
-
-    const backendProducts = await handleResponse<BackendProduct[]>(response)
+      cacheConfigs.products
+    )
     
     // Map backend products to frontend Product type
     return backendProducts
@@ -44,24 +47,29 @@ export const productsApi = {
   },
 
   /**
-   * Get product by slug (returns full backend product data)
+   * Get product by slug (returns full backend product data) - with caching
    */
   async getBySlug(slug: string): Promise<BackendProduct | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/Products/${slug}`, {
-        method: "GET",
-        headers: {
-          "accept": "*/*",
+      const backendProduct = await cachedFetch<BackendProduct>(
+        `${API_BASE_URL}/api/Products/${slug}`,
+        {
+          method: "GET",
+          headers: {
+            "accept": "*/*",
+          },
         },
-      })
-
-      if (response.status === 404) {
+        {
+          ...cacheConfigs.productDetail,
+          storageKey: `product_detail_${slug}`,
+        }
+      )
+      return backendProduct
+    } catch (error: any) {
+      // Handle 404 specifically
+      if (error?.statusCode === 404 || error?.status === 404) {
         return null
       }
-
-      const backendProduct = await handleResponse<BackendProduct>(response)
-      return backendProduct
-    } catch (error) {
       console.error("Error fetching product by slug:", error)
       return null
     }

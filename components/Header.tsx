@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { ShoppingCart, Menu, Moon, Sun, User, ChevronDown, Settings, History, Heart, LogOut, Shield, X, Plus, Minus } from "lucide-react"
+import { ShoppingCart, Menu, Moon, Sun, User, ChevronDown, Settings, History, Heart, LogOut, Shield, X, Plus, Minus, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/store/useCart"
 import { useUser } from "@/store/useUser"
@@ -96,10 +96,11 @@ export function Header() {
     setMounted(true)
   }, [])
 
-  // Fetch categories
+  // Fetch categories (with caching)
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        // Categories are automatically cached by categoriesApi.getAll()
         const data = await categoriesApi.getAll()
         setCategories(data)
       } catch (error) {
@@ -243,6 +244,14 @@ export function Header() {
                     TIN TỨC
                   </Link>
                   <Link
+                    href="/order-lookup"
+                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors flex items-center gap-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <FileText className="h-4 w-4" />
+                    TRA CỨU ĐƠN HÀNG
+                  </Link>
+                  <Link
                     href="/franchise"
                     className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
@@ -351,6 +360,10 @@ export function Header() {
               </Link>
               <Link href="/guides" className="text-sm font-medium hover:text-primary transition-colors">
                 Hướng dẫn
+              </Link>
+              <Link href="/order-lookup" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                <FileText className="h-4 w-4" />
+                Tra cứu đơn hàng
               </Link>
             </nav>
           </div>

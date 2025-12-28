@@ -1,6 +1,8 @@
 // API for Vietnamese Provinces
 // Using provinces.open-api.vn/api/v2/
 
+import { cachedFetch, cacheConfigs } from "@/lib/cache"
+
 export interface Province {
   code: string | number
   name: string
@@ -75,16 +77,21 @@ const PROXY_API_BASE = "/api/provinces"
 
 export const provincesApi = {
   /**
-   * Get all provinces (depth=1)
+   * Get all provinces (depth=1) - with caching
    */
   async getProvinces(): Promise<Province[]> {
     try {
-      // Use proxy API to avoid CORS
-      const response = await fetch(`${PROXY_API_BASE}?action=provinces&depth=1`)
-      if (!response.ok) {
-        throw new Error("Failed to fetch provinces")
-      }
-      return await response.json()
+      // Use proxy API to avoid CORS with caching
+      return await cachedFetch<Province[]>(
+        `${PROXY_API_BASE}?action=provinces&depth=1`,
+        {
+          method: "GET",
+        },
+        {
+          ...cacheConfigs.provinces,
+          storageKey: "provinces_list",
+        }
+      )
     } catch (error) {
       console.error("Error fetching provinces:", error)
       throw error

@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "@/lib/constants"
 import { handleResponse } from "./auth"
+import { cachedFetch, cacheConfigs } from "@/lib/cache"
 
 // Category type from backend
 export interface Category {
@@ -14,17 +15,19 @@ export interface Category {
 // Public Categories API Service
 export const categoriesApi = {
   /**
-   * Get all categories (public endpoint)
+   * Get all categories (public endpoint) - with caching
    */
   async getAll(): Promise<Category[]> {
-    const response = await fetch(`${API_BASE_URL}/api/Categories`, {
-      method: "GET",
-      headers: {
-        "accept": "*/*",
+    return cachedFetch<Category[]>(
+      `${API_BASE_URL}/api/Categories`,
+      {
+        method: "GET",
+        headers: {
+          "accept": "*/*",
+        },
       },
-    })
-
-    return handleResponse<Category[]>(response)
+      cacheConfigs.categories
+    )
   },
 }
 
