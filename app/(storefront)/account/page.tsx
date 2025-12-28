@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, Suspense } from "react"
+import { useState, useEffect, useRef, useCallback, Suspense } from "react"
 import { useUser } from "@/store/useUser"
 import { useCustomizer } from "@/store/useCustomizer"
 import { useCart } from "@/store/useCart"
@@ -92,6 +92,7 @@ function AccountPageContent({
   onOrderIdFound: (orderId: string) => void
 }) {
   const searchParams = useSearchParams()
+  const processedOrderIdRef = useRef<string | null>(null) // Track processed orderId to prevent multiple calls
   
   // Check if we should open orders tab from URL
   useEffect(() => {
@@ -108,7 +109,8 @@ function AccountPageContent({
     // Auto-open order detail if:
     // 1. openOrder=true is explicitly set (user clicked "Xem đơn hàng" button)
     // 2. OR not from payment flow (to avoid auto-opening when redirected from payment)
-    if (orderId) {
+    // 3. AND we haven't processed this orderId yet
+    if (orderId && orderId !== processedOrderIdRef.current) {
       const referrer = typeof window !== 'undefined' ? document.referrer : ''
       const isFromPayment = referrer.includes('/payment/') || 
                            (typeof window !== 'undefined' && window.location.pathname.includes('payment'))
@@ -116,11 +118,19 @@ function AccountPageContent({
       // If openOrder=true, always open regardless of referrer
       // Otherwise, only open if not from payment flow
       if (openOrder === 'true' || !isFromPayment) {
+        // Mark this orderId as processed to prevent multiple calls
+        processedOrderIdRef.current = orderId
+        
         // Small delay to ensure orders are loaded first
         setTimeout(() => {
           onOrderIdFound(orderId)
         }, 300)
       }
+    }
+    
+    // Reset processed orderId if orderId changes or is removed from URL
+    if (!orderId) {
+      processedOrderIdRef.current = null
     }
   }, [searchParams, setActiveTab, onOrderIdFound])
   
@@ -142,6 +152,7 @@ export default function AccountPage() {
   const [orderDetailDialogOpen, setOrderDetailDialogOpen] = useState(false)
   const [loadingOrderDetail, setLoadingOrderDetail] = useState(false)
   const [productImages, setProductImages] = useState<Record<string, string>>({})
+  const fetchingImagesRef = useRef(false) // Prevent multiple image fetch calls
   
   // User profile hooks
   const { profile, loading: loadingProfile, error: profileError, refetch: refetchProfile } = useUserProfile()
@@ -254,24 +265,6 @@ export default function AccountPage() {
     }
   }, [user?.accessToken, activeTab])
 
-  // Handle order ID from URL - only auto-open if explicitly requested (not from payment flow)
-  const handleOrderIdFromUrl = (orderId: string) => {
-    if (user?.accessToken && orderId) {
-      // Check if this is from payment flow - if so, don't auto-open
-      // Check referrer to see if we came from payment pages
-      const referrer = typeof window !== 'undefined' ? document.referrer : ''
-      const isFromPayment = referrer.includes('/payment/') || 
-                           (typeof window !== 'undefined' && window.location.pathname.includes('payment'))
-      
-      if (!isFromPayment) {
-        // Small delay to ensure orders are loaded first
-        setTimeout(() => {
-          handleViewOrderDetail(orderId)
-        }, 500)
-      }
-    }
-  }
-
   const fetchOrders = async () => {
     if (!user?.accessToken) return
 
@@ -299,13 +292,25 @@ export default function AccountPage() {
     }
   }
 
+  // Track if we're already processing an order from URL to prevent multiple calls
+  const processingOrderIdRef = useRef<string | null>(null)
+  
+  // Define handleViewOrderDetail first so it can be used in handleOrderIdFromUrl
   const handleViewOrderDetail = async (orderId: string) => {
     if (!user?.accessToken) return
 
+    // Prevent multiple simultaneous calls
+    if (loadingOrderDetail) return
+
+    // Reset states and open dialog first for better UX
+    setProductImages({}) // Reset product images
+    setSelectedOrder(null) // Reset selected order
+    fetchingImagesRef.current = false // Reset image fetching flag
     setLoadingOrderDetail(true)
     setOrderDetailDialogOpen(true)
-    setProductImages({}) // Reset product images
+    
     try {
+      // First, fetch order detail (main data)
       const orderDetail = await makeAuthenticatedRequest(async (token) => {
         return await ordersApi.getOrderById(
           orderId,
@@ -322,46 +327,82 @@ export default function AccountPage() {
         throw new Error("Không tìm thấy thông tin đơn hàng")
       }
       
+      // Set order detail first to show content immediately
       setSelectedOrder(orderDetail)
+      setLoadingOrderDetail(false)
 
-      // Fetch product images for all items in the order
-      const imageMap: Record<string, string> = {}
-      await Promise.all(
-        orderDetail.items.map(async (item) => {
-          try {
-            // Check if order item has imageUrl (from backend)
+      // Fetch product images asynchronously in background (non-blocking)
+      // This allows the dialog to show order info immediately while images load
+      // Only fetch if not already fetching
+      if (!fetchingImagesRef.current) {
+        fetchingImagesRef.current = true
+        
+        const fetchImagesAsync = async () => {
+          const imageMap: Record<string, string> = {}
+          
+          // First, check for images already in order items
+          orderDetail.items.forEach((item) => {
             const itemWithImage = item as any
             if (itemWithImage.productImageUrl || itemWithImage.imageUrl) {
               imageMap[item.id] = itemWithImage.productImageUrl || itemWithImage.imageUrl
-              return
             }
-
-            // Otherwise, fetch product by ID to get image
-            // Try to get product by ID (might need to use slug or other identifier)
-            // For now, we'll try to fetch product details
-            try {
-              const product = await productsApi.getBySlug(item.productId)
-              if (product) {
-                const imageUrl = 
-                  (product.images && product.images.length > 0 && product.images[0]) ||
-                  (product.imageUrls && product.imageUrls.length > 0 && product.imageUrls[0]) ||
-                  ""
-                if (imageUrl) {
-                  imageMap[item.id] = imageUrl
-                }
-              }
-            } catch (productError) {
-              // If product fetch fails, try using productId as slug
-              console.warn(`Could not fetch product ${item.productId}:`, productError)
-            }
-          } catch (error) {
-            console.error(`Error fetching image for item ${item.id}:`, error)
+          })
+          
+          // Update with existing images first
+          if (Object.keys(imageMap).length > 0) {
+            setProductImages({ ...imageMap })
           }
+          
+          // Then fetch missing images in batches
+          const itemsNeedingFetch = orderDetail.items.filter((item) => {
+            const itemWithImage = item as any
+            return !itemWithImage.productImageUrl && !itemWithImage.imageUrl
+          })
+          
+          if (itemsNeedingFetch.length > 0) {
+            const batchSize = 3
+            for (let i = 0; i < itemsNeedingFetch.length; i += batchSize) {
+              const batch = itemsNeedingFetch.slice(i, i + batchSize)
+              
+              await Promise.all(
+                batch.map(async (item) => {
+                  try {
+                    const product = await productsApi.getBySlug(item.productId)
+                    if (product) {
+                      const imageUrl = 
+                        (product.images && product.images.length > 0 && product.images[0]) ||
+                        (product.imageUrls && product.imageUrls.length > 0 && product.imageUrls[0]) ||
+                        ""
+                      if (imageUrl) {
+                        imageMap[item.id] = imageUrl
+                      }
+                    }
+                  } catch (productError) {
+                    // If product fetch fails, silently continue
+                    console.warn(`Could not fetch product ${item.productId}:`, productError)
+                  }
+                })
+              )
+              
+              // Update images only once per batch to reduce re-renders
+              setProductImages(prev => ({ ...prev, ...imageMap }))
+            }
+          }
+          
+          fetchingImagesRef.current = false
+        }
+        
+        // Start fetching images in background (don't await)
+        fetchImagesAsync().catch(error => {
+          console.error("Error fetching product images:", error)
+          fetchingImagesRef.current = false
+          // Don't show error toast for image loading failures
         })
-      )
-      setProductImages(imageMap)
+      }
+      
     } catch (error: any) {
       console.error("Error fetching order detail:", error)
+      fetchingImagesRef.current = false
       
       // Check if error is related to payment link creation
       const errorMessage = error.message || ""
@@ -382,10 +423,48 @@ export default function AccountPage() {
       }
       setOrderDetailDialogOpen(false)
       setSelectedOrder(null)
-    } finally {
       setLoadingOrderDetail(false)
     }
   }
+
+  // Handle order ID from URL - only auto-open if explicitly requested (not from payment flow)
+  const handleOrderIdFromUrl = useCallback((orderId: string) => {
+    if (user?.accessToken && orderId) {
+      // Prevent multiple calls for the same orderId
+      if (processingOrderIdRef.current === orderId) {
+        return
+      }
+      
+      // Check if this is from payment flow - if so, don't auto-open
+      // Check referrer to see if we came from payment pages
+      const referrer = typeof window !== 'undefined' ? document.referrer : ''
+      const isFromPayment = referrer.includes('/payment/') || 
+                           (typeof window !== 'undefined' && window.location.pathname.includes('payment'))
+      
+      if (!isFromPayment) {
+        // Mark as processing
+        processingOrderIdRef.current = orderId
+        
+        // Wait for orders to be loaded, then open order detail
+        const tryOpenOrder = () => {
+          // Check if orders are loaded (either we have orders or loading is complete)
+          if (orders.length > 0 || !loadingOrders) {
+            handleViewOrderDetail(orderId)
+            // Reset after a delay to allow re-opening if needed
+            setTimeout(() => {
+              processingOrderIdRef.current = null
+            }, 1000)
+          } else {
+            // If orders are still loading, wait a bit more
+            setTimeout(tryOpenOrder, 200)
+          }
+        }
+        
+        // Start trying after a short delay
+        setTimeout(tryOpenOrder, 300)
+      }
+    }
+  }, [user?.accessToken, orders.length, loadingOrders])
 
   if (!user) {
     return (

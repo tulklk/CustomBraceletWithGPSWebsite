@@ -127,9 +127,9 @@ function OrderSuccessContent() {
             )}
 
             <div className="flex gap-4 pt-4">
-              {orderId && (
+              {orderId && user?.accessToken && (
                 <Button asChild variant="outline">
-                  <Link href={user?.accessToken ? `/account?order=${orderId}` : `/?order=${orderId}`}>
+                  <Link href={`/account?order=${orderId}&tab=orders&openOrder=true`}>
                     Xem chi tiết đơn hàng
                   </Link>
                 </Button>

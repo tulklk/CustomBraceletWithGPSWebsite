@@ -22,7 +22,7 @@ import { useUser } from "@/store/useUser"
 import { useAddresses } from "@/store/useAddresses"
 import { formatCurrency } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { CreditCard, Wallet, Building, ShoppingBag } from "lucide-react"
+import { CreditCard, Wallet, Building, ShoppingBag, Mail } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { productsApi, BackendProduct } from "@/lib/api/products"
@@ -407,12 +407,19 @@ export default function CheckoutPage() {
 
       clearCart()
 
+      // Get user email for notification
+      const userEmail = email || user?.email || data.email
+
       // Handle payment flow based on payment method
       if (data.paymentMethod === "COD") {
-        // COD: Redirect to success page
+        // COD: Show email confirmation toast and redirect to success page
         toast({
-          title: "Đặt hàng thành công!",
-          description: `Mã đơn hàng: ${order.orderNumber || order.id}. Chúng tôi sẽ liên hệ qua ${data.phoneNumber}`,
+          title: "Đơn hàng đã được tạo thành công! 🎉",
+          description: userEmail 
+            ? `Chúng tôi đã gửi email xác nhận đến ${userEmail}. Vui lòng kiểm tra hộp thư của bạn.`
+            : `Mã đơn hàng: ${order.orderNumber || order.id}. Chúng tôi sẽ liên hệ qua ${data.phoneNumber}`,
+          duration: 7000,
+          className: "bg-gradient-to-r from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border-pink-200 dark:border-pink-800",
         })
         
         // Redirect to success page
@@ -507,6 +514,17 @@ export default function CheckoutPage() {
           const paymentUrl = paymentResult.paymentUrl
           
           if (paymentUrl && typeof paymentUrl === "string") {
+            // Show email confirmation toast before redirecting to PayOS
+            const userEmail = email || user?.email || data.email
+            toast({
+              title: "Đơn hàng đã được tạo thành công! 🎉",
+              description: userEmail
+                ? `Chúng tôi đã gửi email xác nhận đến ${userEmail}. Vui lòng kiểm tra hộp thư của bạn.`
+                : `Mã đơn hàng: ${order.orderNumber || order.id}. Đang chuyển đến trang thanh toán...`,
+              duration: 5000,
+              className: "bg-gradient-to-r from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border-pink-200 dark:border-pink-800",
+            })
+            
             console.log("Redirecting to PayOS payment page:", paymentUrl)
             // Redirect to PayOS checkout page (external URL, use window.location.href)
             // This will show the QR code page

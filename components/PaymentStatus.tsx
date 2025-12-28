@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle2, XCircle, Loader2, AlertCircle } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, AlertCircle, Mail } from "lucide-react"
 import { useUser } from "@/store/useUser"
 import { ordersApi } from "@/lib/api/orders"
+import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 
 function PaymentStatusContent() {
@@ -15,9 +16,24 @@ function PaymentStatusContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, makeAuthenticatedRequest } = useUser()
+  const { toast } = useToast()
   const orderId = searchParams.get("orderId")
   const [order, setOrder] = useState<any>(null)
   const [loadingOrder, setLoadingOrder] = useState(false)
+  const [emailNotificationShown, setEmailNotificationShown] = useState(false)
+
+  // Show email notification immediately when payment is successful
+  useEffect(() => {
+    if (isSuccess && !emailNotificationShown && user?.email) {
+      toast({
+        title: "Thanh toán thành công! ✅",
+        description: `Email xác nhận đơn hàng đã được gửi đến ${user.email}. Vui lòng kiểm tra hộp thư của bạn.`,
+        duration: 7000,
+        className: "bg-gradient-to-r from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border-pink-200 dark:border-pink-800",
+      })
+      setEmailNotificationShown(true)
+    }
+  }, [isSuccess, emailNotificationShown, user?.email, toast])
 
   useEffect(() => {
     // Fetch order details if orderId is available
@@ -39,6 +55,20 @@ function PaymentStatusContent() {
             orderData = await ordersApi.getGuestOrderById(orderId)
           }
           setOrder(orderData)
+          
+          // Show email confirmation notification when payment is successful (if not shown yet and user email not available from context)
+          if (isSuccess && !emailNotificationShown && !user?.email) {
+            const userEmail = orderData?.email || orderData?.shippingAddress?.email
+            if (userEmail) {
+              toast({
+                title: "Thanh toán thành công! ✅",
+                description: `Email xác nhận đơn hàng đã được gửi đến ${userEmail}. Vui lòng kiểm tra hộp thư của bạn.`,
+                duration: 7000,
+                className: "bg-gradient-to-r from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border-pink-200 dark:border-pink-800",
+              })
+              setEmailNotificationShown(true)
+            }
+          }
           
           // If payment was successful, the backend should have updated paymentStatus via webhook
           // If paymentStatus is still 0 (pending), wait a bit and refresh again
@@ -72,7 +102,7 @@ function PaymentStatusContent() {
       }
       fetchOrder()
     }
-  }, [orderId, isSuccess, isCanceled, user, makeAuthenticatedRequest])
+  }, [orderId, isSuccess, isCanceled, user, makeAuthenticatedRequest, emailNotificationShown, toast])
 
   if (isProcessing) {
     return (
