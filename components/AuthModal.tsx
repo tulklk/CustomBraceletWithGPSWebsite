@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -33,7 +34,7 @@ declare global {
     }
   }
 }
-import { Mail, Lock, User, Chrome, Eye, EyeOff, Facebook } from "lucide-react"
+import { Mail, Lock, User, Chrome, Eye, EyeOff, Facebook, Phone } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface AuthModalProps {
@@ -42,10 +43,14 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ open, onOpenChange }: AuthModalProps) {
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [name, setName] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false)
   const { setAuth } = useUser()
@@ -125,7 +130,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email || !password || !name) {
+    if (!email || !password || !confirmPassword || !name || !phoneNumber) {
       toast({
         title: "Lỗi",
         description: "Vui lòng điền đầy đủ thông tin",
@@ -134,28 +139,62 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       return
     }
 
+    // Validate password match
+    if (password !== confirmPassword) {
+      toast({
+        title: "Lỗi",
+        description: "Mật khẩu và xác nhận mật khẩu không khớp",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      toast({
+        title: "Lỗi",
+        description: "Mật khẩu phải có ít nhất 6 ký tự",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate phone number format (basic validation)
+    const phoneRegex = /^[0-9]{10,11}$/
+    if (!phoneRegex.test(phoneNumber.replace(/\s/g, ""))) {
+      toast({
+        title: "Lỗi",
+        description: "Số điện thoại không hợp lệ (10-11 chữ số)",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
     try {
-      const authResponse = await authApi.register({
+      await authApi.register({
         email,
         password,
+        confirmPassword,
         fullName: name,
+        phoneNumber: phoneNumber.replace(/\s/g, ""), // Remove spaces from phone number
       })
-      setAuth(authResponse)
       
-      // Fetch cart from backend after registration
-      try {
-        await fetchCart()
-      } catch (error) {
-        console.warn("Failed to fetch cart after registration:", error)
+      // Lưu email vào localStorage để có thể resend verification
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pendingVerificationEmail', email)
       }
       
       toast({
         title: "Đăng ký thành công! 🎉",
-        description: `Chào mừng ${name} đến với ARTEMIS`,
+        description: "Vui lòng kiểm tra email để xác thực tài khoản",
       })
+      
       onOpenChange(false)
       resetForm()
+      
+      // Redirect đến trang verify-email
+      router.push('/verify-email?registered=true')
     } catch (error) {
       const apiError = error as ApiError
       toast({
@@ -516,8 +555,11 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const resetForm = () => {
     setEmail("")
     setPassword("")
+    setConfirmPassword("")
     setName("")
+    setPhoneNumber("")
     setShowPassword(false)
+    setShowConfirmPassword(false)
   }
 
   return (
@@ -681,6 +723,21 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="register-phone">Số điện thoại</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="register-phone"
+                      type="tel"
+                      placeholder="0901234567"
+                      className="pl-10"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="register-password">Mật khẩu</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -704,6 +761,35 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                       )}
                     </button>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="register-confirm-password">Xác nhận mật khẩu</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="register-confirm-password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="pl-10 pr-10"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                  {confirmPassword && password !== confirmPassword && (
+                    <p className="text-xs text-red-500">Mật khẩu không khớp</p>
+                  )}
                 </div>
 
                 <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={isLoading}>

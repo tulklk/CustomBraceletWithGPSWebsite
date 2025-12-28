@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -18,7 +19,6 @@ import {
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
 import { useUser } from "@/store/useUser"
 
 const navItems = [
@@ -67,8 +67,50 @@ const navItems = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [avatarError, setAvatarError] = useState(false)
   const { user, logout } = useUser()
   const router = useRouter()
+
+  // Reset avatar error when user changes
+  useEffect(() => {
+    setAvatarError(false)
+  }, [user?.avatar])
+
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (user?.fullName) return user.fullName[0].toUpperCase()
+    if (user?.name) return user.name[0].toUpperCase()
+    if (user?.email) return user.email[0].toUpperCase()
+    return "A"
+  }
+
+  // Get avatar URL - handle Cloudinary URLs
+  const getAvatarUrl = () => {
+    if (!user?.avatar) return null
+    
+    // If it's already a full URL (http/https), return as is
+    if (user.avatar.startsWith('http://') || user.avatar.startsWith('https://')) {
+      return user.avatar
+    }
+    
+    // If it's already a Cloudinary URL (contains res.cloudinary.com), return as is
+    if (user.avatar.includes('res.cloudinary.com')) {
+      return user.avatar
+    }
+    
+    // If it's a Cloudinary public_id or path, construct the URL
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'your-cloud-name'
+    
+    // If it starts with /, it's a path - prepend Cloudinary base URL
+    if (user.avatar.startsWith('/')) {
+      return `https://res.cloudinary.com/${cloudName}/image/upload${user.avatar}`
+    }
+    
+    // Otherwise, assume it's a public_id and construct URL
+    // Remove any leading slashes
+    const publicId = user.avatar.replace(/^\/+/, '')
+    return `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}`
+  }
 
   // Role check - only allow admin (role === 1 theo backend)
   useEffect(() => {
@@ -149,10 +191,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* User Info & Logout */}
           <div className="p-4 border-t">
             <div className="flex items-center gap-3 px-3 py-2 mb-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-primary font-medium text-sm">
-                  {user?.fullName?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || "A"}
-                </span>
+              <div className="relative w-8 h-8 rounded-full border-2 border-primary/20 overflow-hidden bg-primary/10 flex-shrink-0">
+                {(() => {
+                  const avatarUrl = getAvatarUrl()
+                  if (avatarUrl && !avatarError) {
+                    return (
+                      <Image
+                        src={avatarUrl}
+                        alt={user?.fullName || user?.name || "Admin"}
+                        fill
+                        className="object-cover"
+                        onError={() => setAvatarError(true)}
+                        unoptimized
+                      />
+                    )
+                  }
+                  return (
+                    <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                      <span className="text-primary font-medium text-sm">
+                        {getUserInitials()}
+                      </span>
+                    </div>
+                  )
+                })()}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user?.fullName || user?.name || "Admin"}</p>

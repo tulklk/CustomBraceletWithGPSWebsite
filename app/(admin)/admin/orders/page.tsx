@@ -5,7 +5,7 @@ import { DataTable } from "@/components/admin/DataTable"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Eye } from "lucide-react"
+import { Eye, RefreshCw } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -74,12 +74,14 @@ export default function OrdersPage() {
     }
   }
 
-  const handleViewOrder = async (order: AdminOrder) => {
+  const handleViewOrder = async (order: AdminOrder, skipDialogOpen = false) => {
     if (!user?.accessToken) return
     try {
       const orderDetail = await makeAuthenticatedRequest((token) => adminApi.orders.getById(token, order.id))
       setSelectedOrder(orderDetail)
-      setDialogOpen(true)
+      if (!skipDialogOpen) {
+        setDialogOpen(true)
+      }
       
       // Fetch product images for all items in the order
       const imageMap: Record<string, string> = {}
@@ -331,6 +333,10 @@ export default function OrdersPage() {
       {/* Order Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(open) => {
         setDialogOpen(open)
+        if (open && selectedOrder) {
+          // Auto-refresh order detail when dialog opens to get latest payment status
+          handleViewOrder({ id: selectedOrder.id } as AdminOrder, true)
+        }
         if (!open) {
           // Reset product images when dialog closes
           setProductImages({})
@@ -339,7 +345,20 @@ export default function OrdersPage() {
       }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chi tiết đơn hàng #{selectedOrder?.orderNumber}</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Chi tiết đơn hàng #{selectedOrder?.orderNumber}</DialogTitle>
+              {selectedOrder && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewOrder({ id: selectedOrder.id } as AdminOrder, true)}
+                  className="ml-auto"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Làm mới
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           {selectedOrder && (
             <div className="space-y-6">

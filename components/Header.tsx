@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { ShoppingCart, Menu, Moon, Sun, User, ChevronDown, Settings, History, Heart, LogOut, Shield, X, Plus, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/store/useCart"
@@ -22,16 +23,20 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { useState, useEffect, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import { CartDrawer } from "./CartDrawer"
 import { CartPopup } from "./CartPopup"
 import { AuthModal } from "./AuthModal"
 import { Logo } from "@/components/Logo"
 import { categoriesApi, Category } from "@/lib/api/categories"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 export function Header() {
   const { getTotalItems, fetchCart } = useCart()
   const { user, logout } = useUser()
+  const searchParams = useSearchParams()
+  const { toast } = useToast()
   
   // Fetch cart when user is logged in
   useEffect(() => {
@@ -41,6 +46,29 @@ export function Header() {
       })
     }
   }, [user?.accessToken, fetchCart])
+
+  // Reset avatar error when user changes
+  useEffect(() => {
+    setAvatarError(false)
+  }, [user?.avatar])
+  
+  // Show toast when email is verified
+  useEffect(() => {
+    const verified = searchParams.get("verified")
+    if (verified === "true") {
+      toast({
+        title: "Email đã được xác thực thành công! ✅",
+        description: "Bạn có thể đăng nhập ngay bây giờ",
+      })
+      // Remove query parameter from URL
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href)
+        url.searchParams.delete("verified")
+        window.history.replaceState({}, "", url.toString())
+      }
+    }
+  }, [searchParams, toast])
+  
   const { setTheme, theme } = useTheme()
   const [cartOpen, setCartOpen] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
@@ -88,6 +116,35 @@ export function Header() {
   // Get user display name
   const getUserDisplayName = () => {
     return user?.name || user?.fullName || "User"
+  }
+
+  // Get avatar URL - handle Cloudinary URLs
+  const getAvatarUrl = () => {
+    if (!user?.avatar) return null
+    
+    // If it's already a full URL (http/https), return as is
+    if (user.avatar.startsWith('http://') || user.avatar.startsWith('https://')) {
+      return user.avatar
+    }
+    
+    // If it's already a Cloudinary URL (contains res.cloudinary.com), return as is
+    if (user.avatar.includes('res.cloudinary.com')) {
+      return user.avatar
+    }
+    
+    // If it's a Cloudinary public_id or path, construct the URL
+    // Try to get cloud name from env, or extract from existing URLs if available
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'your-cloud-name'
+    
+    // If it starts with /, it's a path - prepend Cloudinary base URL
+    if (user.avatar.startsWith('/')) {
+      return `https://res.cloudinary.com/${cloudName}/image/upload${user.avatar}`
+    }
+    
+    // Otherwise, assume it's a public_id and construct URL
+    // Remove any leading slashes
+    const publicId = user.avatar.replace(/^\/+/, '')
+    return `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}`
   }
 
   return (
@@ -345,21 +402,28 @@ export function Header() {
                     <div className="flex items-center gap-1 md:gap-2">
                       {/* Avatar */}
                       <div className="relative w-8 h-8 md:w-9 md:h-9 rounded-full border-2 border-pink-400 dark:border-pink-500 overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                        {user.avatar && !avatarError ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={user.avatar}
-                            alt={getUserDisplayName()}
-                            className="w-full h-full object-cover"
-                            onError={() => setAvatarError(true)}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-400 to-pink-600">
-                            <span className="text-white text-sm font-semibold">
-                              {getUserInitials()}
-                            </span>
-                          </div>
-                        )}
+                        {(() => {
+                          const avatarUrl = getAvatarUrl()
+                          if (avatarUrl && !avatarError) {
+                            return (
+                              <Image
+                                src={avatarUrl}
+                                alt={getUserDisplayName()}
+                                fill
+                                className="object-cover"
+                                onError={() => setAvatarError(true)}
+                                unoptimized
+                              />
+                            )
+                          }
+                          return (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-400 to-pink-600">
+                              <span className="text-white text-sm font-semibold">
+                                {getUserInitials()}
+                              </span>
+                            </div>
+                          )
+                        })()}
                       </div>
                       {/* Name */}
                       <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">

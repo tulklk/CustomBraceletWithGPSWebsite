@@ -21,6 +21,7 @@ function PaymentStatusContent() {
 
   useEffect(() => {
     // Fetch order details if orderId is available
+    // When payment is successful, refresh order to get updated payment status from backend
     if (orderId && (isSuccess || isCanceled)) {
       setLoadingOrder(true)
       const fetchOrder = async () => {
@@ -38,6 +39,31 @@ function PaymentStatusContent() {
             orderData = await ordersApi.getGuestOrderById(orderId)
           }
           setOrder(orderData)
+          
+          // If payment was successful, the backend should have updated paymentStatus via webhook
+          // If paymentStatus is still 0 (pending), wait a bit and refresh again
+          if (isSuccess && orderData && orderData.paymentStatus === 0) {
+            // Wait 2 seconds for webhook to process, then refresh again
+            setTimeout(async () => {
+              try {
+                let refreshedOrder: any
+                if (user?.accessToken) {
+                  refreshedOrder = await makeAuthenticatedRequest(async (token: string) => {
+                    return await ordersApi.getOrderById(
+                      orderId,
+                      token,
+                      user.refreshToken
+                    )
+                  })
+                } else {
+                  refreshedOrder = await ordersApi.getGuestOrderById(orderId)
+                }
+                setOrder(refreshedOrder)
+              } catch (error) {
+                console.error("Failed to refresh order after payment:", error)
+              }
+            }, 2000)
+          }
         } catch (error) {
           console.error("Failed to fetch order details:", error)
         } finally {

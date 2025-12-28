@@ -39,6 +39,9 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const normalizeStatus = (status?: string | null) => {
     const lower = (status || "").toLowerCase()
@@ -148,16 +151,23 @@ export default function UsersPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!user?.accessToken) return
-    if (!confirm("Bạn có chắc chắn muốn xóa người dùng này?")) return
+  const handleDeleteClick = (userItem: AdminUser) => {
+    setUserToDelete(userItem)
+    setDeleteDialogOpen(true)
+  }
 
+  const handleDeleteConfirm = async () => {
+    if (!user?.accessToken || !userToDelete) return
+
+    setDeleting(true)
     try {
-      await adminApi.users.delete(user.accessToken, id)
+      await adminApi.users.delete(user.accessToken, userToDelete.id)
       toast({
         title: "Thành công",
         description: "Đã xóa người dùng",
       })
+      setDeleteDialogOpen(false)
+      setUserToDelete(null)
       fetchUsers()
     } catch (error: any) {
       toast({
@@ -165,7 +175,14 @@ export default function UsersPage() {
         description: error.message || "Không thể xóa người dùng",
         variant: "destructive",
       })
+    } finally {
+      setDeleting(false)
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false)
+    setUserToDelete(null)
   }
 
   const columns = [
@@ -231,7 +248,7 @@ export default function UsersPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => handleDelete(userItem.id)}
+            onClick={() => handleDeleteClick(userItem)}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
           </Button>
@@ -377,6 +394,41 @@ export default function UsersPage() {
               Hủy
             </Button>
             <Button onClick={handleSubmit}>Cập nhật</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa người dùng</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleDeleteCancel}
+              disabled={deleting}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <div className="h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  Đang xóa...
+                </>
+              ) : (
+                "Xóa"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

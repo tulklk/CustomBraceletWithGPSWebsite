@@ -62,14 +62,22 @@ export function ProductFilter({
   const maxPrice = priceRange[1]
 
   const handlePriceChange = (value: number[]) => {
-    onFilterChange({ ...safeFilters, priceRange: [value[0], value[1]], productTypes: safeProductTypes })
+    onFilterChange({ 
+      ...safeFilters, 
+      priceRange: [value[0], value[1]],
+      productTypes: safeProductTypes,
+    })
   }
 
   const handleProductTypeToggle = (value: string) => {
     const newProductTypes = safeProductTypes.includes(value)
       ? safeProductTypes.filter((t) => t !== value)
       : [...safeProductTypes, value]
-    onFilterChange({ ...safeFilters, productTypes: newProductTypes, priceRange: safePriceRange })
+    onFilterChange({ 
+      ...safeFilters, 
+      productTypes: newProductTypes,
+      priceRange: safePriceRange,
+    })
   }
 
   const activeFiltersCount =
@@ -106,7 +114,12 @@ export function ProductFilter({
             <Select
               value={safeFilters.sortBy || "default"}
               onValueChange={(value) =>
-                onFilterChange({ ...filters, sortBy: value })
+                onFilterChange({ 
+                  ...safeFilters, 
+                  sortBy: value,
+                  productTypes: safeProductTypes,
+                  priceRange: safePriceRange,
+                })
               }
             >
               <SelectTrigger>

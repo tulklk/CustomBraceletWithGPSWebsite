@@ -5,8 +5,9 @@ import { AuthResponse, BackendUser } from "@/lib/types"
 export interface RegisterRequest {
   email: string
   password: string
+  confirmPassword: string
   fullName: string
-  phoneNumber?: string
+  phoneNumber: string
 }
 
 // Login Request
@@ -236,7 +237,7 @@ export const authApi = {
   /**
    * Verify email address
    */
-  async verifyEmail(data: VerifyEmailRequest): Promise<void> {
+  async verifyEmail(data: VerifyEmailRequest): Promise<{ success: boolean }> {
     const response = await fetch(`${API_BASE_URL}/api/Auth/verify-email`, {
       method: "POST",
       headers: {
@@ -246,13 +247,13 @@ export const authApi = {
       body: JSON.stringify(data),
     })
 
-    return handleResponse<void>(response)
+    return handleResponse<{ success: boolean }>(response)
   },
 
   /**
    * Resend verification email
    */
-  async resendVerification(email: string): Promise<void> {
+  async resendVerification(email: string): Promise<{ success: boolean }> {
     const response = await fetch(`${API_BASE_URL}/api/Auth/resend-verification`, {
       method: "POST",
       headers: {
@@ -262,7 +263,7 @@ export const authApi = {
       body: JSON.stringify({ email }),
     })
 
-    return handleResponse<void>(response)
+    return handleResponse<{ success: boolean }>(response)
   },
 
   /**
