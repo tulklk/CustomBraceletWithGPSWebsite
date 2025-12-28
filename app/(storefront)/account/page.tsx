@@ -757,7 +757,7 @@ export default function AccountPage() {
               </Card>
             ) : (
               <>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -770,21 +770,6 @@ export default function AccountPage() {
                         {profile?.stats?.totalOrders ?? orders.length}
                       </div>
                   <p className="text-xs text-muted-foreground">Tổng số đơn</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-primary" />
-                    Thiết kế đã lưu
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                      <div className="text-2xl font-bold">
-                        {profile?.stats?.savedDesigns ?? user.savedDesigns.length}
-                      </div>
-                  <p className="text-xs text-muted-foreground">Designs</p>
                 </CardContent>
               </Card>
 

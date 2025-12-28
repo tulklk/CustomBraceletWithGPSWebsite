@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -15,7 +15,7 @@ import { useUser } from "@/store/useUser"
 import { useToast } from "@/hooks/use-toast"
 import { Product, Template, Accessory, CustomDesign } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
-import { Save, ShoppingCart, ArrowLeft, Box, Image as ImageIcon, Star, Send, Trash2, Reply, Mail, ChevronUp } from "lucide-react"
+import { Save, ShoppingCart, ArrowLeft, Box, Image as ImageIcon, Star, Send, Trash2, Reply, Mail, ChevronUp, ChevronDown } from "lucide-react"
 import Link from "next/link"
 import { Separator } from "@/components/ui/separator"
 import { productsApi, BackendProduct } from "@/lib/api/products"
@@ -23,9 +23,20 @@ import { ProductCard } from "@/components/ProductCard"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import Image from "next/image"
 import { formatCurrency } from "@/lib/utils"
-import { Minus, Plus, ChevronRight, Facebook, MessageCircle } from "lucide-react"
+import { Minus, Plus, ChevronRight, Facebook, MessageCircle, X, Upload } from "lucide-react"
+import { uploadImageToCloudinary } from "@/lib/cloudinary"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -41,6 +52,19 @@ export default function ProductDetailPage() {
   const [commentText, setCommentText] = useState("")
   const [replyTo, setReplyTo] = useState<string | null>(null)
   const [newsletterEmail, setNewsletterEmail] = useState("")
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewComment, setReviewComment] = useState("")
+  const [reviewFullName, setReviewFullName] = useState("")
+  const [reviewPhoneNumber, setReviewPhoneNumber] = useState("")
+  const [reviewEmail, setReviewEmail] = useState("")
+  const [reviewSendPhoto, setReviewSendPhoto] = useState(false)
+  const [reviewSaveInfo, setReviewSaveInfo] = useState(false)
+  const [reviewPhotoUrls, setReviewPhotoUrls] = useState<string[]>([])
+  const [reviewPhotoFiles, setReviewPhotoFiles] = useState<File[]>([])
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const reviewPhotoInputRef = useRef<HTMLInputElement>(null)
   
   // Product detail states
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
@@ -638,23 +662,13 @@ export default function ProductDetailPage() {
             </div>
           </div>
           
-          {/* Brand & Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-            {product.brand && (
-              <div>
-                <span className="text-muted-foreground">Thương hiệu: </span>
-                <span className="font-medium">{product.brand}</span>
-              </div>
-            )}
-            <div>
-              <span className="text-muted-foreground">Tình trạng: </span>
-              <span className={`font-medium ${
-                product.stockQuantity > 0 ? "text-green-600" : "text-red-600"
-              }`}>
-                {product.stockQuantity > 0 ? "Còn hàng" : "Hết hàng"}
-              </span>
+          {/* Brand */}
+          {product.brand && (
+            <div className="text-xs sm:text-sm">
+              <span className="text-muted-foreground">Thương hiệu: </span>
+              <span className="font-medium">{product.brand}</span>
             </div>
-          </div>
+          )}
           
           {/* Quantity */}
           <div>
@@ -762,26 +776,57 @@ export default function ProductDetailPage() {
         </TabsList>
 
         <TabsContent value="details" className="space-y-4 sm:space-y-6">
-          <div className="prose max-w-none">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 sm:mb-4">1. Giới thiệu {product.name}</h2>
-            <div className="text-sm sm:text-base text-muted-foreground whitespace-pre-line leading-relaxed">
-              {product.description || "Không có mô tả chi tiết."}
-            </div>
-          </div>
-          
-          {product.images && product.images.length > 0 && (
-            <div className="flex justify-center my-6 sm:my-8">
-              <div className="relative w-full max-w-2xl aspect-square">
-                <Image
-                  src={product.images[0]}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 768px"
-                  className="object-contain rounded-lg"
-                />
+          <Card className="border-2 rounded-xl overflow-hidden">
+            <CardContent className="p-6 sm:p-8">
+              <div className="prose max-w-none">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 sm:mb-4">1. Giới thiệu {product.name}</h2>
+                <div className="space-y-4">
+                  <div 
+                    className={`text-sm sm:text-base text-muted-foreground whitespace-pre-line leading-relaxed transition-all duration-300 ${
+                      !isDescriptionExpanded ? "line-clamp-4" : ""
+                    }`}
+                  >
+                    {product.description || "Không có mô tả chi tiết."}
+                  </div>
+                  {product.description && product.description.length > 200 && (
+                    <div className="flex justify-center">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                        className="text-primary border-primary hover:bg-primary hover:text-white"
+                      >
+                        {isDescriptionExpanded ? (
+                          <>
+                            Thu gọn
+                            <ChevronDown className="h-4 w-4 ml-2" />
+                          </>
+                        ) : (
+                          <>
+                            Xem thêm
+                            <ChevronUp className="h-4 w-4 ml-2" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+              
+              {product.images && product.images.length > 0 && (
+                <div className="flex justify-center my-6 sm:my-8">
+                  <div className="relative w-full max-w-2xl aspect-square">
+                    <Image
+                      src={product.images[0]}
+                      alt={product.name}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 768px"
+                      className="object-contain rounded-lg"
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           
           {/* Only show specs/features if product has them (for customizer products) */}
           {(product as any).specs || (product as any).features ? (
@@ -847,18 +892,6 @@ export default function ProductDetailPage() {
                   <span>{product.brand}</span>
                 </div>
               )}
-              <div>
-                <span className="font-medium">Tình trạng: </span>
-                <span className={product.stockQuantity > 0 ? "text-green-600" : "text-red-600"}>
-                  {product.stockQuantity > 0 ? "Còn hàng" : "Hết hàng"}
-                </span>
-              </div>
-              {product.stockQuantity > 0 && (
-                <div>
-                  <span className="font-medium">Số lượng còn lại: </span>
-                  <span>{product.stockQuantity}</span>
-                </div>
-              )}
             </div>
           )}
         </TabsContent>
@@ -901,7 +934,19 @@ export default function ProductDetailPage() {
 
             {/* Rate Button */}
             <div className="flex items-center justify-center sm:col-span-2 md:col-span-1">
-              <Button className="bg-primary hover:bg-primary/90 w-full sm:w-auto text-xs sm:text-sm">
+              <Button 
+                onClick={() => {
+                  // Load saved info if available
+                  if (typeof window !== "undefined") {
+                    const savedName = localStorage.getItem("reviewFullName")
+                    const savedEmail = localStorage.getItem("reviewEmail")
+                    if (savedName) setReviewFullName(savedName)
+                    if (savedEmail) setReviewEmail(savedEmail)
+                  }
+                  setReviewDialogOpen(true)
+                }}
+                className="bg-primary hover:bg-primary/90 w-full sm:w-auto text-xs sm:text-sm"
+              >
                 ĐÁNH GIÁ NGAY
               </Button>
             </div>
@@ -939,8 +984,8 @@ export default function ProductDetailPage() {
         <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Bình luận</h2>
         
         {/* Comment Form */}
-        <Card className="mb-4 sm:mb-6">
-          <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
+        <div className="mb-4 sm:mb-6">
+          <div className="pt-4 sm:pt-6 px-0">
             <Textarea
               placeholder={user ? "Viết bình luận của bạn..." : "Đăng nhập để bình luận"}
               value={commentText}
@@ -984,8 +1029,8 @@ export default function ProductDetailPage() {
                 Gửi bình luận
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Comments List */}
         <div className="space-y-4 sm:space-y-6">
@@ -1045,6 +1090,404 @@ export default function ProductDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Review Dialog */}
+      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl sm:text-2xl font-bold">
+              Đánh giá {product?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Star Rating */}
+            <div className="space-y-3">
+              <Label className="text-base font-medium">
+                Bạn cảm thấy thế nào về sản phẩm? (Chọn sao)
+              </Label>
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      className="focus:outline-none transition-transform hover:scale-110"
+                    >
+                      <Star
+                        className={`h-10 w-10 sm:h-12 sm:w-12 ${
+                          star <= reviewRating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "fill-none text-gray-300"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-4 text-xs sm:text-sm text-muted-foreground mt-2">
+                  <span className={reviewRating >= 1 ? "font-semibold text-foreground" : ""}>
+                    Rất tệ
+                  </span>
+                  <span className={reviewRating >= 2 ? "font-semibold text-foreground" : ""}>
+                    Không tệ
+                  </span>
+                  <span className={reviewRating >= 3 ? "font-semibold text-foreground" : ""}>
+                    Trung bình
+                  </span>
+                  <span className={reviewRating >= 4 ? "font-semibold text-foreground" : ""}>
+                    Tốt
+                  </span>
+                  <span className={reviewRating >= 5 ? "font-semibold text-foreground" : ""}>
+                    Tuyệt vời
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Comment Textarea */}
+            <div className="space-y-2">
+              <Textarea
+                placeholder="Mời bạn chia sẻ thêm một số cảm nhận..."
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                className="min-h-[120px] text-sm sm:text-base"
+              />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="sendPhoto"
+                    checked={reviewSendPhoto}
+                    onCheckedChange={(checked) => {
+                      setReviewSendPhoto(checked as boolean)
+                      if (!checked) {
+                        setReviewPhotoUrls([])
+                        setReviewPhotoFiles([])
+                        if (reviewPhotoInputRef.current) {
+                          reviewPhotoInputRef.current.value = ""
+                        }
+                      }
+                    }}
+                  />
+                  <Label htmlFor="sendPhoto" className="text-xs cursor-pointer">
+                    Gửi ảnh thực tế
+                  </Label>
+                </div>
+                <span>
+                  {reviewComment.length} ký tự {reviewComment.length < 10 && "(Tối thiểu 10)"}
+                </span>
+              </div>
+            </div>
+
+            {/* Photo Upload Section */}
+            {reviewSendPhoto && (
+              <div className="space-y-3">
+                <input
+                  ref={reviewPhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files || [])
+                    if (files.length === 0) return
+
+                    // Validate all files
+                    for (const file of files) {
+                      // Validate file size (max 5MB)
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast({
+                          title: "File quá lớn",
+                          description: `${file.name} có kích thước lớn hơn 5MB`,
+                          variant: "destructive",
+                        })
+                        return
+                      }
+
+                      // Validate file type
+                      if (!file.type.startsWith("image/")) {
+                        toast({
+                          title: "File không hợp lệ",
+                          description: `${file.name} không phải là file ảnh`,
+                          variant: "destructive",
+                        })
+                        return
+                      }
+                    }
+
+                    setUploadingPhoto(true)
+                    const newFiles: File[] = []
+                    const newUrls: string[] = []
+
+                    try {
+                      // Upload all files to Cloudinary
+                      for (const file of files) {
+                        try {
+                          const result = await uploadImageToCloudinary(file)
+                          newUrls.push(result.secure_url)
+                          newFiles.push(file)
+                        } catch (error: any) {
+                          console.error("Upload error for file:", file.name, error)
+                          toast({
+                            title: "Upload thất bại",
+                            description: `Không thể tải ${file.name}: ${error.message || "Lỗi không xác định"}`,
+                            variant: "destructive",
+                          })
+                        }
+                      }
+
+                      if (newUrls.length > 0) {
+                        setReviewPhotoUrls([...reviewPhotoUrls, ...newUrls])
+                        setReviewPhotoFiles([...reviewPhotoFiles, ...newFiles])
+                        toast({
+                          title: "Upload thành công!",
+                          description: `Đã tải lên ${newUrls.length} ảnh`,
+                        })
+                      }
+                    } catch (error: any) {
+                      console.error("Upload error:", error)
+                    } finally {
+                      setUploadingPhoto(false)
+                      // Reset input to allow selecting same files again
+                      if (reviewPhotoInputRef.current) {
+                        reviewPhotoInputRef.current.value = ""
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => reviewPhotoInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  className="w-full"
+                >
+                  {uploadingPhoto ? (
+                    <>
+                      <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
+                      Đang tải lên...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Chọn ảnh
+                    </>
+                  )}
+                </Button>
+                {reviewPhotoUrls.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {reviewPhotoUrls.map((url, index) => (
+                      <div key={index} className="relative aspect-square rounded-lg overflow-hidden border-2 border-border">
+                        <Image
+                          src={url}
+                          alt={`Review photo ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-8 w-8 rounded-full"
+                          onClick={() => {
+                            setReviewPhotoUrls(reviewPhotoUrls.filter((_, i) => i !== index))
+                            setReviewPhotoFiles(reviewPhotoFiles.filter((_, i) => i !== index))
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* User Information */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reviewFullName" className="text-sm font-medium">
+                  Họ tên <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="reviewFullName"
+                  value={reviewFullName}
+                  onChange={(e) => setReviewFullName(e.target.value)}
+                  placeholder="Nhập họ tên"
+                  className="text-sm sm:text-base"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reviewPhoneNumber" className="text-sm font-medium">
+                  Số điện thoại <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="reviewPhoneNumber"
+                  type="tel"
+                  value={reviewPhoneNumber}
+                  onChange={(e) => setReviewPhoneNumber(e.target.value)}
+                  placeholder="Nhập số điện thoại"
+                  className="text-sm sm:text-base"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reviewEmail" className="text-sm font-medium">
+                  Email
+                </Label>
+                <Input
+                  id="reviewEmail"
+                  type="email"
+                  value={reviewEmail}
+                  onChange={(e) => setReviewEmail(e.target.value)}
+                  placeholder="Nhập email"
+                  className="text-sm sm:text-base"
+                />
+              </div>
+            </div>
+
+            {/* Save Info Checkbox */}
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="saveInfo"
+                checked={reviewSaveInfo}
+                onCheckedChange={(checked) => setReviewSaveInfo(checked as boolean)}
+              />
+              <Label htmlFor="saveInfo" className="text-xs sm:text-sm text-muted-foreground cursor-pointer leading-relaxed">
+                Lưu tên của tôi, email, và trang web trong trình duyệt này cho lần bình luận kế tiếp của tôi.
+              </Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setReviewDialogOpen(false)
+                setReviewRating(0)
+                setReviewComment("")
+                setReviewFullName("")
+                setReviewPhoneNumber("")
+                setReviewEmail("")
+                setReviewSendPhoto(false)
+                setReviewSaveInfo(false)
+                setReviewPhotoUrls([])
+                setReviewPhotoFiles([])
+                if (reviewPhotoInputRef.current) {
+                  reviewPhotoInputRef.current.value = ""
+                }
+              }}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!reviewFullName.trim() || !reviewPhoneNumber.trim()) {
+                  toast({
+                    title: "Vui lòng điền đầy đủ thông tin",
+                    description: "Họ tên và số điện thoại là bắt buộc",
+                    variant: "destructive",
+                  })
+                  return
+                }
+                if (reviewRating === 0) {
+                  toast({
+                    title: "Vui lòng chọn đánh giá",
+                    description: "Bạn cần chọn số sao đánh giá",
+                    variant: "destructive",
+                  })
+                  return
+                }
+                if (reviewComment.length > 0 && reviewComment.length < 10) {
+                  toast({
+                    title: "Bình luận quá ngắn",
+                    description: "Bình luận phải có ít nhất 10 ký tự",
+                    variant: "destructive",
+                  })
+                  return
+                }
+                
+                // If sendPhoto is checked but there are files not uploaded yet, try to upload them
+                let finalPhotoUrls = [...reviewPhotoUrls]
+                if (reviewSendPhoto && reviewPhotoFiles.length > reviewPhotoUrls.length) {
+                  setUploadingPhoto(true)
+                  const filesToUpload = reviewPhotoFiles.slice(reviewPhotoUrls.length)
+                  
+                  try {
+                    for (const file of filesToUpload) {
+                      try {
+                        const result = await uploadImageToCloudinary(file)
+                        finalPhotoUrls.push(result.secure_url)
+                      } catch (error: any) {
+                        toast({
+                          title: "Upload ảnh thất bại",
+                          description: error.message || "Không thể tải ảnh lên",
+                          variant: "destructive",
+                        })
+                        setUploadingPhoto(false)
+                        return
+                      }
+                    }
+                  } finally {
+                    setUploadingPhoto(false)
+                  }
+                }
+                
+                // Save to localStorage if user wants
+                if (reviewSaveInfo) {
+                  if (typeof window !== "undefined") {
+                    localStorage.setItem("reviewFullName", reviewFullName)
+                    localStorage.setItem("reviewEmail", reviewEmail)
+                  }
+                }
+
+                // Prepare review data to send to backend
+                const reviewData = {
+                  productId: product?.id,
+                  rating: reviewRating,
+                  comment: reviewComment,
+                  fullName: reviewFullName,
+                  phoneNumber: reviewPhoneNumber,
+                  email: reviewEmail,
+                  photoUrls: finalPhotoUrls, // Array of URL strings from Cloudinary
+                }
+
+                // TODO: Submit review to backend API
+                console.log("Review data to send:", reviewData)
+                
+                toast({
+                  title: "Đánh giá đã được gửi!",
+                  description: "Cảm ơn bạn đã đánh giá sản phẩm",
+                })
+                
+                setReviewDialogOpen(false)
+                setReviewRating(0)
+                setReviewComment("")
+                setReviewFullName("")
+                setReviewPhoneNumber("")
+                setReviewEmail("")
+                setReviewSendPhoto(false)
+                setReviewSaveInfo(false)
+                setReviewPhotoUrls([])
+                setReviewPhotoFiles([])
+                if (reviewPhotoInputRef.current) {
+                  reviewPhotoInputRef.current.value = ""
+                }
+              }}
+              className="bg-primary hover:bg-primary/90"
+              disabled={uploadingPhoto}
+            >
+              {uploadingPhoto ? (
+                <>
+                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Đang xử lý...
+                </>
+              ) : (
+                "GỬI ĐÁNH GIÁ"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

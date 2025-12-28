@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { DataTable } from "@/components/admin/DataTable"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -380,29 +381,37 @@ export default function ProductsPage() {
     {
       key: "actions",
       label: "Actions",
-      render: (product: AdminProduct) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" title="Xem">
-            <Eye className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleOpenDialog(product)}
-            title="Sửa"
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleDeleteClick(product)}
-            title="Xóa"
-          >
-            <Trash2 className="w-4 h-4 text-destructive" />
-          </Button>
-        </div>
-      ),
+      render: (product: AdminProduct) => {
+        // Generate product URL from slug or id
+        const productSlug = product.slug || slugify(product.name)
+        const productUrl = `/products/${productSlug}`
+        
+        return (
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" title="Xem" asChild>
+              <Link href={productUrl} target="_blank">
+                <Eye className="w-4 h-4" />
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleOpenDialog(product)}
+              title="Sửa"
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleDeleteClick(product)}
+              title="Xóa"
+            >
+              <Trash2 className="w-4 h-4 text-destructive" />
+            </Button>
+          </div>
+        )
+      },
     },
   ]
 
