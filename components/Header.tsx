@@ -22,7 +22,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { CartDrawer } from "./CartDrawer"
 import { CartPopup } from "./CartPopup"
@@ -32,27 +32,11 @@ import { categoriesApi, Category } from "@/lib/api/categories"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
-export function Header() {
-  const { getTotalItems, fetchCart } = useCart()
-  const { user, logout } = useUser()
+// Component to handle verified query param (needs Suspense)
+function VerifiedToastHandler() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
-  
-  // Fetch cart when user is logged in
-  useEffect(() => {
-    if (user?.accessToken) {
-      fetchCart().catch((error) => {
-        console.warn("Failed to fetch cart:", error)
-      })
-    }
-  }, [user?.accessToken, fetchCart])
 
-  // Reset avatar error when user changes
-  useEffect(() => {
-    setAvatarError(false)
-  }, [user?.avatar])
-  
-  // Show toast when email is verified
   useEffect(() => {
     const verified = searchParams.get("verified")
     if (verified === "true") {
@@ -68,6 +52,28 @@ export function Header() {
       }
     }
   }, [searchParams, toast])
+
+  return null
+}
+
+export function Header() {
+  const { getTotalItems, fetchCart } = useCart()
+  const { user, logout } = useUser()
+  const { toast } = useToast()
+  
+  // Fetch cart when user is logged in
+  useEffect(() => {
+    if (user?.accessToken) {
+      fetchCart().catch((error) => {
+        console.warn("Failed to fetch cart:", error)
+      })
+    }
+  }, [user?.accessToken, fetchCart])
+
+  // Reset avatar error when user changes
+  useEffect(() => {
+    setAvatarError(false)
+  }, [user?.avatar])
   
   const { setTheme, theme } = useTheme()
   const [cartOpen, setCartOpen] = useState(false)
@@ -149,6 +155,9 @@ export function Header() {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <VerifiedToastHandler />
+      </Suspense>
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 md:h-20 items-center justify-between px-4">
           <div className="flex items-center gap-0 md:gap-6">
