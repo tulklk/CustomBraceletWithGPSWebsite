@@ -52,10 +52,7 @@ export function ProductCard({ product, featured }: ProductCardProps) {
                 )}
               </div>
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-2 sm:mb-3">
-              {product.description}
-            </p>
-            <div className="flex gap-1 sm:gap-2 flex-wrap">
+            <div className="flex gap-1 sm:gap-2 flex-wrap mt-2 sm:mt-3">
               <Badge variant="outline" className="text-[10px] sm:text-xs">
                 {product.specs.waterproof}
               </Badge>

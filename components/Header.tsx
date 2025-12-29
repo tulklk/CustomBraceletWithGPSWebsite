@@ -245,18 +245,10 @@ export function Header() {
                   </Link>
                   <Link
                     href="/order-lookup"
-                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors flex items-center gap-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <FileText className="h-4 w-4" />
-                    TRA CỨU ĐƠN HÀNG
-                  </Link>
-                  <Link
-                    href="/franchise"
                     className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    CHÍNH SÁCH NHƯỢNG QUYỀN
+                    TRA CỨU ĐƠN HÀNG
                   </Link>
                   <Link
                     href="/guides"
@@ -264,14 +256,6 @@ export function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <span>HƯỚNG DẪN</span>
-                    <Plus className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href="/technology"
-                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    CÔNG NGHỆ SẢN PHẨM
                   </Link>
                   <Link
                     href="/about"
@@ -500,8 +484,14 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="ghost" size="sm" className="hidden sm:flex" onClick={() => setAuthOpen(true)}>
-                Đăng nhập
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 md:h-10 md:w-10"
+                onClick={() => setAuthOpen(true)}
+                aria-label="Đăng nhập"
+              >
+                <User className="h-[18px] w-[18px] md:h-5 md:w-5" />
               </Button>
             )}
 

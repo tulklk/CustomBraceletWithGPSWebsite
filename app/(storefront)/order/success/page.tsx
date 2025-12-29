@@ -64,6 +64,20 @@ function OrderSuccessContent() {
     )
   }
 
+  // Lấy email để hiển thị trong thông báo (ưu tiên email user login, fallback email từ order)
+  const getOrderEmail = () => {
+    if (user?.email) return user.email
+    return (
+      (order as any)?.userEmail ||
+      (order as any)?.guestEmail ||
+      (order as any)?.email ||
+      ""
+    )
+  }
+
+  const orderEmail = order ? getOrderEmail() : ""
+  const isBankTransfer = order?.paymentMethod === 1 // 1: PayOS / chuyển khoản
+
   return (
     <div className="container py-12">
       <div className="max-w-2xl mx-auto">
@@ -76,8 +90,32 @@ function OrderSuccessContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <p className="text-green-800 dark:text-green-200">
-                Cảm ơn bạn đã đặt hàng! Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất để xác nhận đơn hàng.
+              <p className="text-green-800 dark:text-green-200 text-sm md:text-base">
+                {isBankTransfer ? (
+                  <>
+                    Đơn của bạn đã chuyển khoản thành công và đơn được xử lý.{" "}
+                    {orderEmail ? (
+                      <>
+                        Chúng tôi đã gửi email xác nhận đến{" "}
+                        <span className="font-semibold">{orderEmail}</span>, vui lòng kiểm tra hòm thư của bạn.
+                      </>
+                    ) : (
+                      <>Chúng tôi đã gửi email xác nhận, vui lòng kiểm tra hòm thư của bạn.</>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    Đơn hàng của bạn đã được tiếp nhận và đang xử lý.{" "}
+                    {orderEmail ? (
+                      <>
+                        Chúng tôi đã gửi email xác nhận đến{" "}
+                        <span className="font-semibold">{orderEmail}</span>, vui lòng kiểm tra hòm thư của bạn.
+                      </>
+                    ) : (
+                      <>Chúng tôi đã gửi email xác nhận, vui lòng kiểm tra hòm thư của bạn.</>
+                    )}
+                  </>
+                )}
               </p>
             </div>
 
