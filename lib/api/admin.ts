@@ -313,12 +313,54 @@ export const adminApi = {
 
   // Vouchers API
   vouchers: {
+    // Helper to map backend response to frontend format
+    mapBackendToFrontend(backendVoucher: any): AdminVoucher {
+      return {
+        id: backendVoucher.id,
+        code: backendVoucher.code,
+        name: backendVoucher.name,
+        description: backendVoucher.description ?? null,
+        discountType: backendVoucher.discountType,
+        discountValue: backendVoucher.discountValue,
+        minimumOrderAmount: backendVoucher.minOrderAmount ?? null,
+        maximumDiscountAmount: backendVoucher.maxDiscountAmount ?? null,
+        totalUsageLimit: backendVoucher.usageLimitTotal ?? null,
+        usageLimitPerCustomer: backendVoucher.usageLimitPerCustomer ?? null,
+        startDate: backendVoucher.startDate,
+        endDate: backendVoucher.endDate,
+        published: backendVoucher.isPublic ?? false,
+        createdAt: backendVoucher.createdAt,
+        updatedAt: backendVoucher.updatedAt,
+      }
+    },
+
+    // Helper to map frontend format to backend format
+    mapFrontendToBackend(frontendVoucher: Partial<AdminVoucher>): any {
+      const backendData: any = {}
+      
+      if (frontendVoucher.code !== undefined) backendData.code = frontendVoucher.code
+      if (frontendVoucher.name !== undefined) backendData.name = frontendVoucher.name
+      if (frontendVoucher.description !== undefined) backendData.description = frontendVoucher.description
+      if (frontendVoucher.discountType !== undefined) backendData.discountType = frontendVoucher.discountType
+      if (frontendVoucher.discountValue !== undefined) backendData.discountValue = frontendVoucher.discountValue
+      if (frontendVoucher.minimumOrderAmount !== undefined) backendData.minOrderAmount = frontendVoucher.minimumOrderAmount
+      if (frontendVoucher.maximumDiscountAmount !== undefined) backendData.maxDiscountAmount = frontendVoucher.maximumDiscountAmount
+      if (frontendVoucher.totalUsageLimit !== undefined) backendData.usageLimitTotal = frontendVoucher.totalUsageLimit
+      if (frontendVoucher.usageLimitPerCustomer !== undefined) backendData.usageLimitPerCustomer = frontendVoucher.usageLimitPerCustomer
+      if (frontendVoucher.startDate !== undefined) backendData.startDate = frontendVoucher.startDate
+      if (frontendVoucher.endDate !== undefined) backendData.endDate = frontendVoucher.endDate
+      if (frontendVoucher.published !== undefined) backendData.isPublic = frontendVoucher.published
+      
+      return backendData
+    },
+
     async getAll(accessToken: string): Promise<AdminVoucher[]> {
       const response = await fetch(`${API_BASE_URL}/api/admin/AdminVouchers`, {
         method: "GET",
         headers: createAuthHeaders(accessToken),
       })
-      return handleResponse<AdminVoucher[]>(response)
+      const backendData = await handleResponse<any[]>(response)
+      return backendData.map(v => this.mapBackendToFrontend(v))
     },
 
     async getById(accessToken: string, id: string): Promise<AdminVoucher> {
@@ -326,25 +368,30 @@ export const adminApi = {
         method: "GET",
         headers: createAuthHeaders(accessToken),
       })
-      return handleResponse<AdminVoucher>(response)
+      const backendData = await handleResponse<any>(response)
+      return this.mapBackendToFrontend(backendData)
     },
 
     async create(accessToken: string, data: Partial<AdminVoucher>): Promise<AdminVoucher> {
+      const backendData = this.mapFrontendToBackend(data)
       const response = await fetch(`${API_BASE_URL}/api/admin/AdminVouchers`, {
         method: "POST",
         headers: createAuthHeaders(accessToken),
-        body: JSON.stringify(data),
+        body: JSON.stringify(backendData),
       })
-      return handleResponse<AdminVoucher>(response)
+      const backendResponse = await handleResponse<any>(response)
+      return this.mapBackendToFrontend(backendResponse)
     },
 
     async update(accessToken: string, id: string, data: Partial<AdminVoucher>): Promise<AdminVoucher> {
+      const backendData = this.mapFrontendToBackend(data)
       const response = await fetch(`${API_BASE_URL}/api/admin/AdminVouchers/${id}`, {
         method: "PUT",
         headers: createAuthHeaders(accessToken),
-        body: JSON.stringify(data),
+        body: JSON.stringify(backendData),
       })
-      return handleResponse<AdminVoucher>(response)
+      const backendResponse = await handleResponse<any>(response)
+      return this.mapBackendToFrontend(backendResponse)
     },
 
     async publish(accessToken: string, id: string): Promise<AdminVoucher> {
@@ -352,7 +399,8 @@ export const adminApi = {
         method: "PATCH",
         headers: createAuthHeaders(accessToken),
       })
-      return handleResponse<AdminVoucher>(response)
+      const backendResponse = await handleResponse<any>(response)
+      return this.mapBackendToFrontend(backendResponse)
     },
 
     async delete(accessToken: string, id: string): Promise<void> {

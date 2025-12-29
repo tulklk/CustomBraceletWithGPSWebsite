@@ -193,8 +193,30 @@ export default function CheckoutPage() {
           )
         })
       } else {
-        // Apply voucher without authentication
-        result = await ordersApi.applyVoucherWithoutAuth({ voucherCode: discountCode.trim() })
+        // Apply voucher without authentication - need email and items
+        const email = form.watch("email") || ""
+        if (!email) {
+          toast({
+            title: "Lỗi",
+            description: "Vui lòng nhập email trước khi áp dụng mã giảm giá",
+            variant: "destructive",
+          })
+          setIsApplyingVoucher(false)
+          return
+        }
+
+        // Map cart items to API format
+        const orderItems = items.map(item => ({
+          productId: item.design.productId,
+          productVariantId: null, // Cart items may not have variant ID
+          quantity: item.qty,
+        }))
+
+        result = await ordersApi.applyVoucherWithoutAuth({
+          email: email,
+          code: discountCode.trim(),
+          items: orderItems,
+        })
       }
 
       if (result.isValid && result.discountAmount) {

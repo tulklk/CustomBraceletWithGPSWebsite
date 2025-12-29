@@ -1,24 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -27,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Plus, Edit, Trash2, Eye } from "lucide-react"
+import { Plus, Edit, Trash2, Copy } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useUser } from "@/store/useUser"
 import { adminApi } from "@/lib/api/admin"
@@ -42,23 +27,11 @@ dayjs.locale("vi")
 export default function VouchersPage() {
   const { user } = useUser()
   const { toast } = useToast()
+  const router = useRouter()
   const [vouchers, setVouchers] = useState<AdminVoucher[]>([])
   const [loading, setLoading] = useState(true)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingVoucher, setEditingVoucher] = useState<AdminVoucher | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [formData, setFormData] = useState({
-    code: "",
-    name: "",
-    discountType: "Percent" as "Percent" | "Amount",
-    discountValue: "",
-    minimumOrderAmount: "",
-    maximumDiscountAmount: "",
-    startDate: "",
-    endDate: "",
-    published: false,
-  })
 
   useEffect(() => {
     if (!user?.accessToken) return
@@ -83,102 +56,17 @@ export default function VouchersPage() {
     }
   }
 
-  const handleOpenDialog = (voucher?: AdminVoucher) => {
-    if (voucher) {
-      setEditingVoucher(voucher)
-      setFormData({
-        code: voucher.code || "",
-        name: voucher.name || "",
-        discountType: voucher.discountType || "Percent",
-        discountValue: voucher.discountValue.toString() || "",
-        minimumOrderAmount: voucher.minimumOrderAmount?.toString() || "",
-        maximumDiscountAmount: voucher.maximumDiscountAmount?.toString() || "",
-        startDate: voucher.startDate ? dayjs(voucher.startDate).format("YYYY-MM-DD") : "",
-        endDate: voucher.endDate ? dayjs(voucher.endDate).format("YYYY-MM-DD") : "",
-        published: voucher.published || false,
-      })
-    } else {
-      setEditingVoucher(null)
-      setFormData({
-        code: "",
-        name: "",
-        discountType: "Percent",
-        discountValue: "",
-        minimumOrderAmount: "",
-        maximumDiscountAmount: "",
-        startDate: "",
-        endDate: "",
-        published: false,
-      })
-    }
-    setDialogOpen(true)
-  }
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false)
-    setEditingVoucher(null)
-    setFormData({
-      code: "",
-      name: "",
-      discountType: "Percent",
-      discountValue: "",
-      minimumOrderAmount: "",
-      maximumDiscountAmount: "",
-      startDate: "",
-      endDate: "",
-      published: false,
-    })
-  }
-
-  const handleSubmit = async () => {
-    if (!user?.accessToken) return
-    if (!formData.code.trim() || !formData.name.trim() || !formData.discountValue) {
-      toast({
-        title: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
-        variant: "destructive",
-      })
-      return
-    }
-
+  const handleCopyCode = async (code: string) => {
     try {
-      const voucherData = {
-        code: formData.code,
-        name: formData.name,
-        discountType: formData.discountType,
-        discountValue: formData.discountType === "Percent" 
-          ? parseFloat(formData.discountValue)
-          : parseFloat(formData.discountValue),
-        minimumOrderAmount: formData.minimumOrderAmount 
-          ? parseFloat(formData.minimumOrderAmount)
-          : null,
-        maximumDiscountAmount: formData.maximumDiscountAmount
-          ? parseFloat(formData.maximumDiscountAmount)
-          : null,
-        startDate: formData.startDate || new Date().toISOString(),
-        endDate: formData.endDate || new Date().toISOString(),
-        published: formData.published,
-      }
-
-      if (editingVoucher) {
-        await adminApi.vouchers.update(user.accessToken, editingVoucher.id, voucherData)
-        toast({
-          title: "Thành công",
-          description: "Đã cập nhật mã giảm giá",
-        })
-      } else {
-        await adminApi.vouchers.create(user.accessToken, voucherData)
-        toast({
-          title: "Thành công",
-          description: "Đã tạo mã giảm giá mới",
-        })
-      }
-      handleCloseDialog()
-      fetchVouchers()
-    } catch (error: any) {
+      await navigator.clipboard.writeText(code)
+      toast({
+        title: "Đã sao chép",
+        description: `Đã sao chép mã "${code}" vào clipboard`,
+      })
+    } catch (error) {
       toast({
         title: "Lỗi",
-        description: error.message || "Không thể lưu mã giảm giá",
+        description: "Không thể sao chép mã",
         variant: "destructive",
       })
     }
@@ -204,31 +92,6 @@ export default function VouchersPage() {
     }
   }
 
-  const handleTogglePublish = async (id: string, currentPublished: boolean) => {
-    if (!user?.accessToken) return
-    try {
-      if (!currentPublished) {
-        await adminApi.vouchers.publish(user.accessToken, id)
-        toast({
-          title: "Thành công",
-          description: "Đã publish mã giảm giá",
-        })
-      } else {
-        await adminApi.vouchers.update(user.accessToken, id, { published: false })
-        toast({
-          title: "Thành công",
-          description: "Đã ẩn mã giảm giá",
-        })
-      }
-      fetchVouchers()
-    } catch (error: any) {
-      toast({
-        title: "Lỗi",
-        description: error.message || "Không thể cập nhật trạng thái",
-        variant: "destructive",
-      })
-    }
-  }
 
   const filteredVouchers = vouchers.filter((voucher) => {
     const matchesSearch =
@@ -262,7 +125,7 @@ export default function VouchersPage() {
             Mã giảm giá - Danh sách mã giảm giá đang áp dụng cho cửa hàng.
           </p>
         </div>
-        <Button onClick={() => handleOpenDialog()}>
+        <Button onClick={() => router.push("/admin/vouchers/new")}>
           <Plus className="h-4 w-4 mr-2" />
           Tạo mã giảm giá
         </Button>
@@ -331,7 +194,19 @@ export default function VouchersPage() {
               ) : (
                 filteredVouchers.map((voucher) => (
                   <TableRow key={voucher.id}>
-                    <TableCell className="font-medium">{voucher.code}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {voucher.code}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => handleCopyCode(voucher.code)}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
                     <TableCell>{voucher.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
@@ -364,7 +239,10 @@ export default function VouchersPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={voucher.published ? "default" : "secondary"}>
+                      <Badge 
+                        variant={voucher.published ? "default" : "secondary"}
+                        className={voucher.published ? "bg-green-500 hover:bg-green-600" : ""}
+                      >
                         {voucher.published ? "Đang public" : "Đang ẩn"}
                       </Badge>
                     </TableCell>
@@ -373,16 +251,9 @@ export default function VouchersPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleOpenDialog(voucher)}
+                          onClick={() => router.push(`/admin/vouchers/${voucher.id}`)}
                         >
                           <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleTogglePublish(voucher.id, voucher.published)}
-                        >
-                          <Eye className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -401,143 +272,6 @@ export default function VouchersPage() {
         </CardContent>
       </Card>
 
-      {/* Create/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingVoucher ? "Sửa mã giảm giá" : "Tạo mã giảm giá mới"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingVoucher
-                ? "Cập nhật thông tin mã giảm giá"
-                : "Tạo mã giảm giá mới cho cửa hàng"}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="code">Mã *</Label>
-                <Input
-                  id="code"
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  placeholder="SALE500K"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Tên *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Giảm 500.000₫ mọi đơn hàng"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="discountType">Loại giảm</Label>
-                <Select
-                  value={formData.discountType}
-                  onValueChange={(value: "Percent" | "Amount") =>
-                    setFormData({ ...formData, discountType: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Percent">Phần trăm (%)</SelectItem>
-                    <SelectItem value="Amount">Số tiền (VNĐ)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="discountValue">Giá trị *</Label>
-                <Input
-                  id="discountValue"
-                  type="number"
-                  value={formData.discountValue}
-                  onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
-                  placeholder={formData.discountType === "Percent" ? "5" : "50000"}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="minimumOrderAmount">Đơn tối thiểu</Label>
-                <Input
-                  id="minimumOrderAmount"
-                  type="number"
-                  value={formData.minimumOrderAmount}
-                  onChange={(e) =>
-                    setFormData({ ...formData, minimumOrderAmount: e.target.value })
-                  }
-                  placeholder="300000"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="maximumDiscountAmount">Tối đa giảm</Label>
-                <Input
-                  id="maximumDiscountAmount"
-                  type="number"
-                  value={formData.maximumDiscountAmount}
-                  onChange={(e) =>
-                    setFormData({ ...formData, maximumDiscountAmount: e.target.value })
-                  }
-                  placeholder="100000"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="startDate">Từ ngày</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="endDate">Đến ngày</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="published">Trạng thái</Label>
-              <Select
-                value={formData.published ? "published" : "hidden"}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, published: value === "published" })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hidden">Đang ẩn</SelectItem>
-                  <SelectItem value="published">Đang public</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseDialog}>
-              Hủy
-            </Button>
-            <Button onClick={handleSubmit}>
-              {editingVoucher ? "Cập nhật" : "Tạo"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

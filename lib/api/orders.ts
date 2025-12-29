@@ -92,9 +92,20 @@ export interface Order {
   updatedAt?: string
 }
 
-// Apply Voucher Request
+// Apply Voucher Request (for authenticated users)
 export interface ApplyVoucherRequest {
   voucherCode: string
+}
+
+// Apply Voucher Request (for guest users)
+export interface ApplyGuestVoucherRequest {
+  email: string
+  code: string
+  items: Array<{
+    productId: string
+    productVariantId: string | null
+    quantity: number
+  }>
 }
 
 // Apply Voucher Response
@@ -249,7 +260,7 @@ export const ordersApi = {
    * Apply voucher code (without authentication - for guest checkout)
    * POST /api/guest/orders/apply-voucher
    */
-  async applyVoucherWithoutAuth(data: ApplyVoucherRequest): Promise<ApplyVoucherResponse> {
+  async applyVoucherWithoutAuth(data: ApplyGuestVoucherRequest): Promise<ApplyVoucherResponse> {
     // Use Next.js API route as proxy to bypass HTTP/2 protocol errors
     const response = await fetch("/api/guest/orders/apply-voucher", {
       method: "POST",

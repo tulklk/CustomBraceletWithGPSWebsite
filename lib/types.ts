@@ -166,10 +166,13 @@ export type AdminVoucher = {
   id: string
   code: string
   name: string
+  description?: string | null
   discountType: "Percent" | "Amount"
   discountValue: number
   minimumOrderAmount?: number | null
   maximumDiscountAmount?: number | null
+  totalUsageLimit?: number | null
+  usageLimitPerCustomer?: number | null
   startDate: string
   endDate: string
   published: boolean
