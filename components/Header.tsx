@@ -230,13 +230,6 @@ export function Header() {
                     )}
                   </div>
                   <Link
-                    href="/products?sort=sale"
-                    className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    SALE OFF
-                  </Link>
-                  <Link
                     href="/news"
                     className="px-4 py-3 text-sm font-medium hover:bg-accent transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
@@ -339,20 +332,32 @@ export function Header() {
                 </div>
               </div>
 
+              <Link href="/news" className="text-sm font-medium hover:text-primary transition-colors">
+                Tin tức
+              </Link>
               <Link href="/faq" className="text-sm font-medium hover:text-primary transition-colors">
                 FAQ
               </Link>
               <Link href="/guides" className="text-sm font-medium hover:text-primary transition-colors">
                 Hướng dẫn
               </Link>
-              <Link href="/order-lookup" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-                <FileText className="h-4 w-4" />
-                Tra cứu đơn hàng
+              <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors">
+                Giới thiệu
+              </Link>
+              <Link href="/contact" className="text-sm font-medium hover:text-primary transition-colors">
+                Liên hệ
               </Link>
             </nav>
           </div>
 
           <div className="flex items-center gap-0.5 md:gap-1">
+            <Link 
+              href="/order-lookup" 
+              className="hidden md:flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors px-2 py-1.5 rounded-md hover:bg-accent"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden lg:inline">Tra cứu đơn hàng</span>
+            </Link>
             <Button
               variant="ghost"
               size="icon"
@@ -466,7 +471,7 @@ export function Header() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/account?tab=favorites" className="flex items-center gap-2 cursor-pointer">
+                    <Link href="/account?tab=wishlist" className="flex items-center gap-2 cursor-pointer">
                       <Heart className="h-4 w-4" />
                       Sản phẩm yêu thích
                     </Link>

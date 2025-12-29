@@ -35,8 +35,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
 import { formatCurrency } from "@/lib/utils"
-import { Minus, Plus, ChevronRight, Facebook, MessageCircle, X, Upload } from "lucide-react"
+import { Minus, Plus, ChevronRight, Facebook, MessageCircle, X, Upload, Heart } from "lucide-react"
 import { uploadImageToCloudinary } from "@/lib/cloudinary"
+import { wishlistApi } from "@/lib/api/wishlist"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -114,8 +115,12 @@ export default function ProductDetailPage() {
   const { setProduct: setCustomizerProduct, getDesign, templateId } =
     useCustomizer()
   const { addItem, addItemByProductId } = useCart()
-  const { user, saveDesign } = useUser()
+  const { user, saveDesign, makeAuthenticatedRequest } = useUser()
   const { toast } = useToast()
+  
+  // Wishlist state - default to false, only set to true when explicitly confirmed
+  const [isInWishlist, setIsInWishlist] = useState(false)
+  const [checkingWishlist, setCheckingWishlist] = useState(false)
 
   // Helper function to get product type from ID
   const getProductType = (productId: string): 'bracelet' | 'necklace' | 'clip' => {
@@ -170,16 +175,57 @@ export default function ProductDetailPage() {
           if (firstVariant.size) setSelectedSize(firstVariant.size)
         }
         
-        // Fetch similar products (same category or random products)
+        // Fetch similar products (same category)
         try {
           const allProducts = await productsApi.getAll()
-          // Get products from same category or random 4 products
-          const similar = allProducts
-            .filter((p) => p.id !== foundProduct.id)
-            .slice(0, 4)
+          
+          // Fetch backend products to get categoryId
+          const { API_BASE_URL } = await import("@/lib/constants")
+          const backendResponse = await fetch(`${API_BASE_URL}/api/Products`, {
+            method: "GET",
+            headers: { "accept": "*/*" },
+          })
+          const allBackendProducts: BackendProduct[] = await backendResponse.json()
+          
+          // Get current product's categoryId
+          const currentProductCategoryId = foundProduct.categoryId
+          
+          // Filter products from the same category
+          let similar: Product[] = []
+          
+          if (currentProductCategoryId) {
+            // Get product IDs that belong to the same category
+            const sameCategoryProductIds = allBackendProducts
+              .filter((bp) => bp.categoryId === currentProductCategoryId && bp.id !== foundProduct.id && bp.isActive)
+              .map((bp) => bp.id)
+            
+            // Get products that match those IDs
+            similar = allProducts
+              .filter((p) => sameCategoryProductIds.includes(p.id))
+              .slice(0, 4)
+          }
+          
+          // If not enough products from same category, fill with other products
+          if (similar.length < 4) {
+            const remaining = allProducts
+              .filter((p) => p.id !== foundProduct.id && !similar.some((s) => s.id === p.id))
+              .slice(0, 4 - similar.length)
+            similar = [...similar, ...remaining]
+          }
+          
           setSimilarProducts(similar)
         } catch (err) {
           console.error("Error fetching similar products:", err)
+          // Fallback: just get any 4 products excluding current
+          try {
+            const allProducts = await productsApi.getAll()
+            const similar = allProducts
+              .filter((p) => p.id !== foundProduct.id)
+              .slice(0, 4)
+            setSimilarProducts(similar)
+          } catch (fallbackErr) {
+            console.error("Error in fallback similar products:", fallbackErr)
+          }
         }
 
         // Auto-select first template if none selected
@@ -196,6 +242,93 @@ export default function ProductDetailPage() {
 
     fetchData()
   }, [slug, router, setCustomizerProduct, templateId])
+
+  // Check if product is in wishlist
+  useEffect(() => {
+    // Reset to false when product or user changes
+    setIsInWishlist(false)
+    
+    const checkWishlist = async () => {
+      if (!user?.accessToken || !product?.id) {
+        return
+      }
+
+      setCheckingWishlist(true)
+      try {
+        // Try using check endpoint first
+        let inWishlist = false
+        try {
+          inWishlist = await makeAuthenticatedRequest(async (token) => {
+            return await wishlistApi.check(token, product.id)
+          })
+          console.log("Wishlist check result for product", product.id, ":", inWishlist, "type:", typeof inWishlist)
+        } catch (checkError) {
+          console.warn("Check endpoint failed, trying to fetch all wishlist items:", checkError)
+          // Fallback: fetch all wishlist items and check if productId exists
+          const allItems = await makeAuthenticatedRequest(async (token) => {
+            return await wishlistApi.getAll(token)
+          })
+          inWishlist = allItems.some(item => item.productId === product.id)
+          console.log("Fallback check - product in wishlist:", inWishlist)
+        }
+        
+        // Set based on the result
+        setIsInWishlist(Boolean(inWishlist))
+      } catch (error) {
+        console.error("Error checking wishlist:", error)
+        // On error, assume not in wishlist
+        setIsInWishlist(false)
+      } finally {
+        setCheckingWishlist(false)
+      }
+    }
+
+    // Only check if we have both user and product
+    if (user?.accessToken && product?.id) {
+      checkWishlist()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.accessToken, product?.id])
+
+  const handleToggleWishlist = async () => {
+    if (!user?.accessToken) {
+      toast({
+        title: "Vui lòng đăng nhập",
+        description: "Đăng nhập để thêm sản phẩm vào danh sách yêu thích",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!product) return
+
+    try {
+      if (isInWishlist) {
+        await makeAuthenticatedRequest(async (token) => {
+          await wishlistApi.remove(token, product.id)
+        })
+        setIsInWishlist(false)
+        toast({
+          title: "Đã xóa khỏi danh sách yêu thích",
+        })
+      } else {
+        await makeAuthenticatedRequest(async (token) => {
+          await wishlistApi.add(token, product.id)
+        })
+        setIsInWishlist(true)
+        toast({
+          title: "Đã thêm sản phẩm vào danh sách yêu thích",
+        })
+      }
+    } catch (error: any) {
+      console.error("Error toggling wishlist:", error)
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể cập nhật danh sách yêu thích",
+        variant: "destructive",
+      })
+    }
+  }
 
   const handleAddToCart = async () => {
     if (!product) return
@@ -400,8 +533,11 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="container py-12">
-        <div className="text-center">Đang tải...</div>
+      <div className="flex items-center justify-center min-h-[60vh] bg-white">
+        <div className="text-center">
+          <div className="h-8 w-8 border-[3px] border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-gray-700 text-sm">Đang tải sản phẩm...</p>
+        </div>
       </div>
     )
   }
@@ -580,7 +716,26 @@ export default function ProductDetailPage() {
         {/* Right: Product Info */}
         <div className="space-y-4 sm:space-y-6">
           {/* Product Name */}
-          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">{product.name}</h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight flex-1">{product.name}</h1>
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleToggleWishlist}
+                disabled={checkingWishlist}
+                className="flex-shrink-0"
+              >
+                <Heart
+                  className={`h-5 w-5 sm:h-6 sm:w-6 ${
+                    isInWishlist
+                      ? "fill-red-500 text-red-500"
+                      : "text-muted-foreground hover:text-red-500"
+                  }`}
+                />
+              </Button>
+            )}
+          </div>
           
           {/* Rating */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-4">

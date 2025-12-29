@@ -126,7 +126,7 @@ export function ProductFilter({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="default">Mặc định</SelectItem>
+                <SelectItem value="default">Mới nhất</SelectItem>
                 <SelectItem value="price-asc">Giá: Thấp đến cao</SelectItem>
                 <SelectItem value="price-desc">Giá: Cao đến thấp</SelectItem>
                 <SelectItem value="name-asc">Tên: A-Z</SelectItem>

@@ -539,14 +539,21 @@ export const ordersApi = {
    * GET /api/guest/orders/{id}
    */
   async getGuestOrderById(orderId: string): Promise<Order> {
-    const response = await fetch(`${API_BASE_URL}/api/guest/orders/${orderId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
+    const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
+    
+    return cachedFetch<Order>(
+      `${API_BASE_URL}/api/guest/orders/${orderId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    })
-
-    return handleResponse<Order>(response)
+      {
+        ...cacheConfigs.orders,
+        storageKey: `guest_order_${orderId}`,
+      }
+    )
   },
 
   /**
@@ -554,19 +561,25 @@ export const ordersApi = {
    * GET /api/guest/orders/lookup
    */
   async lookupGuestOrder(phoneNumber: string, orderNumber: string): Promise<Order> {
+    const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
     const params = new URLSearchParams({
       phoneNumber,
       orderNumber,
     })
     
-    const response = await fetch(`${API_BASE_URL}/api/guest/orders/lookup?${params.toString()}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
+    return cachedFetch<Order>(
+      `${API_BASE_URL}/api/guest/orders/lookup?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    })
-
-    return handleResponse<Order>(response)
+      {
+        ...cacheConfigs.orders,
+        storageKey: `guest_order_lookup_${phoneNumber}_${orderNumber}`,
+      }
+    )
   },
 
   /**
@@ -574,14 +587,21 @@ export const ordersApi = {
    * GET /api/guest/orders/status/{orderNumber}
    */
   async getGuestOrderStatus(orderNumber: string): Promise<{ status: OrderStatus }> {
-    const response = await fetch(`${API_BASE_URL}/api/guest/orders/status/${orderNumber}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
+    const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
+    
+    return cachedFetch<{ status: OrderStatus }>(
+      `${API_BASE_URL}/api/guest/orders/status/${orderNumber}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    })
-
-    return handleResponse<{ status: OrderStatus }>(response)
+      {
+        ...cacheConfigs.orders,
+        storageKey: `guest_order_status_${orderNumber}`,
+      }
+    )
   },
 }
 

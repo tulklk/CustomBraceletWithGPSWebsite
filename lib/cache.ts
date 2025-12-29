@@ -24,9 +24,12 @@ const DEFAULT_TTL = {
   PRODUCT_DETAIL: 10 * 60 * 1000, // 10 minutes
   CATEGORIES: 30 * 60 * 1000, // 30 minutes
   PROVINCES: 24 * 60 * 60 * 1000, // 24 hours
+  DISTRICTS: 24 * 60 * 60 * 1000, // 24 hours
+  WARDS: 24 * 60 * 60 * 1000, // 24 hours
   ORDERS: 2 * 60 * 1000, // 2 minutes
   USER: 5 * 60 * 1000, // 5 minutes
   CART: 1 * 60 * 1000, // 1 minute
+  WISHLIST: 2 * 60 * 1000, // 2 minutes
 }
 
 // Memory cache (in-memory storage)
@@ -409,6 +412,24 @@ export const cacheConfigs = {
   
   cart: {
     ttl: DEFAULT_TTL.CART,
+    useLocalStorage: false,
+    useSessionStorage: true,
+  } as CacheConfig,
+
+  districts: {
+    ttl: DEFAULT_TTL.DISTRICTS,
+    useLocalStorage: true,
+    useSessionStorage: true,
+  } as CacheConfig,
+
+  wards: {
+    ttl: DEFAULT_TTL.WARDS,
+    useLocalStorage: true,
+    useSessionStorage: true,
+  } as CacheConfig,
+
+  wishlist: {
+    ttl: DEFAULT_TTL.WISHLIST,
     useLocalStorage: false,
     useSessionStorage: true,
   } as CacheConfig,

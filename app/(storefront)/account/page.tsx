@@ -44,7 +44,9 @@ import { OrderStatusTracker } from "@/components/OrderStatusTracker"
 import { provincesApi, Province, Ward } from "@/lib/api/provinces"
 import { useAddresses, Address } from "@/store/useAddresses"
 import { productsApi } from "@/lib/api/products"
+import { wishlistApi, WishlistItem } from "@/lib/api/wishlist"
 import Image from "next/image"
+import Link from "next/link"
 
 // Convert orderStatus number to OrderStatus string
 // 0: Pending, 1: Paid/Confirmed, 2: Processing, 3: Shipped, 4: Delivered, 5: Cancelled
@@ -141,7 +143,7 @@ function AccountPageContent({
 export default function AccountPage() {
   const { user, logout, removeDesign, makeAuthenticatedRequest } = useUser()
   const { setTemplate, setColor, setEngrave } = useCustomizer()
-  const { addItem } = useCart()
+  const { addItem, addItemByProductId } = useCart()
   const { toast } = useToast()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
@@ -154,6 +156,13 @@ export default function AccountPage() {
   const [loadingOrderDetail, setLoadingOrderDetail] = useState(false)
   const [productImages, setProductImages] = useState<Record<string, string>>({})
   const fetchingImagesRef = useRef(false) // Prevent multiple image fetch calls
+  
+  // Wishlist states
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
+  const [loadingWishlist, setLoadingWishlist] = useState(false)
+  const wishlistScrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
   
   // User profile hooks
   const { profile, loading: loadingProfile, error: profileError, refetch: refetchProfile } = useUserProfile()
@@ -265,6 +274,140 @@ export default function AccountPage() {
       setCurrentPage(1) // Reset to first page when fetching orders
     }
   }, [user?.accessToken, activeTab])
+
+  // Fetch wishlist when user is logged in and wishlist tab is active
+  useEffect(() => {
+    if (user?.accessToken && activeTab === "wishlist") {
+      fetchWishlist()
+    }
+  }, [user?.accessToken, activeTab])
+
+  const fetchWishlist = async () => {
+    if (!user?.accessToken) return
+
+    setLoadingWishlist(true)
+    try {
+      const items = await makeAuthenticatedRequest(async (token) => {
+        return await wishlistApi.getAll(token)
+      })
+      console.log("Wishlist items received:", items)
+      console.log("Wishlist items count:", items?.length)
+      
+      // If items don't have product data, fetch product details
+      const itemsWithProducts = await Promise.all(
+        (items || []).map(async (item) => {
+          if (item.product) {
+            return item
+          }
+          
+          // Fetch product details if missing
+          try {
+            console.log("Fetching product details for:", item.productId)
+            const product = await productsApi.getById(item.productId)
+            return {
+              ...item,
+              product: product,
+            }
+          } catch (error) {
+            console.error("Error fetching product for wishlist item:", error)
+            return null
+          }
+        })
+      )
+      
+      // Filter out null items (failed to fetch product)
+      const validItems = itemsWithProducts.filter((item): item is WishlistItem => item !== null)
+      console.log("Valid wishlist items count:", validItems.length)
+      setWishlistItems(validItems)
+    } catch (error: any) {
+      console.error("Error fetching wishlist:", error)
+      toast({
+        title: "Lỗi khi tải danh sách yêu thích",
+        description: error.message || "Vui lòng thử lại sau",
+        variant: "destructive",
+      })
+      setWishlistItems([])
+    } finally {
+      setLoadingWishlist(false)
+    }
+  }
+
+  const handleRemoveFromWishlist = async (productId: string) => {
+    if (!user?.accessToken) return
+
+    try {
+      await makeAuthenticatedRequest(async (token) => {
+        await wishlistApi.remove(token, productId)
+      })
+      setWishlistItems(wishlistItems.filter(item => item.productId !== productId))
+      toast({
+        title: "Đã xóa khỏi danh sách yêu thích",
+      })
+    } catch (error: any) {
+      console.error("Error removing from wishlist:", error)
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể xóa sản phẩm",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleAddToCartFromWishlist = async (productId: string) => {
+    try {
+      await addItemByProductId(productId, 1)
+      toast({
+        title: "Đã thêm vào giỏ hàng!",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể thêm vào giỏ hàng",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Scroll wishlist functions
+  const scrollWishlist = (direction: 'left' | 'right') => {
+    const container = wishlistScrollRef.current
+    if (!container) return
+
+    const scrollAmount = 400 // Scroll 400px each time
+    const currentScroll = container.scrollLeft
+    const newScroll = direction === 'left' 
+      ? currentScroll - scrollAmount 
+      : currentScroll + scrollAmount
+
+    container.scrollTo({
+      left: newScroll,
+      behavior: 'smooth'
+    })
+  }
+
+  // Check scroll position to show/hide arrows
+  const checkWishlistScroll = () => {
+    const container = wishlistScrollRef.current
+    if (!container) return
+
+    const { scrollLeft, scrollWidth, clientWidth } = container
+    setCanScrollLeft(scrollLeft > 0)
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10) // 10px threshold
+  }
+
+  // Check scroll on mount and when items change
+  useEffect(() => {
+    checkWishlistScroll()
+    const container = wishlistScrollRef.current
+    if (container) {
+      container.addEventListener('scroll', checkWishlistScroll)
+      window.addEventListener('resize', checkWishlistScroll)
+      return () => {
+        container.removeEventListener('scroll', checkWishlistScroll)
+        window.removeEventListener('resize', checkWishlistScroll)
+      }
+    }
+  }, [wishlistItems])
 
   const fetchOrders = async () => {
     if (!user?.accessToken) return
@@ -720,7 +863,7 @@ export default function AccountPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 h-auto">
             <TabsTrigger value="overview" className="gap-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Tổng quan</span>
@@ -728,6 +871,10 @@ export default function AccountPage() {
             <TabsTrigger value="orders" className="gap-2">
               <Package className="h-4 w-4" />
               <span className="hidden sm:inline">Đơn hàng</span>
+            </TabsTrigger>
+            <TabsTrigger value="wishlist" className="gap-2">
+              <Heart className="h-4 w-4" />
+              <span className="hidden sm:inline">Yêu thích</span>
             </TabsTrigger>
             <TabsTrigger value="security" className="gap-2">
               <Lock className="h-4 w-4" />
@@ -1396,6 +1543,169 @@ export default function AccountPage() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+          </TabsContent>
+
+          {/* Wishlist Tab */}
+          <TabsContent value="wishlist" className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                <Heart className="h-6 w-6 text-primary" />
+                Sản phẩm yêu thích
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Danh sách các sản phẩm bạn đã đánh dấu yêu thích.
+              </p>
+            </div>
+
+            {loadingWishlist ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-muted-foreground">Đang tải danh sách yêu thích...</p>
+                </div>
+              </div>
+            ) : wishlistItems.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">Chưa có sản phẩm yêu thích</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Bạn chưa thêm sản phẩm nào vào danh sách yêu thích.
+                  </p>
+                  <Button asChild>
+                    <Link href="/products">Xem sản phẩm</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  Tìm thấy {wishlistItems.length} sản phẩm yêu thích
+                </div>
+                <div className="relative">
+                  {/* Left Arrow */}
+                  {canScrollLeft && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm shadow-lg hover:bg-background"
+                      onClick={() => scrollWishlist('left')}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </Button>
+                  )}
+                  
+                  {/* Right Arrow */}
+                  {canScrollRight && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm shadow-lg hover:bg-background"
+                      onClick={() => scrollWishlist('right')}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
+                  )}
+
+                  {/* Scrollable Container */}
+                  <div
+                    ref={wishlistScrollRef}
+                    className="flex gap-6 overflow-x-auto pb-4 px-2 scroll-smooth scrollbar-hide"
+                    style={{ WebkitOverflowScrolling: 'touch' }}
+                    onScroll={checkWishlistScroll}
+                  >
+                    {wishlistItems
+                      .filter((item) => item.product) // Filter out items without product
+                      .map((item) => {
+                  const product = item.product!
+                  const images = product.imageUrls && product.imageUrls.length > 0 
+                    ? product.imageUrls 
+                    : product.images && product.images.length > 0 
+                    ? product.images 
+                    : []
+                  const discount = product.originalPrice && product.originalPrice > product.price
+                    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                    : 0
+
+                  return (
+                    <Card key={item.productId} className="overflow-hidden flex-shrink-0 w-80">
+                      <div className="relative">
+                        <Link href={`/products/${product.slug}`}>
+                          <div className="relative aspect-square bg-muted">
+                            {images.length > 0 ? (
+                              <Image
+                                src={images[0]}
+                                alt={product.name}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package className="h-16 w-16 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+                        {discount > 0 && (
+                          <Badge className="absolute top-2 right-2 bg-red-500">
+                            -{discount}%
+                          </Badge>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 left-2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+                          onClick={() => handleRemoveFromWishlist(item.productId)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                      <CardContent className="p-4">
+                        <Link href={`/products/${product.slug}`}>
+                          <h3 className="font-semibold mb-1 line-clamp-2 hover:text-primary transition-colors">
+                            {product.name}
+                          </h3>
+                        </Link>
+                        {product.brand && (
+                          <p className="text-sm text-muted-foreground mb-2">{product.brand}</p>
+                        )}
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-lg font-bold text-primary">
+                            {formatCurrency(product.price)}
+                          </span>
+                          {product.originalPrice && product.originalPrice > product.price && (
+                            <span className="text-sm text-muted-foreground line-through">
+                              {formatCurrency(product.originalPrice)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleAddToCartFromWishlist(item.productId)}
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            Thêm vào giỏ
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleRemoveFromWishlist(item.productId)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+                  </div>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           {/* Settings Tab */}

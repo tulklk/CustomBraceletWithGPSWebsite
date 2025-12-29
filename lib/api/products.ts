@@ -47,6 +47,35 @@ export const productsApi = {
   },
 
   /**
+   * Get product by ID (returns full backend product data)
+   */
+  async getById(id: string): Promise<BackendProduct | null> {
+    try {
+      const backendProduct = await cachedFetch<BackendProduct>(
+        `${API_BASE_URL}/api/Products/${id}`,
+        {
+          method: "GET",
+          headers: {
+            "accept": "*/*",
+          },
+        },
+        {
+          ...cacheConfigs.productDetail,
+          storageKey: `product_detail_${id}`,
+        }
+      )
+      return backendProduct
+    } catch (error: any) {
+      // Handle 404 specifically
+      if (error?.statusCode === 404 || error?.status === 404) {
+        return null
+      }
+      console.error("Error fetching product by ID:", error)
+      return null
+    }
+  },
+
+  /**
    * Get product by slug (returns full backend product data) - with caching
    */
   async getBySlug(slug: string): Promise<BackendProduct | null> {

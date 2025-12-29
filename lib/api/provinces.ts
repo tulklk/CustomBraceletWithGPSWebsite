@@ -103,16 +103,16 @@ export const provincesApi = {
    */
   async getProvinceWithDistricts(provinceCode: string): Promise<Province> {
     try {
-      // Use proxy API to avoid CORS
-      const response = await fetch(`${PROXY_API_BASE}?action=province&code=${provinceCode}`)
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch province with districts: ${response.status}`)
-      }
-      const data = await response.json()
-      console.log("Province with districts response:", data)
-      
-      return data
+      return await cachedFetch<Province>(
+        `${PROXY_API_BASE}?action=province&code=${provinceCode}`,
+        {
+          method: "GET",
+        },
+        {
+          ...cacheConfigs.provinces,
+          storageKey: `province_${provinceCode}`,
+        }
+      )
     } catch (error) {
       console.error("Error fetching province with districts:", error)
       throw error
@@ -124,15 +124,16 @@ export const provincesApi = {
    */
   async getDistrictWithWards(districtCode: string): Promise<District> {
     try {
-      // Use proxy API to avoid CORS
-      const response = await fetch(`${PROXY_API_BASE}?action=district&code=${districtCode}`)
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch district with wards: ${response.status}`)
-      }
-      const data = await response.json()
-      console.log("District with wards response:", data)
-      return data
+      return await cachedFetch<District>(
+        `${PROXY_API_BASE}?action=district&code=${districtCode}`,
+        {
+          method: "GET",
+        },
+        {
+          ...cacheConfigs.districts,
+          storageKey: `district_${districtCode}`,
+        }
+      )
     } catch (error) {
       console.error("Error fetching district with wards:", error)
       throw error
@@ -148,44 +149,50 @@ export const provincesApi = {
       
       // First, try to get province with depth=2 which should include districts
       try {
-        const provinceResponse = await fetch(`${PROXY_API_BASE}?action=province&code=${provinceCode}`)
-        if (provinceResponse.ok) {
-          const provinceData = await provinceResponse.json()
-          console.log("Province data structure:", {
-            keys: Object.keys(provinceData),
-            hasDistricts: !!provinceData.districts,
-            hasD: !!provinceData.d,
-            districtsLength: provinceData.districts?.length || 0,
-            dLength: provinceData.d?.length || 0,
-          })
+        const provinceData = await cachedFetch<any>(
+          `${PROXY_API_BASE}?action=province&code=${provinceCode}`,
+          {
+            method: "GET",
+          },
+          {
+            ...cacheConfigs.provinces,
+            storageKey: `province_${provinceCode}`,
+          }
+        )
+        console.log("Province data structure:", {
+          keys: Object.keys(provinceData),
+          hasDistricts: !!provinceData.districts,
+          hasD: !!provinceData.d,
+          districtsLength: provinceData.districts?.length || 0,
+          dLength: provinceData.d?.length || 0,
+        })
+        
+        // Try multiple property names
+        let districts = provinceData.districts || provinceData.d || []
+        
+        // If still empty, check if response structure is different
+        if (districts.length === 0) {
+          // Log full structure for debugging
+          console.log("Full province data:", JSON.stringify(provinceData).substring(0, 1000))
           
-          // Try multiple property names
-          let districts = provinceData.districts || provinceData.d || []
-          
-          // If still empty, check if response structure is different
-          if (districts.length === 0) {
-            // Log full structure for debugging
-            console.log("Full province data:", JSON.stringify(provinceData).substring(0, 1000))
-            
-            // Some APIs might nest districts differently
-            if (provinceData.data && provinceData.data.districts) {
-              districts = provinceData.data.districts
-            }
-            
-            // API v2 might return wards directly instead of districts
-            // Check if wards exist and have province_code matching
-            if (districts.length === 0 && provinceData.wards && Array.isArray(provinceData.wards)) {
-              console.log("Found wards in province, checking if they are districts...")
-              // If wards have province_code, they might actually be districts
-              // But typically, we need to fetch districts separately
-              // Let's try to get districts from a different endpoint
-            }
+          // Some APIs might nest districts differently
+          if (provinceData.data && provinceData.data.districts) {
+            districts = provinceData.data.districts
           }
           
-          if (districts.length > 0) {
-            console.log("Found districts from province:", districts.length)
-            return districts
+          // API v2 might return wards directly instead of districts
+          // Check if wards exist and have province_code matching
+          if (districts.length === 0 && provinceData.wards && Array.isArray(provinceData.wards)) {
+            console.log("Found wards in province, checking if they are districts...")
+            // If wards have province_code, they might actually be districts
+            // But typically, we need to fetch districts separately
+            // Let's try to get districts from a different endpoint
           }
+        }
+        
+        if (districts.length > 0) {
+          console.log("Found districts from province:", districts.length)
+          return districts
         }
       } catch (provinceError) {
         console.error("Province fetch failed:", provinceError)
@@ -193,13 +200,17 @@ export const provincesApi = {
       
       // Fallback: try direct districts endpoint
       console.log("Trying direct districts endpoint...")
-      const response = await fetch(`${PROXY_API_BASE}?action=districts&code=${provinceCode}`)
+      const data = await cachedFetch<any>(
+        `${PROXY_API_BASE}?action=districts&code=${provinceCode}`,
+        {
+          method: "GET",
+        },
+        {
+          ...cacheConfigs.districts,
+          storageKey: `districts_${provinceCode}`,
+        }
+      )
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch districts: ${response.status}`)
-      }
-      
-      const data = await response.json()
       console.log("Districts response:", data)
       
       // Extract districts from response
@@ -221,13 +232,17 @@ export const provincesApi = {
       console.log("Fetching wards for district code:", districtCode)
       
       // Use proxy API to avoid CORS
-      const response = await fetch(`${PROXY_API_BASE}?action=wards&code=${districtCode}`)
+      const data = await cachedFetch<any>(
+        `${PROXY_API_BASE}?action=wards&code=${districtCode}`,
+        {
+          method: "GET",
+        },
+        {
+          ...cacheConfigs.wards,
+          storageKey: `wards_${districtCode}`,
+        }
+      )
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch wards: ${response.status}`)
-      }
-      
-      const data = await response.json()
       console.log("Wards response:", data)
       
       // Extract wards from response
@@ -237,12 +252,22 @@ export const provincesApi = {
       if (wards.length === 0) {
         console.log("No wards in response, trying district endpoint...")
         try {
-          const districtResponse = await fetch(`${PROXY_API_BASE}?action=district&code=${districtCode}`)
-          if (districtResponse.ok) {
-            const districtData = await districtResponse.json()
+          try {
+            const districtData = await cachedFetch<any>(
+              `${PROXY_API_BASE}?action=district&code=${districtCode}`,
+              {
+                method: "GET",
+              },
+              {
+                ...cacheConfigs.districts,
+                storageKey: `district_${districtCode}`,
+              }
+            )
             console.log("District data:", districtData)
             wards = districtData.wards || districtData.w || []
             console.log("Wards from district:", wards.length)
+          } catch (districtError) {
+            console.error("District fetch failed:", districtError)
           }
         } catch (districtError) {
           console.error("District fetch failed:", districtError)

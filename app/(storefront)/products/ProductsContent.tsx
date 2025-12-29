@@ -260,7 +260,17 @@ export function ProductsContent() {
         result.sort((a, b) => b.name.localeCompare(a.name))
         break
       default:
-        // Default order
+        // Default: Sort by createdAt (newest first)
+        result.sort((a, b) => {
+          const productA = backendProducts.find((bp) => bp.id === a.id)
+          const productB = backendProducts.find((bp) => bp.id === b.id)
+          
+          const dateA = productA?.createdAt ? new Date(productA.createdAt).getTime() : 0
+          const dateB = productB?.createdAt ? new Date(productB.createdAt).getTime() : 0
+          
+          // Newest first (descending order)
+          return dateB - dateA
+        })
         break
     }
 

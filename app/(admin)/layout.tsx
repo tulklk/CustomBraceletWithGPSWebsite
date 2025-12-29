@@ -17,6 +17,7 @@ import {
   LogOut,
   Menu,
   X,
+  Home,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useUser } from "@/store/useUser"
@@ -220,6 +221,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
               </div>
             </div>
+            <Button
+              variant="outline"
+              className="w-full mb-2"
+              onClick={() => {
+                router.push("/")
+                setSidebarOpen(false)
+              }}
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Quay về trang chủ
+            </Button>
             <Button
               variant="outline"
               className="w-full"
