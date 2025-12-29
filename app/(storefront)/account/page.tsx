@@ -40,6 +40,7 @@ import { useUpdateProfile } from "@/hooks/useUpdateProfile"
 import { useChangePassword } from "@/hooks/useChangePassword"
 import { UpdateProfileRequest, ChangePasswordRequest } from "@/types/user"
 import { uploadImageToCloudinary } from "@/lib/cloudinary"
+import { OrderStatusTracker } from "@/components/OrderStatusTracker"
 import { provincesApi, Province, Ward } from "@/lib/api/provinces"
 import { useAddresses, Address } from "@/store/useAddresses"
 import { productsApi } from "@/lib/api/products"
@@ -1665,35 +1666,33 @@ export default function AccountPage() {
                   <p className="font-semibold">#{selectedOrder.orderNumber || selectedOrder.id}</p>
                 </div>
                 <div>
-                  <Label className="text-sm text-muted-foreground">Trạng thái</Label>
-                  <div className="mt-1">
-                    <Badge variant={getStatusVariant(getOrderStatus(selectedOrder))}>
-                      {getStatusLabel(getOrderStatus(selectedOrder))}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
                   <Label className="text-sm text-muted-foreground">Ngày đặt</Label>
                   <p className="text-sm">
-                    {selectedOrder.createdAt 
-                      ? new Date(selectedOrder.createdAt).toLocaleDateString("vi-VN", {
+                    {selectedOrder.createdAt ? (
+                      <span className="font-semibold">
+                        {new Date(selectedOrder.createdAt).toLocaleDateString("vi-VN", {
                           year: "numeric",
                           month: "long",
                           day: "numeric",
                           hour: "2-digit",
-                          minute: "2-digit"
-                        })
-                      : "N/A"}
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    ) : (
+                      "N/A"
+                    )}
                   </p>
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">Phương thức thanh toán</Label>
                   <p className="text-sm">
-                    {selectedOrder.paymentMethod === 0 
-                      ? "COD" 
-                      : selectedOrder.paymentMethod === 1 
-                        ? "Chuyển khoản qua Ngân Hàng" 
-                        : "N/A"}
+                    {selectedOrder.paymentMethod === 0 ? (
+                      <span className="font-semibold">COD</span>
+                    ) : selectedOrder.paymentMethod === 1 ? (
+                      <span className="font-semibold">Chuyển khoản qua Ngân Hàng</span>
+                    ) : (
+                      "N/A"
+                    )}
                   </p>
                 </div>
               </div>
@@ -1774,6 +1773,11 @@ export default function AccountPage() {
                   <span className="text-primary">{formatCurrency(selectedOrder.totalAmount)}</span>
                 </div>
               </div>
+
+              {/* Order Status Tracker */}
+              {selectedOrder.orderStatus !== undefined && selectedOrder.orderStatus !== null && (
+                <OrderStatusTracker orderStatus={selectedOrder.orderStatus} />
+              )}
             </div>
           ) : (
             <div className="text-center py-12">

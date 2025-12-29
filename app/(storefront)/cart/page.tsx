@@ -224,7 +224,15 @@ export default function CartPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tạm tính:</span>
-                  <span>{formatCurrency(getTotalPrice())}</span>
+                  <span>
+                    {formatCurrency(
+                      items.reduce((total, item) => {
+                        const product = products[item.design.productId]
+                        const currentPrice = product?.price || item.design.unitPrice || 0
+                        return total + (currentPrice * item.qty)
+                      }, 0)
+                    )}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Phí vận chuyển:</span>
@@ -237,7 +245,13 @@ export default function CartPage() {
               <div className="flex justify-between items-center">
                 <span className="font-semibold">Tổng cộng:</span>
                 <span className="text-2xl font-bold text-primary">
-                  {formatCurrency(getTotalPrice())}
+                  {formatCurrency(
+                    items.reduce((total, item) => {
+                      const product = products[item.design.productId]
+                      const currentPrice = product?.price || item.design.unitPrice || 0
+                      return total + (currentPrice * item.qty)
+                    }, 0)
+                  )}
                 </span>
               </div>
 

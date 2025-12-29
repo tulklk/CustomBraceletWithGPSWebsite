@@ -261,7 +261,18 @@ export function CartPopup({ open, onClose, triggerRef }: CartPopupProps) {
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium">Tổng cộng:</span>
           <span className="text-lg font-bold text-primary">
-            {formatCurrency(getTotalPrice())}
+            {loading ? (
+              <span className="text-muted-foreground text-sm">Đang tải...</span>
+            ) : (
+              formatCurrency(
+                items.reduce((total, item) => {
+                  const product = products[item.design.productId]
+                  // Use same logic as item price calculation: prioritize product.price
+                  const currentPrice = product?.price || item.design.unitPrice || 0
+                  return total + (currentPrice * item.qty)
+                }, 0)
+              )
+            )}
           </span>
         </div>
 

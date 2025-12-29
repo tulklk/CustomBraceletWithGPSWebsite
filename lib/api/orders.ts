@@ -94,7 +94,7 @@ export interface Order {
 
 // Apply Voucher Request (for authenticated users)
 export interface ApplyVoucherRequest {
-  voucherCode: string
+  code: string
 }
 
 // Apply Voucher Request (for guest users)

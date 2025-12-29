@@ -38,11 +38,15 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   useEffect(() => {
     if (!open || items.length === 0) {
       setProducts({})
+      setLoading(false)
       return
     }
 
+    // Clear products immediately when drawer opens
+    setProducts({})
+    setLoading(true)
+
     const fetchProducts = async () => {
-      setLoading(true)
       const productIds = [...new Set(items.map(item => item.design.productId))]
       const productMap: ProductInfo = {}
       
@@ -103,8 +107,9 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                   const productImage = product?.imageUrls?.[0] || product?.images?.[0] || ""
                   const stockQuantity = product?.stockQuantity ?? 0
                   const isInStock = stockQuantity > 0
+                  // Use same logic as cart page: prioritize product.price, fallback to unitPrice
                   const currentPrice = product?.price || item.design.unitPrice || 0
-                  const originalPrice = product?.originalPrice || null
+                  const originalPrice = product?.originalPrice ?? null
                   const hasDiscount = originalPrice && originalPrice > currentPrice
                   const discountPercent = hasDiscount 
                     ? Math.round(((originalPrice! - currentPrice) / originalPrice!) * 100)
@@ -213,7 +218,19 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
             <div className="flex justify-between items-center mb-4">
               <span className="font-semibold">Tổng cộng:</span>
               <span className="text-2xl font-bold text-primary">
-                {formatCurrency(getTotalPrice())}
+                {loading || Object.keys(products).length === 0 ? (
+                  <span className="text-muted-foreground">Đang tải...</span>
+                ) : (
+                  formatCurrency(
+                    items.reduce((total, item) => {
+                      const product = products[item.design.productId]
+                      // Use same logic as cart page: prioritize product.price, fallback to unitPrice
+                      // But only calculate when products have been fetched
+                      const currentPrice = product?.price || item.design.unitPrice || 0
+                      return total + (currentPrice * item.qty)
+                    }, 0)
+                  )
+                )}
               </span>
             </div>
             <Button asChild size="lg" onClick={() => onOpenChange(false)}>
