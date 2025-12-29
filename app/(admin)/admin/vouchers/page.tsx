@@ -40,9 +40,10 @@ export default function VouchersPage() {
 
   const fetchVouchers = async () => {
     if (!user?.accessToken) return
+    const accessToken = user.accessToken // Store in const for TypeScript
     try {
       setLoading(true)
-      const data = await adminApi.vouchers.getAll(user.accessToken)
+      const data = await adminApi.vouchers.getAll(accessToken)
       setVouchers(data)
     } catch (error: any) {
       console.error("Error fetching vouchers:", error)
@@ -76,8 +77,10 @@ export default function VouchersPage() {
     if (!user?.accessToken) return
     if (!confirm("Bạn có chắc chắn muốn xóa mã giảm giá này?")) return
 
+    const accessToken = user.accessToken // Store in const for TypeScript
+
     try {
-      await adminApi.vouchers.delete(user.accessToken, id)
+      await adminApi.vouchers.delete(accessToken, id)
       toast({
         title: "Thành công",
         description: "Đã xóa mã giảm giá",

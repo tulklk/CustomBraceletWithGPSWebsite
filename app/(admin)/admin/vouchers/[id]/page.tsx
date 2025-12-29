@@ -52,9 +52,11 @@ export default function EditVoucherPage() {
     if (!user?.accessToken || !voucherId) return
     
     const fetchVoucher = async () => {
+      if (!user?.accessToken) return
+      const accessToken = user.accessToken // Store in const for TypeScript
       try {
         setLoading(true)
-        const data = await adminApi.vouchers.getById(user.accessToken, voucherId)
+        const data = await adminApi.vouchers.getById(accessToken, voucherId)
         setVoucher(data)
         
         // Parse dates
@@ -95,6 +97,8 @@ export default function EditVoucherPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user?.accessToken || !voucher) return
+
+    const accessToken = user.accessToken // Store in const for TypeScript
 
     if (!formData.code.trim() || !formData.name.trim() || !formData.discountValue) {
       toast({
@@ -159,7 +163,7 @@ export default function EditVoucherPage() {
         published: formData.published,
       }
 
-      await adminApi.vouchers.update(user.accessToken, voucher.id, voucherData)
+      await adminApi.vouchers.update(accessToken, voucher.id, voucherData)
       toast({
         title: "Thành công",
         description: "Đã cập nhật mã giảm giá",

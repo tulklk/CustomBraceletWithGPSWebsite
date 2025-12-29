@@ -46,6 +46,8 @@ export default function NewVoucherPage() {
     e.preventDefault()
     if (!user?.accessToken) return
 
+    const accessToken = user.accessToken // Store in const for TypeScript
+
     if (!formData.code.trim() || !formData.name.trim() || !formData.discountValue) {
       toast({
         title: "Lỗi",
@@ -109,7 +111,7 @@ export default function NewVoucherPage() {
         published: formData.published,
       }
 
-      await adminApi.vouchers.create(user.accessToken, voucherData)
+      await adminApi.vouchers.create(accessToken, voucherData)
       toast({
         title: "Thành công",
         description: "Đã tạo mã giảm giá mới",
