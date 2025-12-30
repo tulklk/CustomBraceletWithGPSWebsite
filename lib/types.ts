@@ -94,12 +94,27 @@ export type Order = {
   status: "pending" | "processing" | "completed"
 }
 
+// Suggested Product from AI Chat
+export type SuggestedProduct = {
+  id: string
+  name: string
+  brand: string
+  price: number
+  originalPrice: number
+  primaryImageUrl?: string
+  imageUrls: string[]
+  averageRating: number
+  reviewCount: number
+  stockQuantity: number
+}
+
 // Chat Message
 export type ChatMessage = {
   id: string
   role: "user" | "assistant"
   content: string
   timestamp: string
+  suggestedProducts?: SuggestedProduct[]
 }
 
 // Backend User (from API)

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { useChat } from "@/store/useChat"
 import { QUICK_CHAT_CHIPS } from "@/lib/constants"
 import { sendChatMessage } from "@/lib/api/chat"
+import { ChatProductCard } from "./ChatProductCard"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import "dayjs/locale/vi"
@@ -130,8 +131,8 @@ export function ChatWindow() {
         setSessionId(response.sessionId)
       }
 
-      // Add AI response
-      addMessage("assistant", response.response)
+      // Add AI response with suggested products
+      addMessage("assistant", response.message, response.suggestedProducts)
     } catch (error) {
       console.error("Error sending message:", error)
       addMessage(
@@ -163,7 +164,7 @@ export function ChatWindow() {
         setSessionId(response.sessionId)
       }
 
-      addMessage("assistant", response.response)
+      addMessage("assistant", response.message, response.suggestedProducts)
     } catch (error) {
       console.error("Error sending message:", error)
       addMessage(
@@ -281,9 +282,23 @@ export function ChatWindow() {
                 }`}
               >
                 {msg.role === "assistant" ? (
-                  <div className="text-sm text-gray-800 dark:text-gray-100">
-                    {formatMessageText(msg.content)}
-                  </div>
+                  <>
+                    <div className="text-sm text-gray-800 dark:text-gray-100">
+                      {formatMessageText(msg.content)}
+                    </div>
+                    
+                    {/* Suggested Products */}
+                    {msg.suggestedProducts && msg.suggestedProducts.length > 0 && (
+                      <div className="mt-4 space-y-3">
+                        <p className="text-xs font-semibold mb-2 text-gray-700 dark:text-gray-300 opacity-90">
+                          Sản phẩm gợi ý:
+                        </p>
+                        {msg.suggestedProducts.map((product) => (
+                          <ChatProductCard key={product.id} product={product} />
+                        ))}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="text-sm whitespace-pre-line leading-relaxed">{msg.content}</p>
                 )}

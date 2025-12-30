@@ -1,13 +1,13 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { ChatMessage } from '@/lib/types'
+import { ChatMessage, SuggestedProduct } from '@/lib/types'
 import dayjs from 'dayjs'
 
 interface ChatStore {
   messages: ChatMessage[]
   isOpen: boolean
   sessionId: string | null
-  addMessage: (role: 'user' | 'assistant', content: string) => void
+  addMessage: (role: 'user' | 'assistant', content: string, suggestedProducts?: SuggestedProduct[]) => void
   clearMessages: () => void
   toggleChat: () => void
   setOpen: (open: boolean) => void
@@ -22,12 +22,13 @@ export const useChat = create<ChatStore>()(
       isOpen: false,
       sessionId: null,
 
-      addMessage: (role, content) => {
+      addMessage: (role, content, suggestedProducts) => {
         const message: ChatMessage = {
           id: `msg-${Date.now()}-${Math.random()}`,
           role,
           content,
           timestamp: dayjs().toISOString(),
+          suggestedProducts: suggestedProducts && suggestedProducts.length > 0 ? suggestedProducts : undefined,
         }
         set({ messages: [...get().messages, message] })
       },

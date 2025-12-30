@@ -141,8 +141,11 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Check if slug is a GUID (ID) or a slug string
+        const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug as string)
+        
         const [foundProduct, templatesRes, accessoriesRes] = await Promise.all([
-          productsApi.getBySlug(slug as string),
+          isGuid ? productsApi.getById(slug as string) : productsApi.getBySlug(slug as string),
           fetch("/api/templates"),
           fetch("/api/accessories"),
         ])
