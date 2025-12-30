@@ -13,6 +13,7 @@ interface UserStore {
   saveDesign: (design: CustomDesign) => void
   removeDesign: (index: number) => void
   refreshAccessToken: () => Promise<void>
+  updateUser: (updates: Partial<User>) => void
   makeAuthenticatedRequest: <T>(apiCall: (token: string) => Promise<T>) => Promise<T>
 }
 
@@ -108,6 +109,19 @@ export const useUser = create<UserStore>()(
           user: {
             ...user,
             savedDesigns: user.savedDesigns.filter((_, i) => i !== index),
+          },
+        })
+      },
+
+      // Update user information (e.g., after profile update)
+      updateUser: (updates) => {
+        const user = get().user
+        if (!user) return
+
+        set({
+          user: {
+            ...user,
+            ...updates,
           },
         })
       },

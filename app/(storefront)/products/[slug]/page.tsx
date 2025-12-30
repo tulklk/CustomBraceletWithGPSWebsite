@@ -1836,18 +1836,27 @@ function CommentItem({
     return `lúc ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${day} tháng ${month}, ${year}`
   }
 
+  // Check if this comment belongs to the current user
+  const isCurrentUserComment = user && comment.userId === user.id
+  
   // Get user name from various possible API response formats
-  // Priority: userName (from API) > userFullName > fullName > email
-  const authorName = 
-    comment.userName || 
-    comment.userFullName || 
-    comment.fullName || 
-    comment.user?.fullName || 
-    comment.userEmail || 
-    comment.email || 
-    comment.user?.email || 
-    "Người dùng"
-  const authorAvatar = comment.userAvatar || comment.avatar || comment.user?.avatar || null
+  // If it's the current user's comment, prioritize user store data (latest info)
+  // Otherwise, use comment data from API
+  const authorName = isCurrentUserComment && user.fullName
+    ? user.fullName
+    : comment.userName || 
+      comment.userFullName || 
+      comment.fullName || 
+      comment.user?.fullName || 
+      comment.userEmail || 
+      comment.email || 
+      comment.user?.email || 
+      "Người dùng"
+  
+  // Get avatar - prioritize user store for current user's comments
+  const authorAvatar = isCurrentUserComment && user.avatar
+    ? user.avatar
+    : comment.userAvatar || comment.avatar || comment.user?.avatar || null
   const isReplying = replyingTo === comment.id
   // Only admin can delete (role === 1)
   const canDelete = user && (user.role === 1 || user.role === "1")

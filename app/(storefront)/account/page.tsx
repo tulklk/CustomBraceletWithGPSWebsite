@@ -141,7 +141,7 @@ function AccountPageContent({
 }
 
 export default function AccountPage() {
-  const { user, logout, removeDesign, makeAuthenticatedRequest } = useUser()
+  const { user, logout, removeDesign, makeAuthenticatedRequest, updateUser } = useUser()
   const { setTemplate, setColor, setEngrave } = useCustomizer()
   const { addItem, addItemByProductId } = useCart()
   const { toast } = useToast()
@@ -220,6 +220,31 @@ export default function AccountPage() {
       })
     }
   }, [profile, user])
+
+  // Sync user store with profile when profile changes
+  // This ensures navbar and other components show updated info
+  useEffect(() => {
+    if (profile && user) {
+      // Only update if there are actual differences to avoid unnecessary updates
+      const hasChanges = 
+        profile.fullName !== user.fullName ||
+        profile.phoneNumber !== user.phoneNumber ||
+        profile.avatar !== user.avatar ||
+        profile.role !== user.role ||
+        profile.emailVerified !== user.emailVerified
+
+      if (hasChanges) {
+        updateUser({
+          fullName: profile.fullName,
+          name: profile.fullName, // Also update name for backward compatibility
+          phoneNumber: profile.phoneNumber,
+          avatar: profile.avatar,
+          role: profile.role,
+          emailVerified: profile.emailVerified,
+        })
+      }
+    }
+  }, [profile, user, updateUser])
 
   // Fetch provinces on mount
   useEffect(() => {
@@ -666,11 +691,22 @@ export default function AccountPage() {
     
     const success = await updateProfile(formData)
     if (success) {
-    toast({
+      toast({
         title: "Cập nhật thành công!",
-      description: "Thông tin tài khoản đã được cập nhật",
+        description: "Thông tin tài khoản đã được cập nhật",
       })
       setEditMode(false)
+      
+      // Update user store immediately with formData to reflect changes in navbar
+      // This ensures navbar and other components show updated info right away
+      updateUser({
+        fullName: formData.fullName || user?.fullName || "",
+        name: formData.fullName || user?.name || "", // Also update name for backward compatibility
+        phoneNumber: formData.phoneNumber || user?.phoneNumber || null,
+        avatar: formData.avatar || user?.avatar || null,
+      })
+      
+      // Refetch profile to sync with backend
       refetchProfile()
     } else {
       toast({
