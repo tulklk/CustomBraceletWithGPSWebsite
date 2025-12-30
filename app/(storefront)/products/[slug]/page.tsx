@@ -97,6 +97,9 @@ export default function ProductDetailPage() {
   // Wishlist state - default to false, only set to true when explicitly confirmed
   const [isInWishlist, setIsInWishlist] = useState(false)
   const [checkingWishlist, setCheckingWishlist] = useState(false)
+  
+  // Sold quantity state
+  const [soldQuantity, setSoldQuantity] = useState<number>(0)
 
   // Helper function to get product type from ID
   const getProductType = (productId: string): 'bracelet' | 'necklace' | 'clip' => {
@@ -135,6 +138,18 @@ export default function ProductDetailPage() {
         }
 
         setProduct(foundProduct)
+        
+        // Fetch sold quantity for this product
+        try {
+          const soldQuantityRes = await fetch(`/api/products/${foundProduct.id}/sold-quantity`)
+          if (soldQuantityRes.ok) {
+            const data = await soldQuantityRes.json()
+            setSoldQuantity(data.soldQuantity || 0)
+          }
+        } catch (err) {
+          console.error("Error fetching sold quantity:", err)
+          setSoldQuantity(0)
+        }
         
         // Filter templates based on product type (if needed for customizer)
         const productType = getProductType(foundProduct.id)
@@ -869,7 +884,7 @@ export default function ProductDetailPage() {
             </span>
             {product && (
               <span className="text-xs sm:text-sm text-muted-foreground">
-                Đã bán {product.stockQuantity || 0}
+                Đã bán {soldQuantity}
               </span>
             )}
           </div>

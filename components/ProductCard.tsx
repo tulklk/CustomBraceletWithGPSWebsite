@@ -1,8 +1,10 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
+import { Star } from "lucide-react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/utils"
@@ -14,6 +16,84 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, featured }: ProductCardProps) {
+  const [averageRating, setAverageRating] = useState<number>(0)
+  const [reviewCount, setReviewCount] = useState<number>(0)
+  const [loadingRating, setLoadingRating] = useState(true)
+  const [soldQuantity, setSoldQuantity] = useState<number | null>(null)
+
+  useEffect(() => {
+    const fetchRating = async () => {
+      try {
+        // Use slug to be consistent with product detail & backend reviews endpoint
+        const response = await fetch(`/api/products/${product.slug}/rating`)
+        if (response.ok) {
+          const data = await response.json()
+          setAverageRating(data.averageRating || 0)
+          setReviewCount(data.reviewCount || 0)
+        }
+      } catch (error) {
+        console.error("Error fetching rating:", error)
+      } finally {
+        setLoadingRating(false)
+      }
+    }
+
+    fetchRating()
+  }, [product.slug])
+
+  // Fetch sold quantity for product card (using product ID for statistics endpoint)
+  useEffect(() => {
+    const fetchSoldQuantity = async () => {
+      try {
+        const response = await fetch(`/api/products/${product.id}/sold-quantity`)
+        if (response.ok) {
+          const data = await response.json()
+          setSoldQuantity(typeof data.soldQuantity === "number" ? data.soldQuantity : 0)
+        }
+      } catch (error) {
+        console.error("Error fetching sold quantity:", error)
+        setSoldQuantity(0)
+      }
+    }
+
+    fetchSoldQuantity()
+  }, [product.id])
+
+  // Render stars based on average rating
+  const renderStars = () => {
+    const stars = []
+    const fullStars = Math.floor(averageRating)
+    const hasHalfStar = averageRating % 1 >= 0.5
+
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        // Full star
+        stars.push(
+          <Star
+            key={i}
+            className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-yellow-400 fill-yellow-400"
+          />
+        )
+      } else if (i === fullStars && hasHalfStar) {
+        // Half star (we'll show as full for simplicity, or you can use a half-star icon)
+        stars.push(
+          <Star
+            key={i}
+            className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-yellow-400 fill-yellow-400 opacity-50"
+          />
+        )
+      } else {
+        // Empty star
+        stars.push(
+          <Star
+            key={i}
+            className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-gray-300 fill-gray-300"
+          />
+        )
+      }
+    }
+    return stars
+  }
   return (
     <motion.div
       whileHover={{ y: -4 }}
@@ -32,21 +112,75 @@ export function ProductCard({ product, featured }: ProductCardProps) {
           </div>
           <CardContent className="p-2 sm:p-3 md:p-4">
             <div className="flex items-start justify-between mb-1 sm:mb-2 gap-1 sm:gap-2">
-              <h3 className="font-semibold text-sm sm:text-base md:text-lg line-clamp-2 flex-1">{product.name}</h3>
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm sm:text-base md:text-lg line-clamp-2">
+                  {product.name}
+                </h3>
+                {/* Dynamic rating display based on actual reviews - only show stars */}
+                <div className="flex flex-col gap-0.5 mt-1">
+                  {!loadingRating && averageRating > 0 && (
+                    <div className="flex items-center gap-0.5">
+                      {renderStars()}
+                    </div>
+                  )}
+                  {!loadingRating && averageRating === 0 && reviewCount === 0 && (
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <Star
+                          key={index}
+                          className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-gray-300 fill-gray-300"
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {loadingRating && (
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <Star
+                          key={index}
+                          className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-gray-300 fill-gray-300 animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Sold quantity below stars (auto-updated from backend statistics) */}
+                  {typeof soldQuantity === "number" && soldQuantity > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      Đã bán {soldQuantity}
+                    </span>
+                  )}
+                </div>
+              </div>
               <div className="flex flex-col gap-0.5 sm:gap-1 flex-shrink-0">
-                {featured && <Badge className="whitespace-nowrap text-[10px] sm:text-xs">⭐ Bán chạy</Badge>}
-                {product.slug === 'bunny-baby-pink' && (
-                  <Badge variant="secondary" className="bg-gradient-to-r from-pink-400 to-pink-600 text-white border-0 whitespace-nowrap text-[10px] sm:text-xs">
+                {featured && (
+                  <Badge className="whitespace-nowrap text-[10px] sm:text-xs">
+                    ⭐ Bán chạy
+                  </Badge>
+                )}
+                {product.slug === "bunny-baby-pink" && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-gradient-to-r from-pink-400 to-pink-600 text-white border-0 whitespace-nowrap text-[10px] sm:text-xs"
+                  >
                     🐰 Hot
                   </Badge>
                 )}
-                {product.slug === 'bunny-pink' && (
-                  <Badge variant="secondary" className="bg-green-500 text-white border-0 whitespace-nowrap text-[10px] sm:text-xs">
+                {product.slug === "bunny-pink" && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-500 text-white border-0 whitespace-nowrap text-[10px] sm:text-xs"
+                  >
                     💰 Giá tốt
                   </Badge>
                 )}
-                {(product.slug === 'bunny-lavender' || product.slug === 'bunny-yellow' || product.slug === 'bunny-mint') && (
-                  <Badge variant="secondary" className="bg-blue-500 text-white border-0 whitespace-nowrap text-[10px] sm:text-xs">
+                {(product.slug === "bunny-lavender" ||
+                  product.slug === "bunny-yellow" ||
+                  product.slug === "bunny-mint") && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-500 text-white border-0 whitespace-nowrap text-[10px] sm:text-xs"
+                  >
                     ✨ Mới
                   </Badge>
                 )}
