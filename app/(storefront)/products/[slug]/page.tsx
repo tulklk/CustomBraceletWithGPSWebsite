@@ -39,6 +39,7 @@ import { Minus, Plus, ChevronRight, Facebook, MessageCircle, X, Upload, Heart } 
 import { uploadImageToCloudinary } from "@/lib/cloudinary"
 import { wishlistApi } from "@/lib/api/wishlist"
 import { productCommentsApi, ProductComment } from "@/lib/api/productComments"
+import { productReviewsApi, ProductReview } from "@/lib/api/productReviews"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -75,15 +76,13 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1)
   const [previewMode, setPreviewMode] = useState<"2d" | "3d">("2d") // 2D or 3D preview mode
   
-  // Mock rating data
-  const [rating] = useState({ average: 4.5, count: 2, sold: 2 })
+  // Reviews state
+  const [reviews, setReviews] = useState<ProductReview[]>([])
+  const [loadingReviews, setLoadingReviews] = useState(false)
   
   // Check if product has customizer (has templates)
   // Use computed value but ensure consistent initial render
   const hasCustomizer = templates.length > 0
-  
-  // Mock data for reviews
-  const [reviews] = useState<any[]>([]) // Empty for now
   const [comments, setComments] = useState<ProductComment[]>([])
   const [loadingComments, setLoadingComments] = useState(false)
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
@@ -358,6 +357,44 @@ export default function ProductDetailPage() {
 
     fetchComments()
   }, [product?.slug, toast, organizeComments])
+
+  // Fetch reviews when product loads
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!product?.id && !product?.slug) return
+
+      setLoadingReviews(true)
+      try {
+        const productIdOrSlug = product.id || product.slug
+        const fetchedReviews = await productReviewsApi.getByProductIdOrSlug(productIdOrSlug)
+        setReviews(fetchedReviews)
+      } catch (error) {
+        console.error("Error fetching reviews:", error)
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải đánh giá",
+          variant: "destructive",
+        })
+      } finally {
+        setLoadingReviews(false)
+      }
+    }
+
+    fetchReviews()
+  }, [product?.id, product?.slug, toast])
+
+  // Refresh reviews after submitting
+  const refreshReviews = useCallback(async () => {
+    if (!product?.id && !product?.slug) return
+    
+    try {
+      const productIdOrSlug = product.id || product.slug
+      const fetchedReviews = await productReviewsApi.getByProductIdOrSlugFresh(productIdOrSlug)
+      setReviews(fetchedReviews)
+    } catch (error) {
+      console.error("Error refreshing reviews:", error)
+    }
+  }, [product?.id, product?.slug])
 
   const handleToggleWishlist = async () => {
     if (!user?.accessToken) {
@@ -809,25 +846,32 @@ export default function ProductDetailPage() {
           {/* Rating */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-0.5 sm:gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                    star <= Math.floor(rating.average)
-                      ? "fill-yellow-400 text-yellow-400"
-                      : star <= rating.average
-                      ? "fill-yellow-200 text-yellow-200"
-                      : "fill-muted text-muted"
-                  }`}
-                />
-              ))}
+              {[1, 2, 3, 4, 5].map((star) => {
+                const averageRating = reviews.length > 0 
+                  ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+                  : 0
+                return (
+                  <Star
+                    key={star}
+                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                      star <= Math.floor(averageRating)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : star <= averageRating
+                        ? "fill-yellow-200 text-yellow-200"
+                        : "fill-muted text-muted"
+                    }`}
+                  />
+                )
+              })}
             </div>
             <span className="text-xs sm:text-sm text-muted-foreground">
-              ({rating.count} đánh giá)
+              ({reviews.length} đánh giá)
             </span>
-            <span className="text-xs sm:text-sm text-muted-foreground">
-              Đã bán {rating.sold}
-            </span>
+            {product && (
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                Đã bán {product.stockQuantity || 0}
+              </span>
+            )}
           </div>
           
           {/* Color Selection */}
@@ -1121,18 +1165,51 @@ export default function ProductDetailPage() {
         </TabsContent>
 
         <TabsContent value="reviews" className="space-y-4 sm:space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-            {/* Rating Summary */}
-            <div className="text-center sm:col-span-2 md:col-span-1">
-              <div className="text-4xl sm:text-5xl font-bold mb-2">0.0</div>
-              <div className="flex justify-center gap-0.5 sm:gap-1 mb-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="h-5 w-5 sm:h-6 sm:w-6 text-muted fill-muted" />
-                ))}
-              </div>
-              <div className="text-xs sm:text-sm text-muted-foreground mb-1">ĐÁNH GIÁ TRUNG BÌNH</div>
-              <div className="text-xs sm:text-sm text-muted-foreground">{reviews.length} đánh giá</div>
+          {loadingReviews ? (
+            <div className="text-center py-8 sm:py-12 text-sm sm:text-base text-muted-foreground">
+              Đang tải đánh giá...
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+                {/* Rating Summary */}
+                <div className="text-center sm:col-span-2 md:col-span-1">
+                  {reviews.length > 0 ? (
+                    <>
+                      <div className="text-4xl sm:text-5xl font-bold mb-2">
+                        {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+                      </div>
+                      <div className="flex justify-center gap-0.5 sm:gap-1 mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => {
+                          const averageRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+                          return (
+                            <Star
+                              key={star}
+                              className={`h-5 w-5 sm:h-6 sm:w-6 ${
+                                star <= averageRating
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : star <= Math.ceil(averageRating)
+                                  ? "text-yellow-200 fill-yellow-200"
+                                  : "text-muted fill-muted"
+                              }`}
+                            />
+                          )
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-4xl sm:text-5xl font-bold mb-2">0.0</div>
+                      <div className="flex justify-center gap-0.5 sm:gap-1 mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} className="h-5 w-5 sm:h-6 sm:w-6 text-muted fill-muted" />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  <div className="text-xs sm:text-sm text-muted-foreground mb-1">ĐÁNH GIÁ TRUNG BÌNH</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">{reviews.length} đánh giá</div>
+                </div>
 
             {/* Rating Breakdown */}
             <div className="space-y-2 sm:col-span-2 md:col-span-1">
@@ -1141,10 +1218,13 @@ export default function ProductDetailPage() {
                 const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
                 return (
                   <div key={rating} className="flex items-center gap-2">
-                    <span className="w-6 sm:w-8 text-xs sm:text-sm flex-shrink-0">{rating}★</span>
+                    <span className="w-8 sm:w-10 text-xs sm:text-sm flex-shrink-0 flex items-center justify-start">
+                      <span className="text-yellow-400 mr-1">★</span>
+                      <span>{rating}</span>
+                    </span>
                     <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden min-w-0">
                       <div
-                        className="h-full bg-primary"
+                        className="h-full bg-yellow-400"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -1160,8 +1240,12 @@ export default function ProductDetailPage() {
             <div className="flex items-center justify-center sm:col-span-2 md:col-span-1">
               <Button 
                 onClick={() => {
-                  // Load saved info if available
-                  if (typeof window !== "undefined") {
+                  // Load user info if logged in, otherwise load saved info from localStorage
+                  if (user) {
+                    setReviewFullName(user.fullName || user.name || "")
+                    setReviewEmail(user.email || "")
+                    setReviewPhoneNumber(user.phoneNumber || "")
+                  } else if (typeof window !== "undefined") {
                     const savedName = localStorage.getItem("reviewFullName")
                     const savedEmail = localStorage.getItem("reviewEmail")
                     if (savedName) setReviewFullName(savedName)
@@ -1176,10 +1260,151 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {reviews.length === 0 && (
-            <div className="text-center py-8 sm:py-12 text-sm sm:text-base text-muted-foreground">
-              Chưa có đánh giá nào cho sản phẩm này.
-            </div>
+          {/* Reviews List */}
+              {reviews.length === 0 ? (
+                <div className="text-center py-8 sm:py-12 text-sm sm:text-base text-muted-foreground">
+                  Chưa có đánh giá nào cho sản phẩm này.
+                </div>
+              ) : (
+                <div className="space-y-6 mt-8">
+                  {reviews.map((review) => {
+                    const formatDate = (dateString: string) => {
+                      const date = new Date(dateString)
+                      const day = date.getDate()
+                      const month = date.getMonth() + 1
+                      const year = date.getFullYear()
+                      return `${day}/${month}/${year}`
+                    }
+
+                    // Get first letter of last word in name (e.g., "Bích Tuyền" -> "T")
+                    const getInitial = (name: string) => {
+                      const words = name.trim().split(/\s+/)
+                      if (words.length > 0) {
+                        // Get last word's first letter
+                        const lastWord = words[words.length - 1]
+                        return lastWord.charAt(0).toUpperCase()
+                      }
+                      return name.charAt(0).toUpperCase()
+                    }
+
+                    // Check if this review belongs to the current logged-in user
+                    // Check by userId first, then fallback to fullName match
+                    const isCurrentUserReview = user && (
+                      (review.userId && review.userId === user.id) ||
+                      (review.fullName && (review.fullName === user.fullName || review.fullName === user.name))
+                    )
+                    const reviewAvatar = isCurrentUserReview && user.avatar ? user.avatar : null
+
+                    // Get avatar URL - handle Cloudinary URLs
+                    const getAvatarUrl = () => {
+                      if (!reviewAvatar) return null
+                      
+                      // If it's already a full URL (http/https), return as is
+                      if (reviewAvatar.startsWith('http://') || reviewAvatar.startsWith('https://')) {
+                        return reviewAvatar
+                      }
+                      
+                      // If it's already a Cloudinary URL (contains res.cloudinary.com), return as is
+                      if (reviewAvatar.includes('res.cloudinary.com')) {
+                        return reviewAvatar
+                      }
+                      
+                      // If it's a Cloudinary public_id or path, construct the URL
+                      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'your-cloud-name'
+                      
+                      // If it starts with /, it's a path - prepend Cloudinary base URL
+                      if (reviewAvatar.startsWith('/')) {
+                        return `https://res.cloudinary.com/${cloudName}/image/upload${reviewAvatar}`
+                      }
+                      
+                      // Otherwise, assume it's a public_id and construct URL
+                      const publicId = reviewAvatar.replace(/^\/+/, '')
+                      return `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}`
+                    }
+
+                    const avatarUrl = getAvatarUrl()
+
+                    return (
+                      <Card key={review.id} className="border">
+                        <CardContent className="p-4 sm:p-6">
+                          <div className="flex gap-4">
+                            {/* Avatar - Show user avatar if logged in, otherwise show initial */}
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                              {avatarUrl ? (
+                                <Image
+                                  src={avatarUrl}
+                                  alt={review.fullName}
+                                  width={40}
+                                  height={40}
+                                  className="rounded-full object-cover"
+                                  onError={(e) => {
+                                    // Fallback to initial if image fails to load
+                                    e.currentTarget.style.display = 'none'
+                                    const parent = e.currentTarget.parentElement
+                                    if (parent) {
+                                      const fallback = document.createElement('span')
+                                      fallback.className = 'text-primary font-semibold'
+                                      fallback.textContent = getInitial(review.fullName)
+                                      parent.appendChild(fallback)
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <span className="text-primary font-semibold">
+                                  {getInitial(review.fullName)}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Review Content */}
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-start justify-between gap-4 flex-wrap">
+                                <div>
+                                  <div className="font-semibold text-sm sm:text-base">{review.fullName}</div>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <Star
+                                        key={star}
+                                        className={`h-4 w-4 ${
+                                          star <= review.rating
+                                            ? "text-yellow-400 fill-yellow-400"
+                                            : "text-gray-300 fill-gray-300"
+                                        }`}
+                                      />
+                                    ))}
+                                    <span className="text-xs sm:text-sm text-muted-foreground ml-2">
+                                      {formatDate(review.createdAt)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {review.comment && (
+                                <p className="text-sm sm:text-base text-foreground whitespace-pre-wrap">
+                                  {review.comment}
+                                </p>
+                              )}
+
+                              {review.reviewImageUrl && (
+                                <div className="mt-3">
+                                  <Image
+                                    src={review.reviewImageUrl}
+                                    alt="Review image"
+                                    width={200}
+                                    height={200}
+                                    className="rounded-lg object-cover"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
@@ -1750,36 +1975,57 @@ export default function ProductDetailPage() {
                 }
 
                 // Prepare review data to send to backend
-                const reviewData = {
-                  productId: product?.id,
-                  rating: reviewRating,
-                  comment: reviewComment,
-                  fullName: reviewFullName,
-                  phoneNumber: reviewPhoneNumber,
-                  email: reviewEmail,
-                  photoUrls: finalPhotoUrls, // Array of URL strings from Cloudinary
-                }
+                try {
+                  if (!product?.id && !product?.slug) {
+                    toast({
+                      title: "Lỗi",
+                      description: "Không tìm thấy sản phẩm",
+                      variant: "destructive",
+                    })
+                    return
+                  }
 
-                // TODO: Submit review to backend API
-                console.log("Review data to send:", reviewData)
-                
-                toast({
-                  title: "Đánh giá đã được gửi!",
-                  description: "Cảm ơn bạn đã đánh giá sản phẩm",
-                })
-                
-                setReviewDialogOpen(false)
-                setReviewRating(0)
-                setReviewComment("")
-                setReviewFullName("")
-                setReviewPhoneNumber("")
-                setReviewEmail("")
-                setReviewSendPhoto(false)
-                setReviewSaveInfo(false)
-                setReviewPhotoUrls([])
-                setReviewPhotoFiles([])
-                if (reviewPhotoInputRef.current) {
-                  reviewPhotoInputRef.current.value = ""
+                  const productIdOrSlug = product.id || product.slug
+                  
+                  // Submit review to API
+                  await productReviewsApi.create(productIdOrSlug, {
+                    fullName: reviewFullName,
+                    phoneNumber: reviewPhoneNumber,
+                    email: reviewEmail || undefined,
+                    rating: reviewRating,
+                    comment: reviewComment,
+                    reviewImageUrl: finalPhotoUrls.length > 0 ? finalPhotoUrls[0] : null, // API only accepts single image URL
+                  })
+
+                  // Refresh reviews
+                  await refreshReviews()
+
+                  // Close dialog and reset form
+                  setReviewDialogOpen(false)
+                  setReviewRating(0)
+                  setReviewComment("")
+                  setReviewFullName("")
+                  setReviewPhoneNumber("")
+                  setReviewEmail("")
+                  setReviewSendPhoto(false)
+                  setReviewSaveInfo(false)
+                  setReviewPhotoUrls([])
+                  setReviewPhotoFiles([])
+                  if (reviewPhotoInputRef.current) {
+                    reviewPhotoInputRef.current.value = ""
+                  }
+
+                  toast({
+                    title: "Đánh giá thành công!",
+                    description: "Cảm ơn bạn đã đánh giá sản phẩm",
+                  })
+                } catch (error: any) {
+                  console.error("Error submitting review:", error)
+                  toast({
+                    title: "Lỗi",
+                    description: error.message || "Không thể gửi đánh giá",
+                    variant: "destructive",
+                  })
                 }
               }}
               className="bg-primary hover:bg-primary/90"
