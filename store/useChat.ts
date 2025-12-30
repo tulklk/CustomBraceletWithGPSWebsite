@@ -6,10 +6,12 @@ import dayjs from 'dayjs'
 interface ChatStore {
   messages: ChatMessage[]
   isOpen: boolean
+  sessionId: string | null
   addMessage: (role: 'user' | 'assistant', content: string) => void
   clearMessages: () => void
   toggleChat: () => void
   setOpen: (open: boolean) => void
+  setSessionId: (sessionId: string | null) => void
   getAutoResponse: (userMessage: string) => string
 }
 
@@ -18,6 +20,7 @@ export const useChat = create<ChatStore>()(
     (set, get) => ({
       messages: [],
       isOpen: false,
+      sessionId: null,
 
       addMessage: (role, content) => {
         const message: ChatMessage = {
@@ -30,7 +33,11 @@ export const useChat = create<ChatStore>()(
       },
 
       clearMessages: () => {
-        set({ messages: [] })
+        set({ messages: [], sessionId: null })
+      },
+
+      setSessionId: (sessionId) => {
+        set({ sessionId })
       },
 
       toggleChat: () => {
@@ -117,7 +124,7 @@ Hoặc bạn có thể **Tạo ticket** để nhân viên hỗ trợ trực ti�
     }),
     {
       name: 'artemis-chat',
-      partialize: (state) => ({ messages: state.messages }),
+      partialize: (state) => ({ messages: state.messages, sessionId: state.sessionId }),
     }
   )
 )

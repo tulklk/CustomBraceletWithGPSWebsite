@@ -1,37 +1,97 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { X, Send, Paperclip, Bot, Sparkles } from "lucide-react"
+import { X, Send, Bot, Loader2, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useChat } from "@/store/useChat"
 import { QUICK_CHAT_CHIPS } from "@/lib/constants"
+import { sendChatMessage } from "@/lib/api/chat"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import "dayjs/locale/vi"
 import { motion } from "framer-motion"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 
 dayjs.extend(relativeTime)
 dayjs.locale("vi")
 
+// Helper function to format AI message text
+function formatMessageText(text: string) {
+  // Split by lines to handle paragraphs
+  const lines = text.split('\n')
+  const elements: JSX.Element[] = []
+  let keyIndex = 0
+  
+  lines.forEach((line, index) => {
+    // Handle empty lines (paragraph breaks) - only add one break
+    if (line.trim() === '') {
+      if (index > 0 && lines[index - 1].trim() !== '') {
+        elements.push(<div key={`break-${keyIndex++}`} className="h-2" />)
+      }
+      return
+    }
+    
+    // Handle bullet points (•, -, *)
+    if (/^[\s]*[•\-\*]\s/.test(line)) {
+      const content = line.replace(/^[\s]*[•\-\*]\s/, '')
+      elements.push(
+        <div key={keyIndex++} className="flex items-start gap-2.5 my-1.5">
+          <span className="text-primary dark:text-pink-400 mt-0.5 flex-shrink-0 font-semibold">•</span>
+          <span className="flex-1 leading-relaxed">{formatInlineText(content)}</span>
+        </div>
+      )
+      return
+    }
+    
+    // Handle lines that are entirely bold (likely headings)
+    if (/^\*\*.*\*\*$/.test(line.trim())) {
+      const headingText = line.trim().replace(/\*\*/g, '')
+      elements.push(
+        <div key={keyIndex++} className="my-2.5">
+          <strong className="font-semibold text-base text-foreground">{headingText}</strong>
+        </div>
+      )
+      return
+    }
+    
+    // Regular text line
+    elements.push(
+      <div key={keyIndex++} className="my-1.5 leading-relaxed">
+        {formatInlineText(line)}
+      </div>
+    )
+  })
+  
+  return elements
+}
+
+// Helper to format inline text (bold, etc.)
+function formatInlineText(text: string) {
+  // Handle bold text (**text**)
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const boldText = part.slice(2, -2)
+      return (
+        <strong key={index} className="font-semibold text-foreground">
+          {boldText}
+        </strong>
+      )
+    }
+    return <span key={index}>{part}</span>
+  })
+}
+
 export function ChatWindow() {
-  const { messages, addMessage, setOpen, getAutoResponse } = useChat()
+  const { messages, addMessage, setOpen, sessionId, setSessionId, clearMessages } = useChat()
   const [input, setInput] = useState("")
-  const [ticketOpen, setTicketOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
   const scrollToBottom = () => {
@@ -52,38 +112,67 @@ export function ChatWindow() {
     }
   }, [messages.length, addMessage])
 
-  const handleSend = () => {
-    if (!input.trim()) return
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return
 
-    addMessage("user", input)
-    const response = getAutoResponse(input)
-
-    setTimeout(() => {
-      addMessage("assistant", response)
-    }, 500)
-
+    const userMessage = input.trim()
     setInput("")
+    
+    // Add user message
+    addMessage("user", userMessage)
+    setIsLoading(true)
+
+    try {
+      const response = await sendChatMessage(userMessage, sessionId)
+      
+      // Update session ID if new
+      if (response.sessionId && !sessionId) {
+        setSessionId(response.sessionId)
+      }
+
+      // Add AI response
+      addMessage("assistant", response.response)
+    } catch (error) {
+      console.error("Error sending message:", error)
+      addMessage(
+        "assistant",
+        "Xin lỗi, đã xảy ra lỗi khi kết nối với AI. Vui lòng thử lại sau. 😔"
+      )
+      toast({
+        title: "Lỗi kết nối",
+        description: "Không thể gửi tin nhắn. Vui lòng thử lại.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+      inputRef.current?.focus()
+    }
   }
 
-  const handleChipClick = (chip: string) => {
+  const handleChipClick = async (chip: string) => {
+    if (isLoading) return
+    
     addMessage("user", chip)
-    const response = getAutoResponse(chip)
-    setTimeout(() => {
-      addMessage("assistant", response)
-    }, 500)
-  }
+    setIsLoading(true)
 
-  const handleCreateTicket = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get("email")
-    const content = formData.get("content")
+    try {
+      const response = await sendChatMessage(chip, sessionId)
+      
+      // Update session ID if new
+      if (response.sessionId && !sessionId) {
+        setSessionId(response.sessionId)
+      }
 
-    toast({
-      title: "Ticket đã được tạo (Mock)",
-      description: `Chúng tôi sẽ phản hồi qua ${email} trong 24h`,
-    })
-    setTicketOpen(false)
+      addMessage("assistant", response.response)
+    } catch (error) {
+      console.error("Error sending message:", error)
+      addMessage(
+        "assistant",
+        "Xin lỗi, đã xảy ra lỗi khi kết nối với AI. Vui lòng thử lại sau. 😔"
+      )
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -132,9 +221,6 @@ export function ChatWindow() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold">Trợ lý AI ARTEMIS</h3>
-                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 text-xs px-1.5 py-0">
-                  <Sparkles className="h-2.5 w-2.5" />
-                </Badge>
               </div>
               <p className="text-xs opacity-90 flex items-center gap-1">
                 <span className="inline-block w-2 h-2 bg-green-400 rounded-full"></span>
@@ -143,19 +229,34 @@ export function ChatWindow() {
             </div>
           </div>
           
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpen(false)}
-            className="text-primary-foreground hover:bg-white/20 relative z-10"
-            aria-label="Đóng chat"
-          >
-            <X className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1 relative z-10">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                clearMessages()
+              }}
+              className="text-primary-foreground hover:bg-white/20"
+              aria-label="Xóa lịch sử chat"
+              title="Xóa lịch sử"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setOpen(false)}
+              className="text-primary-foreground hover:bg-white/20"
+              aria-label="Đóng chat"
+              title="Đóng chat"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 dark:bg-gray-900/50">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -173,14 +274,24 @@ export function ChatWindow() {
               )}
               
               <div
-                className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                className={`max-w-[85%] rounded-lg ${
                   msg.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-sm"
-                    : "bg-muted rounded-bl-sm"
+                    ? "bg-primary text-primary-foreground rounded-br-sm px-4 py-3"
+                    : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-bl-sm px-5 py-4 shadow-sm"
                 }`}
               >
-                <p className="text-sm whitespace-pre-line">{msg.content}</p>
-                <p className="text-xs mt-1 opacity-70">
+                {msg.role === "assistant" ? (
+                  <div className="text-sm text-gray-800 dark:text-gray-100">
+                    {formatMessageText(msg.content)}
+                  </div>
+                ) : (
+                  <p className="text-sm whitespace-pre-line leading-relaxed">{msg.content}</p>
+                )}
+                <p className={`text-xs mt-2 ${
+                  msg.role === "user" 
+                    ? "opacity-80" 
+                    : "text-gray-500 dark:text-gray-400"
+                }`}>
                   {dayjs(msg.timestamp).fromNow()}
                 </p>
               </div>
@@ -195,6 +306,25 @@ export function ChatWindow() {
               )}
             </div>
           ))}
+          
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="flex items-center gap-2">
+                <div className="flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-pink-600 flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-white" />
+                  </div>
+                </div>
+                <div className="bg-muted rounded-lg px-4 py-2 rounded-bl-sm">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Đang suy nghĩ...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
 
@@ -218,6 +348,7 @@ export function ChatWindow() {
         <div className="p-4 border-t space-y-2">
           <div className="flex gap-2">
             <Input
+              ref={inputRef}
               placeholder="Nhập tin nhắn..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -227,54 +358,22 @@ export function ChatWindow() {
                   handleSend()
                 }
               }}
+              disabled={isLoading}
               aria-label="Nhập tin nhắn"
             />
-            <Button onClick={handleSend} size="icon" aria-label="Gửi tin nhắn">
-              <Send className="h-4 w-4" />
+            <Button 
+              onClick={handleSend} 
+              size="icon" 
+              aria-label="Gửi tin nhắn"
+              disabled={!input.trim() || isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
-
-          <Dialog open={ticketOpen} onOpenChange={setTicketOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full">
-                <Paperclip className="h-3 w-3 mr-2" />
-                Tạo ticket hỗ trợ
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Tạo ticket hỗ trợ</DialogTitle>
-                <DialogDescription>
-                  Nhân viên sẽ phản hồi qua email trong 24h
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreateTicket} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="ticket-email">Email của bạn</Label>
-                  <Input
-                    id="ticket-email"
-                    name="email"
-                    type="email"
-                    required
-                    placeholder="email@example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ticket-content">Nội dung</Label>
-                  <Textarea
-                    id="ticket-content"
-                    name="content"
-                    required
-                    placeholder="Mô tả vấn đề bạn gặp phải..."
-                    rows={4}
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  Gửi ticket
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
         </div>
       </Card>
     </motion.div>
