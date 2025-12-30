@@ -149,6 +149,7 @@ export const productsApi = {
       name: backendProduct.name,
       slug: backendProduct.slug,
       priceFrom: backendProduct.price,
+      originalPrice: backendProduct.originalPrice, // Map originalPrice từ backend
       images: images,
       specs: specs,
       description: backendProduct.description || "",

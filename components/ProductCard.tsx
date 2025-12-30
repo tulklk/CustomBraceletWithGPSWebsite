@@ -109,6 +109,15 @@ export function ProductCard({ product, featured }: ProductCardProps) {
               fill
               className="object-contain p-2 sm:p-3 md:p-4"
             />
+            {/* Discount badge - top left corner */}
+            {product.originalPrice !== null && product.originalPrice > product.priceFrom && (
+              <Badge 
+                variant="destructive" 
+                className="absolute top-2 left-2 sm:top-3 sm:left-3 text-[10px] sm:text-xs font-bold px-2 py-1 z-10 rounded-md"
+              >
+                -{Math.round(((product.originalPrice - product.priceFrom) / product.originalPrice) * 100)}%
+              </Badge>
+            )}
           </div>
           <CardContent className="p-2 sm:p-3 md:p-4">
             <div className="flex items-start justify-between mb-1 sm:mb-2 gap-1 sm:gap-2">
@@ -142,13 +151,6 @@ export function ProductCard({ product, featured }: ProductCardProps) {
                         />
                       ))}
                     </div>
-                  )}
-
-                  {/* Sold quantity below stars (auto-updated from backend statistics) */}
-                  {typeof soldQuantity === "number" && soldQuantity > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      Đã bán {soldQuantity}
-                    </span>
                   )}
                 </div>
               </div>
@@ -198,11 +200,16 @@ export function ProductCard({ product, featured }: ProductCardProps) {
             </div>
           </CardContent>
           <CardFooter className="p-2 sm:p-3 md:p-4 pt-0">
-            <div className="flex items-baseline gap-1">
+            <div className="flex items-baseline gap-1.5">
               <span className="text-xs sm:text-sm text-muted-foreground">Từ</span>
               <span className="text-base sm:text-lg md:text-xl font-bold text-primary">
                 {formatCurrency(product.priceFrom)}
               </span>
+              {product.originalPrice !== null && product.originalPrice > product.priceFrom && (
+                <span className="text-xs sm:text-sm text-muted-foreground line-through">
+                  {formatCurrency(product.originalPrice)}
+                </span>
+              )}
             </div>
           </CardFooter>
         </Card>

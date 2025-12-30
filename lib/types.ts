@@ -67,6 +67,7 @@ export type Product = {
   name: string
   slug: string
   priceFrom: number
+  originalPrice: number | null // Giá gốc (null = sản phẩm bình thường)
   images: string[]
   specs: {
     waterproof: string

@@ -675,8 +675,15 @@ export default function ProductDetailPage() {
   const images = getProductImages()
   const colors = getAvailableColors()
   const sizes = getAvailableSizes()
-  const discount = product.originalPrice 
+  // Check if product is on sale (only if product exists and has originalPrice > price)
+  const isOnSale = product 
+    ? (product.originalPrice !== null && product.originalPrice !== undefined && product.originalPrice > product.price)
+    : false
+  const discount = isOnSale && product && product.originalPrice
     ? product.originalPrice - product.price 
+    : 0
+  const discountPercent = isOnSale && product && product.originalPrice
+    ? Math.round((discount / product.originalPrice) * 100)
     : 0
 
   return (
@@ -916,24 +923,36 @@ export default function ProductDetailPage() {
           
           {/* Price */}
           <div className="space-y-1 sm:space-y-2">
-            <div className="text-xs sm:text-sm text-muted-foreground">Giá khuyến mãi:</div>
-            <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-              <span className="text-2xl sm:text-3xl font-bold text-primary">
-                {formatCurrency(product.price)}
-              </span>
-              {product.originalPrice && product.originalPrice > product.price && (
-                <>
-                  <span className="text-lg sm:text-xl text-muted-foreground line-through">
-                    {formatCurrency(product.originalPrice)}
+            {isOnSale ? (
+              <>
+                <div className="text-xs sm:text-sm text-muted-foreground">Giá khuyến mãi:</div>
+                <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+                  <span className="text-2xl sm:text-3xl font-bold text-primary">
+                    {formatCurrency(product.price)}
                   </span>
-                  {discount > 0 && (
-                    <span className="text-xs sm:text-sm text-green-600">
-                      Tiết kiệm: {formatCurrency(discount)}
-                    </span>
+                  <span className="text-lg sm:text-xl text-muted-foreground line-through">
+                    {formatCurrency(product.originalPrice!)}
+                  </span>
+                  {discountPercent > 0 && (
+                    <Badge variant="destructive" className="text-xs sm:text-sm">
+                      -{discountPercent}%
+                    </Badge>
                   )}
-                </>
-              )}
-            </div>
+                </div>
+                {discount > 0 && (
+                  <div className="text-xs sm:text-sm text-green-600 font-medium">
+                    Tiết kiệm: {formatCurrency(discount)}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-baseline gap-2 sm:gap-3">
+                <span className="text-xs sm:text-sm text-muted-foreground">Giá:</span>
+                <span className="text-2xl sm:text-3xl font-bold text-primary">
+                  {formatCurrency(product.price)}
+                </span>
+              </div>
+            )}
           </div>
           
           {/* Additional Benefits */}
