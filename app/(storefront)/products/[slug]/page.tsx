@@ -538,8 +538,8 @@ export default function ProductDetailPage() {
         ...design,
         engrave: {
           text: engravingText.trim(),
-          font: "Sans",
-          position: "inside",
+          font: "Sans" as const,
+          position: "inside" as const,
         },
       }
     }
@@ -611,11 +611,11 @@ export default function ProductDetailPage() {
         if (engravingText.trim() && !design.engrave && (product.hasEngraving ?? false)) {
           design = {
             ...design,
-            engrave: {
-              text: engravingText.trim(),
-              font: "Sans",
-              position: "inside",
-            },
+        engrave: {
+          text: engravingText.trim(),
+          font: "Sans" as const,
+          position: "inside" as const,
+        },
           }
         }
 

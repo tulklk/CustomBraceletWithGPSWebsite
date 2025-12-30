@@ -150,6 +150,8 @@ export default function ProductsPage() {
       imageUrls: [],
       isActive: true,
       hasVariants: false,
+      hasEngraving: false,
+      defaultEngravingText: "",
       variants: [],
     })
   }

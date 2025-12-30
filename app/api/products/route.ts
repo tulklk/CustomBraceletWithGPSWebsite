@@ -34,6 +34,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'bunny-lavender',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/templates/bunny-lavender.png'],
     specs: {
       waterproof: 'IP67',
@@ -58,6 +60,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'bunny-yellow',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/templates/bunny-yellow.png'],
     specs: {
       waterproof: 'IP67',
@@ -82,6 +86,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'bunny-mint',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/templates/bunny-mint.png'],
     specs: {
       waterproof: 'IP67',
@@ -106,6 +112,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'bunny-pink',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/templates/bunny-pink.png'],
     specs: {
       waterproof: 'IP67',
