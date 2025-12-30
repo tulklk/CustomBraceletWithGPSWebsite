@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -38,6 +38,7 @@ import { formatCurrency } from "@/lib/utils"
 import { Minus, Plus, ChevronRight, Facebook, MessageCircle, X, Upload, Heart } from "lucide-react"
 import { uploadImageToCloudinary } from "@/lib/cloudinary"
 import { wishlistApi } from "@/lib/api/wishlist"
+import { productCommentsApi, ProductComment } from "@/lib/api/productComments"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -81,36 +82,12 @@ export default function ProductDetailPage() {
   // Use computed value but ensure consistent initial render
   const hasCustomizer = templates.length > 0
   
-  // Mock data for reviews and comments
+  // Mock data for reviews
   const [reviews] = useState<any[]>([]) // Empty for now
-  const [comments, setComments] = useState<any[]>([
-    {
-      id: "1",
-      author: "Thành Tú",
-      avatar: null,
-      content: "áo này có những size nào vậy shop",
-      createdAt: "2025-12-09T16:41:00Z",
-      replies: [
-        {
-          id: "1-1",
-          author: "IKA PickleBall Shop",
-          avatar: null,
-          isShop: true,
-          content: "sản phẩm có rất nhiều size cho bạn lựa chọn nha",
-          createdAt: "2025-12-09T16:52:00Z",
-          replies: [
-            {
-              id: "1-1-1",
-              author: "Thành Tú",
-              avatar: null,
-              content: "oke cảm ơn shop nhiều",
-              createdAt: "2025-12-10T23:40:00Z",
-            }
-          ]
-        }
-      ]
-    }
-  ])
+  const [comments, setComments] = useState<ProductComment[]>([])
+  const [loadingComments, setLoadingComments] = useState(false)
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState("")
 
   const { setProduct: setCustomizerProduct, getDesign, templateId } =
     useCustomizer()
@@ -292,6 +269,95 @@ export default function ProductDetailPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.accessToken, product?.id])
+
+  // Helper function to flatten nested comments structure
+  const flattenComments = useCallback((comments: ProductComment[]): ProductComment[] => {
+    const flattened: ProductComment[] = []
+    
+    const traverse = (items: ProductComment[]) => {
+      for (const item of items) {
+        flattened.push(item)
+        if (item.replies && item.replies.length > 0) {
+          traverse(item.replies)
+        }
+      }
+    }
+    
+    traverse(comments)
+    return flattened
+  }, [])
+
+  // Helper function to recursively build comment tree
+  const buildCommentTree = useCallback((allComments: ProductComment[], parentId: string | null): ProductComment[] => {
+    return allComments
+      .filter(c => {
+        if (parentId === null) {
+          return !c.parentCommentId || c.parentCommentId === null || c.parentCommentId === "" || c.parentCommentId === undefined
+        }
+        return c.parentCommentId === parentId
+      })
+      .map(comment => ({
+        ...comment,
+        replies: buildCommentTree(allComments, comment.id),
+      }))
+  }, [])
+
+  // Helper function to organize comments into tree structure
+  const organizeComments = useCallback((comments: ProductComment[]): ProductComment[] => {
+    // First, flatten if comments are already nested
+    const allComments = flattenComments(comments)
+    
+    // Build tree recursively starting from root (parentId = null)
+    return buildCommentTree(allComments, null)
+  }, [flattenComments, buildCommentTree])
+
+  // Helper function to refresh comments (force fresh fetch)
+  const refreshComments = useCallback(async () => {
+    if (!product?.slug) return
+    
+    try {
+      // Use fresh fetch to bypass cache and get latest data
+      const fetchedComments = await productCommentsApi.getBySlugFresh(product.slug)
+      console.log("Fetched comments (raw):", fetchedComments)
+      
+      const organizedComments = organizeComments(fetchedComments)
+      console.log("Organized comments:", organizedComments)
+      
+      setComments(organizedComments)
+    } catch (error) {
+      console.error("Error refreshing comments:", error)
+      toast({
+        title: "Lỗi",
+        description: "Không thể tải lại bình luận",
+        variant: "destructive",
+      })
+    }
+  }, [product?.slug, organizeComments, toast])
+
+  // Fetch comments when product is loaded
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!product?.slug) return
+
+      setLoadingComments(true)
+      try {
+        const fetchedComments = await productCommentsApi.getBySlug(product.slug)
+        const organizedComments = organizeComments(fetchedComments)
+        setComments(organizedComments)
+      } catch (error) {
+        console.error("Error fetching comments:", error)
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải bình luận",
+          variant: "destructive",
+        })
+      } finally {
+        setLoadingComments(false)
+      }
+    }
+
+    fetchComments()
+  }, [product?.slug, toast, organizeComments])
 
   const handleToggleWishlist = async () => {
     if (!user?.accessToken) {
@@ -1153,7 +1219,7 @@ export default function ProductDetailPage() {
             />
             <div className="flex justify-end">
               <Button
-                onClick={() => {
+                onClick={async () => {
                   if (!user) {
                     toast({
                       title: "Vui lòng đăng nhập",
@@ -1162,48 +1228,133 @@ export default function ProductDetailPage() {
                     })
                     return
                   }
-                  if (!commentText.trim()) return
+                  if (!commentText.trim() || !product?.slug) return
                   
-                  const newComment = {
-                    id: Date.now().toString(),
-                    author: user.name || user.email,
-                    avatar: user.avatar,
-                    content: commentText,
-                    createdAt: new Date().toISOString(),
-                    replies: [],
+                  try {
+                    const newComment = await makeAuthenticatedRequest(async (token) => {
+                      return await productCommentsApi.create(token, product.slug, {
+                        content: commentText.trim(),
+                      })
+                    })
+
+                    // Refresh comments
+                    await refreshComments()
+                    
+                    setCommentText("")
+                    toast({
+                      title: "Đã gửi bình luận",
+                      description: "Bình luận của bạn đã được đăng",
+                    })
+                  } catch (error: any) {
+                    console.error("Error creating comment:", error)
+                    toast({
+                      title: "Lỗi",
+                      description: error.message || "Không thể gửi bình luận",
+                      variant: "destructive",
+                    })
                   }
-                  setComments([...comments, newComment])
-                  setCommentText("")
-                  toast({
-                    title: "Đã gửi bình luận",
-                    description: "Bình luận của bạn đã được đăng",
-                  })
                 }}
-                disabled={!commentText.trim()}
+                disabled={!commentText.trim() || loadingComments}
                 size="sm"
                 className="text-xs sm:text-sm"
               >
-                <Send className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                Gửi bình luận
+                {loadingComments ? (
+                  <>
+                    <div className="h-3 w-3 sm:h-4 sm:w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Đang gửi...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                    Gửi bình luận
+                  </>
+                )}
               </Button>
             </div>
           </div>
         </div>
 
         {/* Comments List */}
-        <div className="space-y-4 sm:space-y-6">
-          {comments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              user={user}
-              onReply={(id) => setReplyTo(id)}
-              onDelete={(id) => {
-                setComments(comments.filter((c) => c.id !== id))
-              }}
-            />
-          ))}
-        </div>
+        {loadingComments ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            Đang tải bình luận...
+          </div>
+        ) : comments.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
+          </div>
+        ) : (
+          <div className="space-y-4 sm:space-y-6">
+            {comments.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                user={user}
+                productSlug={product?.slug || ""}
+                onReply={(id: string | null) => {
+                  setReplyingTo(id)
+                  setReplyText("")
+                }}
+                onDelete={async (id) => {
+                  if (!user?.accessToken || !product?.slug) return
+                  
+                  try {
+                    await makeAuthenticatedRequest(async (token) => {
+                      await productCommentsApi.delete(token, product.slug, id)
+                    })
+
+                    // Refresh comments
+                    await refreshComments()
+                    
+                    toast({
+                      title: "Đã xóa bình luận",
+                      description: "Bình luận đã được xóa thành công",
+                    })
+                  } catch (error: any) {
+                    console.error("Error deleting comment:", error)
+                    toast({
+                      title: "Lỗi",
+                      description: error.message || "Không thể xóa bình luận",
+                      variant: "destructive",
+                    })
+                  }
+                }}
+                onReplySubmit={async (parentId: string, replyContent: string) => {
+                  if (!user?.accessToken || !product?.slug) return
+                  
+                  try {
+                    await makeAuthenticatedRequest(async (token) => {
+                      await productCommentsApi.reply(token, product.slug, parentId, {
+                        content: replyContent.trim(),
+                      })
+                    })
+
+                    // Refresh comments
+                    await refreshComments()
+                    
+                    setReplyingTo(null)
+                    setReplyText("")
+                    toast({
+                      title: "Đã gửi phản hồi",
+                      description: "Phản hồi của bạn đã được đăng",
+                    })
+                  } catch (error: any) {
+                    console.error("Error replying to comment:", error)
+                    toast({
+                      title: "Lỗi",
+                      description: error.message || "Không thể gửi phản hồi",
+                      variant: "destructive",
+                    })
+                  }
+                }}
+                replyingTo={replyingTo}
+                replyText={replyText}
+                onReplyTextChange={setReplyText}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Newsletter Subscription */}
@@ -1654,13 +1805,25 @@ export default function ProductDetailPage() {
 function CommentItem({
   comment,
   user,
+  productSlug,
   onReply,
   onDelete,
+  onReplySubmit,
+  replyingTo,
+  replyText,
+  onReplyTextChange,
+  isNestedReply = false,
 }: {
-  comment: any
+  comment: ProductComment
   user: any
-  onReply: (id: string) => void
+  productSlug: string
+  onReply: (id: string | null) => void
   onDelete: (id: string) => void
+  onReplySubmit?: (parentId: string, content: string) => Promise<void>
+  replyingTo?: string | null
+  replyText?: string
+  onReplyTextChange?: (text: string) => void
+  isNestedReply?: boolean
 }) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -1673,21 +1836,37 @@ function CommentItem({
     return `lúc ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${day} tháng ${month}, ${year}`
   }
 
+  // Get user name from various possible API response formats
+  // Priority: userName (from API) > userFullName > fullName > email
+  const authorName = 
+    comment.userName || 
+    comment.userFullName || 
+    comment.fullName || 
+    comment.user?.fullName || 
+    comment.userEmail || 
+    comment.email || 
+    comment.user?.email || 
+    "Người dùng"
+  const authorAvatar = comment.userAvatar || comment.avatar || comment.user?.avatar || null
+  const isReplying = replyingTo === comment.id
+  // Only admin can delete (role === 1)
+  const canDelete = user && (user.role === 1 || user.role === "1")
+
   return (
     <div className="space-y-4">
       <div className="flex gap-4">
         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-          {comment.avatar ? (
-            <Image src={comment.avatar} alt={comment.author} width={40} height={40} className="rounded-full" />
+          {authorAvatar ? (
+            <Image src={authorAvatar} alt={authorName} width={40} height={40} className="rounded-full" />
           ) : (
             <span className="text-primary font-semibold">
-              {comment.author.charAt(0).toUpperCase()}
+              {authorName.charAt(0).toUpperCase()}
             </span>
           )}
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold">{comment.author}</span>
+            <span className="font-semibold">{authorName}</span>
             {comment.isShop && (
               <Badge variant="secondary" className="bg-green-500 text-white">
                 Shop
@@ -1708,7 +1887,7 @@ function CommentItem({
               <Reply className="h-3 w-3 mr-1" />
               Trả lời
             </Button>
-            {user && (user.email === comment.author || user.role === 1) && (
+            {canDelete && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -1720,19 +1899,59 @@ function CommentItem({
               </Button>
             )}
           </div>
+
+          {/* Reply Form */}
+          {isReplying && onReplySubmit && onReplyTextChange !== undefined && (
+            <div className="mt-4 space-y-2">
+              <Textarea
+                placeholder="Viết phản hồi của bạn..."
+                value={replyText || ""}
+                onChange={(e) => onReplyTextChange(e.target.value)}
+                className="min-h-[60px] text-sm"
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => onReplySubmit(comment.id, replyText || "")}
+                  disabled={!replyText?.trim()}
+                  className="text-xs"
+                >
+                  <Send className="h-3 w-3 mr-1" />
+                  Gửi
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (onReply) onReply(null)
+                    if (onReplyTextChange) onReplyTextChange("")
+                  }}
+                  className="text-xs"
+                >
+                  Hủy
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Replies */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="ml-14 space-y-4 border-l-2 border-muted pl-4">
-          {comment.replies.map((reply: any) => (
+        <div className={isNestedReply ? "space-y-4" : "ml-14 space-y-4"}>
+          {comment.replies.map((reply) => (
             <CommentItem
               key={reply.id}
               comment={reply}
               user={user}
+              productSlug={productSlug}
               onReply={onReply}
               onDelete={onDelete}
+              onReplySubmit={onReplySubmit}
+              replyingTo={replyingTo}
+              replyText={replyText}
+              onReplyTextChange={onReplyTextChange}
+              isNestedReply={true}
             />
           ))}
         </div>
