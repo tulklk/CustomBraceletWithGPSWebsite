@@ -57,6 +57,8 @@ export default function ProductsPage() {
     imageUrls: [] as string[],
     isActive: true,
     hasVariants: false,
+    hasEngraving: false,
+    defaultEngravingText: "",
     variants: [] as Array<{
       color: string
       size: string
@@ -109,6 +111,8 @@ export default function ProductsPage() {
         imageUrls: product.imageUrls || product.images || (product.imageUrl ? [product.imageUrl] : []),
         isActive: (product as any).isActive ?? true,
         hasVariants: (product as any).hasVariants ?? false,
+        hasEngraving: (product as any).hasEngraving ?? false,
+        defaultEngravingText: (product as any).defaultEngravingText || "",
         variants: (product as any).variants || [],
       })
     } else {
@@ -124,6 +128,8 @@ export default function ProductsPage() {
         imageUrls: [],
         isActive: true,
         hasVariants: false,
+        hasEngraving: false,
+        defaultEngravingText: "",
         variants: [],
       })
     }
@@ -189,6 +195,10 @@ export default function ProductsPage() {
         stockQuantity: parseInt(formData.stockQuantity),
         brand: formData.brand && formData.brand !== "none" ? formData.brand : null,
         isActive: formData.isActive,
+        hasEngraving: formData.hasEngraving,
+        defaultEngravingText: formData.hasEngraving && formData.defaultEngravingText.trim() 
+          ? formData.defaultEngravingText.trim() 
+          : null,
         imageUrls: imageUrls,
       }
       
@@ -615,6 +625,36 @@ export default function ProductsPage() {
                 onCheckedChange={(checked) => setFormData({ ...formData, hasVariants: checked })}
               />
             </div>
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="hasEngraving" className="text-base">
+                  Sản phẩm hỗ trợ khắc tên
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Cho phép khách hàng khắc tên/từ trên sản phẩm
+                </p>
+              </div>
+              <Switch
+                id="hasEngraving"
+                checked={formData.hasEngraving}
+                onCheckedChange={(checked) => setFormData({ ...formData, hasEngraving: checked })}
+              />
+            </div>
+            {formData.hasEngraving && (
+              <div className="space-y-2">
+                <Label htmlFor="defaultEngravingText">Nội dung khắc tên mặc định (tùy chọn)</Label>
+                <Input
+                  id="defaultEngravingText"
+                  value={formData.defaultEngravingText}
+                  onChange={(e) => setFormData({ ...formData, defaultEngravingText: e.target.value })}
+                  placeholder="VD: KIDTRACK"
+                  className="uppercase"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Nội dung này sẽ được tự động điền vào ô nhập khắc tên khi khách hàng xem sản phẩm
+                </p>
+              </div>
+            )}
             {formData.hasVariants && (
               <div className="space-y-4 p-4 border rounded-lg">
                 <div className="flex items-center justify-between">

@@ -2088,6 +2088,14 @@ export default function AccountPage() {
                           <p className="text-sm text-muted-foreground mt-1">
                             Số lượng: {item.quantity} × {formatCurrency(item.unitPrice)}
                           </p>
+                          {/* Engraving Text (if applicable) */}
+                          {((item as any).engravingText || (item as any).design?.engraving?.text) && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Nội dung khắc tên: <span className="font-medium text-foreground">
+                                {(item as any).engravingText || (item as any).design?.engraving?.text}
+                              </span>
+                            </p>
+                          )}
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="font-semibold">{formatCurrency(item.lineTotal)}</p>

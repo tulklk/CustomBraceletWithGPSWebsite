@@ -8,6 +8,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'bunny-baby-pink',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/templates/bunny-baby-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -128,6 +130,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'necklace-baby-pink',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/necklaces/necklace-baby-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -152,6 +156,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'necklace-pink',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/necklaces/necklace-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -176,6 +182,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'necklace-lavender',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/necklaces/necklace-lavender.png'],
     specs: {
       waterproof: 'IP67',
@@ -200,6 +208,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'necklace-yellow',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/necklaces/necklace-yellow.png'],
     specs: {
       waterproof: 'IP67',
@@ -224,6 +234,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'necklace-mint',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/necklaces/necklace-mint.png'],
     specs: {
       waterproof: 'IP67',
@@ -248,6 +260,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'clip-baby-pink',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/clips/clip-baby-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -272,6 +286,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'clip-pink',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/clips/clip-pink.png'],
     specs: {
       waterproof: 'IP67',
@@ -296,6 +312,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'clip-lavender',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/clips/clip-lavender.png'],
     specs: {
       waterproof: 'IP67',
@@ -320,6 +338,8 @@ const MOCK_PRODUCTS: Product[] = [
     slug: 'clip-yellow',
     priceFrom: 550000,
     originalPrice: null,
+    hasEngraving: false,
+    defaultEngravingText: null,
     images: ['/images/clips/clip-yellow.png'],
     specs: {
       waterproof: 'IP67',

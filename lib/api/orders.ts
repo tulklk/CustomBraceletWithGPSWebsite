@@ -14,8 +14,9 @@ export interface ShippingAddress {
 // Order Item Request (for creating order)
 export interface CreateOrderItemRequest {
   productId: string
-  productVariantId?: string // Optional variant ID
+  productVariantId?: string | null // Optional variant ID
   quantity: number
+  engravingText?: string | null
 }
 
 // Create Order Request (for authenticated users)

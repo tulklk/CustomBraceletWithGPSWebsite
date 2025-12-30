@@ -32,6 +32,12 @@ function mapBackendCartItem(backendItem: BackendCartItem): CartItem {
     },
     accessories: [],
     unitPrice: backendItem.unitPrice,
+    // Map engraving text from backend if available
+    engrave: backendItem.engravingText?.trim() ? {
+      text: backendItem.engravingText.trim(),
+      font: "Sans",
+      position: "inside",
+    } : undefined,
   }
 
   return {
@@ -150,7 +156,7 @@ export const useCart = create<CartStore>()(
       },
 
       // Add item by product ID (for regular products without customizer)
-      addItemByProductId: async (productId: string, quantity: number) => {
+      addItemByProductId: async (productId: string, quantity: number, engravingText?: string | null) => {
         const userStore = await import('./useUser').then(m => m.useUser.getState())
         const user = userStore.user
         
@@ -159,7 +165,7 @@ export const useCart = create<CartStore>()(
             set({ isSyncing: true })
             await userStore.makeAuthenticatedRequest(async (token) => {
               await cartApi.addItem(
-                { productId, quantity },
+                { productId, quantity, engravingText: engravingText?.trim() || null },
                 token,
                 user.refreshToken,
                 (newToken) => {
@@ -192,11 +198,21 @@ export const useCart = create<CartStore>()(
             },
             accessories: [],
             unitPrice: 0, // Will need to fetch from product
+            // Add engraving text if provided
+            engrave: engravingText?.trim() ? {
+              text: engravingText.trim(),
+              font: "Sans",
+              position: "inside",
+            } : undefined,
           }
           
           const items = get().items
+          // Check for existing item with same productId, templateId, and engraving text
           const existingItem = items.find(
-            (item) => item.design.productId === productId && !item.design.templateId
+            (item) => 
+              item.design.productId === productId && 
+              !item.design.templateId &&
+              item.design.engrave?.text === design.engrave?.text
           )
 
           if (existingItem) {

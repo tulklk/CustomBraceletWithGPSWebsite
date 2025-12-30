@@ -354,6 +354,7 @@ export default function CheckoutPage() {
       const orderItems = items.map(item => ({
         productId: item.design.productId,
         quantity: item.qty,
+        engravingText: item.design.engrave?.text || null,
       }))
 
       // Create order using API (with or without auth)
@@ -380,6 +381,7 @@ export default function CheckoutPage() {
                 {
                   productId: item.design.productId,
                   quantity: item.qty,
+                  engravingText: item.design.engrave?.text || null,
                 },
                 token,
                 user.refreshToken,
@@ -855,8 +857,14 @@ export default function CheckoutPage() {
                               {productName}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Số lượng: {item.qty}
+                              Số lượng: <span className="font-bold text-gray-900 dark:text-gray-100">{item.qty}</span>
                             </p>
+                            {/* Engraving Text (if applicable) */}
+                            {item.design.engrave?.text && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Nội dung khắc tên: <span className="font-bold text-gray-900 dark:text-gray-100">{item.design.engrave.text}</span>
+                              </p>
+                            )}
                             <p className="text-sm font-semibold text-primary mt-1">
                               {formatCurrency(currentPrice * item.qty)}
                             </p>

@@ -21,6 +21,8 @@ export interface BackendProduct {
   categoryId: string | null
   createdAt?: string
   updatedAt?: string | null
+  hasEngraving?: boolean // Product có hỗ trợ khắc tên không
+  defaultEngravingText?: string | null // Nội dung khắc tên mặc định (nếu có)
 }
 
 // Public Products API Service
@@ -154,6 +156,8 @@ export const productsApi = {
       specs: specs,
       description: backendProduct.description || "",
       features: features,
+      hasEngraving: backendProduct.hasEngraving ?? false, // Default to false if not provided
+      defaultEngravingText: backendProduct.defaultEngravingText ?? null, // Default to null if not provided
     }
   },
 }

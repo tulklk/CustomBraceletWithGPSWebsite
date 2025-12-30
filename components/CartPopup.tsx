@@ -183,6 +183,12 @@ export function CartPopup({ open, onClose, triggerRef }: CartPopupProps) {
                         <p className="text-sm font-medium line-clamp-2">
                           {productName}
                         </p>
+                        {/* Engraving Text (if applicable) */}
+                        {item.design.engrave?.text && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Nội dung khắc tên: <span className="font-medium text-foreground">{item.design.engrave.text}</span>
+                          </p>
+                        )}
                       </div>
                       <Button
                         variant="ghost"

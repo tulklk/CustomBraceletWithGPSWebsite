@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -40,6 +40,7 @@ import { uploadImageToCloudinary } from "@/lib/cloudinary"
 import { wishlistApi } from "@/lib/api/wishlist"
 import { productCommentsApi, ProductComment } from "@/lib/api/productComments"
 import { productReviewsApi, ProductReview } from "@/lib/api/productReviews"
+import EngravingSection from "@/components/product/EngravingSection"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -100,6 +101,15 @@ export default function ProductDetailPage() {
   
   // Sold quantity state
   const [soldQuantity, setSoldQuantity] = useState<number>(0)
+  
+  // Engraving state (for all products)
+  const [engravingText, setEngravingText] = useState<string>("")
+
+  // Map BackendProduct to Product for EngravingSection (memoized to avoid recalculation)
+  const mappedProduct: Product | null = useMemo(() => {
+    if (!product) return null
+    return productsApi.mapToProduct(product)
+  }, [product])
 
   // Helper function to get product type from ID
   const getProductType = (productId: string): 'bracelet' | 'necklace' | 'clip' => {
@@ -457,11 +467,17 @@ export default function ProductDetailPage() {
     // For regular products (not customizer) - use API
     if (!hasCustomizer) {
       try {
-        await addItemByProductId(product.id, quantity)
+        // Only send engravingText if product supports it
+        const engravingTextToSend = (product.hasEngraving ?? false) 
+          ? (engravingText.trim() || null)
+          : null
+        await addItemByProductId(product.id, quantity, engravingTextToSend)
         toast({
           title: "Đã thêm vào giỏ hàng!",
           description: `${product.name} x${quantity}`,
         })
+        // Reset engraving text after adding to cart
+        setEngravingText("")
       } catch (error: any) {
         toast({
           title: "Lỗi",
@@ -492,22 +508,40 @@ export default function ProductDetailPage() {
       design = defaultDesign
     } else if (templateId) {
       design = getDesign()
-    } else {
-      // No templates available, use product directly via API
-      try {
-        await addItemByProductId(product.id, quantity)
-        toast({
-          title: "Đã thêm vào giỏ hàng!",
-          description: `${product.name} x${quantity}`,
-        })
-      } catch (error: any) {
-        toast({
-          title: "Lỗi",
-          description: error.message || "Không thể thêm sản phẩm vào giỏ hàng",
-          variant: "destructive",
-        })
+      } else {
+        // No templates available, use product directly via API
+        try {
+          // Only send engravingText if product supports it
+          const engravingTextToSend = (product.hasEngraving ?? false) 
+            ? (engravingText.trim() || null)
+            : null
+          await addItemByProductId(product.id, quantity, engravingTextToSend)
+          toast({
+            title: "Đã thêm vào giỏ hàng!",
+            description: `${product.name} x${quantity}`,
+          })
+          setEngravingText("")
+        } catch (error: any) {
+          toast({
+            title: "Lỗi",
+            description: error.message || "Không thể thêm sản phẩm vào giỏ hàng",
+            variant: "destructive",
+          })
+        }
+        return
       }
-      return
+
+    // Add engravingText to design if provided (and not already set via EngraveForm)
+    // Only add if product supports engraving
+    if (engravingText.trim() && !design.engrave && (product.hasEngraving ?? false)) {
+      design = {
+        ...design,
+        engrave: {
+          text: engravingText.trim(),
+          font: "Sans",
+          position: "inside",
+        },
+      }
     }
 
     await addItem(design)
@@ -515,6 +549,8 @@ export default function ProductDetailPage() {
       title: "Đã thêm vào giỏ hàng!",
       description: "Xem giỏ hàng để thanh toán",
     })
+    // Reset engraving text after adding to cart
+    setEngravingText("")
   }
   
   const handleBuyNow = async () => {
@@ -523,11 +559,16 @@ export default function ProductDetailPage() {
     try {
       // For regular products (not customizer) - use API
       if (!hasCustomizer) {
-        await addItemByProductId(product.id, quantity)
+        // Only send engravingText if product supports it
+        const engravingTextToSend = (product.hasEngraving ?? false) 
+          ? (engravingText.trim() || null)
+          : null
+        await addItemByProductId(product.id, quantity, engravingTextToSend)
         toast({
           title: "Đã thêm vào giỏ hàng!",
           description: `${product.name} x${quantity}`,
         })
+        setEngravingText("")
       } else {
         // For customizer products - use local storage with design
         // If no template selected, use first template or create default design
@@ -551,13 +592,31 @@ export default function ProductDetailPage() {
           design = getDesign()
         } else {
           // No templates available, use product directly via API
-          await addItemByProductId(product.id, quantity)
+          // Only send engravingText if product supports it
+          const engravingTextToSend = (product.hasEngraving ?? false) 
+            ? (engravingText.trim() || null)
+            : null
+          await addItemByProductId(product.id, quantity, engravingTextToSend)
           toast({
             title: "Đã thêm vào giỏ hàng!",
             description: `${product.name} x${quantity}`,
           })
+          setEngravingText("")
           router.push("/checkout")
           return
+        }
+
+        // Add engravingText to design if provided (and not already set via EngraveForm)
+        // Only add if product supports engraving
+        if (engravingText.trim() && !design.engrave && (product.hasEngraving ?? false)) {
+          design = {
+            ...design,
+            engrave: {
+              text: engravingText.trim(),
+              font: "Sans",
+              position: "inside",
+            },
+          }
         }
 
         await addItem(design)
@@ -565,6 +624,7 @@ export default function ProductDetailPage() {
           title: "Đã thêm vào giỏ hàng!",
           description: "Xem giỏ hàng để thanh toán",
         })
+        setEngravingText("")
       }
       
       // Redirect to checkout after adding to cart
@@ -1009,6 +1069,17 @@ export default function ProductDetailPage() {
               </Button>
             </div>
           </div>
+          
+          {/* Engraving Section (only for products with hasEngraving === true) */}
+          {product && (product.hasEngraving ?? false) && mappedProduct && (
+            <div className="pt-2 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
+              <EngravingSection
+                product={mappedProduct}
+                value={engravingText}
+                onChange={setEngravingText}
+              />
+            </div>
+          )}
           
           {/* Action Buttons */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 pt-2 sm:pt-4">

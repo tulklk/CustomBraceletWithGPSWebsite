@@ -161,6 +161,13 @@ export default function CartPage() {
                           </p>
                         )}
 
+                        {/* Engraving Text (if applicable) */}
+                        {item.design.engrave?.text && (
+                          <p className="text-sm text-muted-foreground">
+                            Nội dung khắc tên: <span className="font-medium text-foreground">{item.design.engrave.text}</span>
+                          </p>
+                        )}
+
                         {/* Quantity and Price */}
                         <div className="flex items-center justify-between pt-2">
                           <div className="flex items-center gap-3">

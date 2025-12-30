@@ -494,6 +494,14 @@ export default function OrdersPage() {
                                       {item.variantInfoSnapshot}
                                     </p>
                                   )}
+                                  {/* Engraving Text (if applicable) */}
+                                  {((item as any).engravingText || (item as any).design?.engraving?.text) && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Nội dung khắc tên: <span className="font-medium text-foreground">
+                                        {(item as any).engravingText || (item as any).design?.engraving?.text}
+                                      </span>
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                             </td>

@@ -78,6 +78,8 @@ export type Product = {
   }
   description: string
   features: string[]
+  hasEngraving: boolean // Product có hỗ trợ khắc tên không
+  defaultEngravingText?: string | null // Nội dung khắc tên mặc định (nếu có)
 }
 
 // Order

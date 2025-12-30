@@ -10,6 +10,7 @@ export interface BackendCartItem {
   quantity: number
   unitPrice: number
   totalPrice: number
+  engravingText?: string | null // Engraving text if product supports it
 }
 
 // Backend Cart Response Type
@@ -26,6 +27,7 @@ export interface BackendCart {
 export interface AddCartItemRequest {
   productId: string
   quantity: number
+  engravingText?: string | null
 }
 
 // Update Cart Item Request

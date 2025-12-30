@@ -148,6 +148,12 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                                   {isInStock ? "Còn hàng" : "Hết hàng"}
                                 </span>
                               </p>
+                              {/* Engraving Text (if applicable) */}
+                              {item.design.engrave?.text && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Nội dung khắc tên: <span className="font-medium text-foreground">{item.design.engrave.text}</span>
+                                </p>
+                              )}
                             </div>
                             <Button
                               variant="ghost"
