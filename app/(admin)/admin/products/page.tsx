@@ -152,6 +152,7 @@ export default function ProductsPage() {
       brand: "",
       categoryId: "none",
       imageUrls: [],
+      model3DUrl: null,
       isActive: true,
       hasVariants: false,
       hasEngraving: false,
