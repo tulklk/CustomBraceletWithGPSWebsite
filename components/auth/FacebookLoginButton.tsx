@@ -26,109 +26,145 @@ export default function FacebookLoginButton({
   const [isSDKReady, setIsSDKReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Initialize Facebook SDK on mount
+  // Initialize Facebook SDK on mount with retry logic
   useEffect(() => {
-    initFacebookSDK()
-      .then(() => {
-        setIsSDKReady(true)
-      })
-      .catch((err) => {
-        console.error("Failed to initialize Facebook SDK:", err)
-        setError("Không thể tải Facebook login. Vui lòng làm mới trang.")
-      })
+    let retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = 2000; // 2 seconds
+
+    const initializeSDK = () => {
+      initFacebookSDK()
+        .then(() => {
+          setIsSDKReady(true)
+          setError(null)
+        })
+        .catch((err) => {
+          console.error("Failed to initialize Facebook SDK:", err)
+          
+          if (retryCount < maxRetries) {
+            retryCount++
+            setTimeout(() => {
+              initializeSDK()
+            }, retryDelay)
+          } else {
+            setError("Không thể tải Facebook login. Vui lòng kiểm tra kết nối và làm mới trang.")
+          }
+        })
+    }
+
+    initializeSDK()
   }, [])
 
   const handleFacebookLogin = () => {
-    if (!isSDKReady || !window.FB) {
-      setError("Facebook SDK chưa sẵn sàng. Vui lòng đợi...")
+    // Double check SDK is ready
+    if (!window.FB) {
+      // Try to initialize again (don't await, handle asynchronously)
+      initFacebookSDK()
+        .then(() => {
+          setIsSDKReady(true)
+        })
+        .catch((err) => {
+          setError("Facebook SDK chưa sẵn sàng. Vui lòng đợi hoặc làm mới trang.")
+        })
       return
     }
 
     setIsLoading(true)
     setError(null)
 
-    window.FB.login(
-      async (response) => {
-        try {
-          if (response.status === "connected" && response.authResponse) {
-            const accessToken = response.authResponse.accessToken
+    // Define async handler separately (not as callback)
+    const handleLoginResponse = async (response: any) => {
+      try {
+        if (response.status === "connected" && response.authResponse) {
+          const accessToken = response.authResponse.accessToken
 
-            // Call backend API with Facebook access token
-            const authResponse = await authApi.loginWithFacebook({ accessToken })
-            
-            // Fetch full user info including isActive from /me endpoint
-            let isActive: boolean | undefined = authResponse.user.isActive
-            if (isActive === undefined && authResponse.accessToken) {
-              try {
-                const meResponse = await authApi.getMe(authResponse.accessToken)
-                isActive = meResponse.isActive
-              } catch (error) {
-                console.warn("Failed to fetch user details:", error)
-              }
-            }
-            
-            // Check if account is active
-            if (isActive === false) {
-              toast({
-                title: "Tài khoản đã bị khóa",
-                description: "Tài khoản của bạn đã bị khóa, liên hệ admin",
-                variant: "destructive",
-              })
-              setIsLoading(false)
-              return
-            }
-            
-            // Update authResponse with isActive if we fetched it from /me
-            if (isActive !== undefined && authResponse.user.isActive === undefined) {
-              authResponse.user.isActive = isActive
-            }
-            
-            // Store tokens and user info
-            setAuth(authResponse)
-            
-            // Fetch cart after login
-            try {
-              await fetchCart()
-            } catch (cartError) {
-              console.warn("Failed to fetch cart after login:", cartError)
-            }
-            
-            toast({
-              title: "Đăng nhập thành công!",
-              description: `Chào mừng ${authResponse.user.fullName}`,
-            })
-            
-            // Call onSuccess callback if provided
-            if (onSuccess) {
-              onSuccess()
-            } else {
-              // Redirect to home
-              router.push("/")
-            }
-          } else {
-            throw new Error("Đăng nhập Facebook bị hủy hoặc thất bại")
-          }
-        } catch (err: any) {
-          console.error("Facebook login error:", err)
-          const errorMessage = err?.message || "Không thể đăng nhập với Facebook"
+          // Call backend API with Facebook access token
+          const authResponse = await authApi.loginWithFacebook({ accessToken })
           
-          // Handle specific error cases
-          if (err?.statusCode === 401) {
-            setError("Token Facebook không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.")
-          } else if (errorMessage.includes("email")) {
-            setError("Tài khoản Facebook của bạn không có email. Vui lòng sử dụng phương thức đăng nhập khác.")
-          } else {
-            setError(errorMessage)
+          // Fetch full user info including isActive from /me endpoint
+          let isActive: boolean | undefined = authResponse.user.isActive
+          if (isActive === undefined && authResponse.accessToken) {
+            try {
+              const meResponse = await authApi.getMe(authResponse.accessToken)
+              isActive = meResponse.isActive
+            } catch (error) {
+              console.warn("Failed to fetch user details:", error)
+            }
+          }
+          
+          // Check if account is active
+          if (isActive === false) {
+            toast({
+              title: "Tài khoản đã bị khóa",
+              description: "Tài khoản của bạn đã bị khóa, liên hệ admin",
+              variant: "destructive",
+            })
+            setIsLoading(false)
+            return
+          }
+          
+          // Update authResponse with isActive if we fetched it from /me
+          if (isActive !== undefined && authResponse.user.isActive === undefined) {
+            authResponse.user.isActive = isActive
+          }
+          
+          // Store tokens and user info
+          setAuth(authResponse)
+          
+          // Fetch cart after login
+          try {
+            await fetchCart()
+          } catch (cartError) {
+            console.warn("Failed to fetch cart after login:", cartError)
           }
           
           toast({
-            title: "Lỗi đăng nhập",
-            description: errorMessage,
-            variant: "destructive",
+            title: "Đăng nhập thành công!",
+            description: `Chào mừng ${authResponse.user.fullName}`,
           })
-        } finally {
-          setIsLoading(false)
+          
+          // Call onSuccess callback if provided
+          if (onSuccess) {
+            onSuccess()
+          } else {
+            // Redirect to home
+            router.push("/")
+          }
+        } else {
+          throw new Error("Đăng nhập Facebook bị hủy hoặc thất bại")
         }
+      } catch (err: any) {
+        console.error("Facebook login error:", err)
+        const errorMessage = err?.message || "Không thể đăng nhập với Facebook"
+        
+        // Handle specific error cases
+        if (err?.statusCode === 401) {
+          setError("Token Facebook không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.")
+        } else if (errorMessage.includes("email")) {
+          setError("Tài khoản Facebook của bạn không có email. Vui lòng sử dụng phương thức đăng nhập khác.")
+        } else {
+          setError(errorMessage)
+        }
+        
+        toast({
+          title: "Lỗi đăng nhập",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    // Use regular function (not async) as callback for FB.login
+    window.FB.login(
+      (response) => {
+        // Call async handler and catch any errors
+        handleLoginResponse(response).catch((err) => {
+          console.error("Unhandled error in handleLoginResponse:", err)
+          setIsLoading(false)
+          setError("Đã xảy ra lỗi không mong đợi. Vui lòng thử lại.")
+        })
       },
       {
         scope: "email,public_profile", // Request email and public profile permissions
