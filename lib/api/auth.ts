@@ -36,6 +36,11 @@ export interface GoogleLoginRequest {
   idToken: string
 }
 
+// Facebook Login Request (backend requires accessToken)
+export interface FacebookLoginRequest {
+  accessToken: string
+}
+
 // API Error Response
 export interface ApiError {
   message: string
@@ -189,6 +194,24 @@ export const authApi = {
    */
   async loginWithGoogle(data: GoogleLoginRequest): Promise<AuthResponse> {
     return this.verifyGoogleToken(data)
+  },
+
+  /**
+   * Login with Facebook access token
+   * Frontend uses Facebook SDK to get access token, then sends to backend to verify
+   * Backend endpoint: /api/auth/login/facebook (verifies access token and returns user + tokens)
+   */
+  async loginWithFacebook(data: FacebookLoginRequest): Promise<AuthResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login/facebook`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "accept": "*/*",
+      },
+      body: JSON.stringify(data),
+    })
+
+    return handleResponse<AuthResponse>(response)
   },
 
   /**

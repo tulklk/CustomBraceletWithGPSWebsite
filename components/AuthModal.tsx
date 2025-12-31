@@ -36,6 +36,7 @@ declare global {
 }
 import { Mail, Lock, User, Chrome, Eye, EyeOff, Facebook, Phone } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import FacebookLoginButton from "@/components/auth/FacebookLoginButton"
 
 interface AuthModalProps {
   open: boolean
@@ -505,25 +506,9 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     }
   }
 
-  const handleFacebookLogin = async () => {
-    setIsLoading(true)
-    try {
-      // Facebook login is not available in the backend API
-      toast({
-        title: "Chức năng chưa khả dụng",
-        description: "Đăng nhập bằng Facebook chưa được hỗ trợ",
-        variant: "default",
-      })
-    } catch (error) {
-      const apiError = error as ApiError
-      toast({
-        title: "Đăng nhập thất bại",
-        description: apiError.message || "Có lỗi xảy ra, vui lòng thử lại",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+  const handleFacebookLoginSuccess = () => {
+    onOpenChange(false)
+    resetForm()
   }
 
   const handleForgotPassword = async () => {
@@ -588,21 +573,10 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
               )}
             </Button>
 
-            <Button
-              variant="outline"
-              className="h-12 text-base font-semibold hover:bg-accent hover:border-primary transition-all"
-              onClick={handleFacebookLogin}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="h-5 w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Facebook className="h-5 w-5 mr-2 text-blue-600" />
-                  Facebook
-                </>
-              )}
-            </Button>
+            <FacebookLoginButton
+              onSuccess={handleFacebookLoginSuccess}
+              className="h-12 text-base font-semibold"
+            />
           </div>
 
           <div className="relative mb-6">

@@ -4,6 +4,7 @@ import localFont from "next/font/local"
 import "./globals.css"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { GoogleOAuthProviderWrapper } from "@/components/providers/google-oauth-provider"
+import { FacebookSDKProvider } from "@/components/providers/facebook-sdk-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ScrollToTop } from "@/components/ScrollToTop"
@@ -34,18 +35,20 @@ export default function RootLayout({
     <html lang="vi" suppressHydrationWarning>
       <body className={`${inter.className} ${akina.variable}`}>
         <GoogleOAuthProviderWrapper>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <TooltipProvider>
-              {children}
-            </TooltipProvider>
-            <Toaster />
-            <ScrollToTop />
-          </ThemeProvider>
+          <FacebookSDKProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="light"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <TooltipProvider>
+                {children}
+              </TooltipProvider>
+              <Toaster />
+              <ScrollToTop />
+            </ThemeProvider>
+          </FacebookSDKProvider>
         </GoogleOAuthProviderWrapper>
       </body>
     </html>
