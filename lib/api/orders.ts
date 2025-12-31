@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "@/lib/constants"
 import { handleResponse, fetchWithAuth } from "./auth"
+import { cachedFetch, cacheConfigs, invalidateCache } from "@/lib/cache"
 
 // Shipping Address Type
 export interface ShippingAddress {
@@ -281,7 +282,7 @@ export const ordersApi = {
   },
 
   /**
-   * Get current user's orders
+   * Get current user's orders (with caching)
    * GET /api/Orders/my
    */
   async getMyOrders(
@@ -289,6 +290,24 @@ export const ordersApi = {
     refreshToken?: string,
     onTokenRefresh?: (newToken: string) => void
   ): Promise<Order[]> {
+    // Use cache key that includes user token prefix for user-specific caching
+    const cacheKey = `orders_my_${accessToken.substring(0, 10)}`
+    
+    // Try cache first
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem(`artemis_cache_${cacheKey}`)
+        if (cached) {
+          const cacheEntry = JSON.parse(cached)
+          if (Date.now() < cacheEntry.expiresAt) {
+            return cacheEntry.data
+          }
+        }
+      } catch (e) {
+        // Ignore cache errors
+      }
+    }
+    
     const response = await fetchWithAuth(`${API_BASE_URL}/api/Orders/my`, {
       method: "GET",
       accessToken,
@@ -296,11 +315,27 @@ export const ordersApi = {
       onTokenRefresh,
     })
 
-    return handleResponse<Order[]>(response)
+    const orders = await handleResponse<Order[]>(response)
+    
+    // Cache the result (cache only in sessionStorage for user-specific data)
+    if (typeof window !== "undefined") {
+      try {
+        const cacheEntry = {
+          data: orders,
+          timestamp: Date.now(),
+          expiresAt: Date.now() + cacheConfigs.orders.ttl!,
+        }
+        sessionStorage.setItem(`artemis_cache_${cacheKey}`, JSON.stringify(cacheEntry))
+      } catch (e) {
+        // Ignore cache errors
+      }
+    }
+    
+    return orders
   },
 
   /**
-   * Get order by ID
+   * Get order by ID (with caching)
    * GET /api/Orders/{id}
    */
   async getOrderById(
@@ -309,18 +344,55 @@ export const ordersApi = {
     refreshToken?: string,
     onTokenRefresh?: (newToken: string) => void
   ): Promise<Order> {
-    const response = await fetchWithAuth(`${API_BASE_URL}/api/Orders/${orderId}`, {
-      method: "GET",
-      accessToken,
-      refreshToken,
-      onTokenRefresh,
-    })
+    const cacheKey = `order_${orderId}_${accessToken.substring(0, 10)}`
+    
+    try {
+      // Try cache first
+      if (typeof window !== "undefined") {
+        try {
+          const cached = sessionStorage.getItem(`artemis_cache_${cacheKey}`)
+          if (cached) {
+            const cacheEntry = JSON.parse(cached)
+            if (Date.now() < cacheEntry.expiresAt) {
+              return cacheEntry.data
+            }
+          }
+        } catch (e) {
+          // Ignore cache errors
+        }
+      }
+      
+      const response = await fetchWithAuth(`${API_BASE_URL}/api/Orders/${orderId}`, {
+        method: "GET",
+        accessToken,
+        refreshToken,
+        onTokenRefresh,
+      })
 
-    return handleResponse<Order>(response)
+      const order = await handleResponse<Order>(response)
+      
+      // Cache the result
+      if (typeof window !== "undefined") {
+        try {
+          const cacheEntry = {
+            data: order,
+            timestamp: Date.now(),
+            expiresAt: Date.now() + cacheConfigs.orders.ttl!,
+          }
+          sessionStorage.setItem(`artemis_cache_${cacheKey}`, JSON.stringify(cacheEntry))
+        } catch (e) {
+          // Ignore cache errors
+        }
+      }
+      
+      return order
+    } catch (error) {
+      throw error
+    }
   },
 
   /**
-   * Get order status
+   * Get order status (with caching)
    * GET /api/Orders/{id}/status
    */
   async getOrderStatus(
@@ -329,6 +401,23 @@ export const ordersApi = {
     refreshToken?: string,
     onTokenRefresh?: (newToken: string) => void
   ): Promise<{ status: OrderStatus }> {
+    const cacheKey = `order_status_${orderId}_${accessToken.substring(0, 10)}`
+    
+    // Try cache first
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem(`artemis_cache_${cacheKey}`)
+        if (cached) {
+          const cacheEntry = JSON.parse(cached)
+          if (Date.now() < cacheEntry.expiresAt) {
+            return cacheEntry.data
+          }
+        }
+      } catch (e) {
+        // Ignore cache errors
+      }
+    }
+    
     const response = await fetchWithAuth(`${API_BASE_URL}/api/Orders/${orderId}/status`, {
       method: "GET",
       accessToken,
@@ -336,7 +425,23 @@ export const ordersApi = {
       onTokenRefresh,
     })
 
-    return handleResponse<{ status: OrderStatus }>(response)
+    const status = await handleResponse<{ status: OrderStatus }>(response)
+    
+    // Cache the result
+    if (typeof window !== "undefined") {
+      try {
+        const cacheEntry = {
+          data: status,
+          timestamp: Date.now(),
+          expiresAt: Date.now() + cacheConfigs.orders.ttl!,
+        }
+        sessionStorage.setItem(`artemis_cache_${cacheKey}`, JSON.stringify(cacheEntry))
+      } catch (e) {
+        // Ignore cache errors
+      }
+    }
+    
+    return status
   },
 
   /**

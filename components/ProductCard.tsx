@@ -25,12 +25,18 @@ export function ProductCard({ product, featured }: ProductCardProps) {
     const fetchRating = async () => {
       try {
         // Use slug to be consistent with product detail & backend reviews endpoint
-        const response = await fetch(`/api/products/${product.slug}/rating`)
-        if (response.ok) {
-          const data = await response.json()
-          setAverageRating(data.averageRating || 0)
-          setReviewCount(data.reviewCount || 0)
-        }
+        // Use cachedFetch for better performance
+        const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
+        const data = await cachedFetch<{ averageRating: number; reviewCount: number }>(
+          `/api/products/${product.slug}/rating`,
+          { method: "GET" },
+          {
+            ...cacheConfigs.productRating,
+            storageKey: `product_rating_${product.slug}`,
+          }
+        )
+        setAverageRating(data.averageRating || 0)
+        setReviewCount(data.reviewCount || 0)
       } catch (error) {
         console.error("Error fetching rating:", error)
       } finally {
@@ -41,15 +47,20 @@ export function ProductCard({ product, featured }: ProductCardProps) {
     fetchRating()
   }, [product.slug])
 
-  // Fetch sold quantity for product card (using product ID for statistics endpoint)
+  // Fetch sold quantity for product card (using product ID for statistics endpoint) - with caching
   useEffect(() => {
     const fetchSoldQuantity = async () => {
       try {
-        const response = await fetch(`/api/products/${product.id}/sold-quantity`)
-        if (response.ok) {
-          const data = await response.json()
-          setSoldQuantity(typeof data.soldQuantity === "number" ? data.soldQuantity : 0)
-        }
+        const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
+        const data = await cachedFetch<{ soldQuantity: number }>(
+          `/api/products/${product.id}/sold-quantity`,
+          { method: "GET" },
+          {
+            ...cacheConfigs.soldQuantity,
+            storageKey: `sold_quantity_${product.id}`,
+          }
+        )
+        setSoldQuantity(typeof data.soldQuantity === "number" ? data.soldQuantity : 0)
       } catch (error) {
         console.error("Error fetching sold quantity:", error)
         setSoldQuantity(0)
@@ -98,7 +109,7 @@ export function ProductCard({ product, featured }: ProductCardProps) {
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
-      className="w-full"
+      className="w-full h-full"
     >
       <Link href={`/products/${product.slug}`}>
         <Card className="overflow-hidden h-full hover:shadow-lg transition-shadow">

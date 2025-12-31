@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast"
 import { formatCurrency, slugify } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ImageUpload } from "@/components/admin/ImageUpload"
+import { Model3DUpload } from "@/components/admin/Model3DUpload"
 import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
 
@@ -55,6 +56,7 @@ export default function ProductsPage() {
     brand: "",
     categoryId: "none",
     imageUrls: [] as string[],
+    model3DUrl: null as string | null,
     isActive: true,
     hasVariants: false,
     hasEngraving: false,
@@ -109,6 +111,7 @@ export default function ProductsPage() {
         brand: product.brand || "",
         categoryId: product.categoryId || "none",
         imageUrls: product.imageUrls || product.images || (product.imageUrl ? [product.imageUrl] : []),
+        model3DUrl: (product as any).model3DUrl || null,
         isActive: (product as any).isActive ?? true,
         hasVariants: (product as any).hasVariants ?? false,
         hasEngraving: (product as any).hasEngraving ?? false,
@@ -126,6 +129,7 @@ export default function ProductsPage() {
         brand: "",
         categoryId: "none",
         imageUrls: [],
+        model3DUrl: null,
         isActive: true,
         hasVariants: false,
         hasEngraving: false,
@@ -201,6 +205,7 @@ export default function ProductsPage() {
         defaultEngravingText: formData.hasEngraving && formData.defaultEngravingText.trim() 
           ? formData.defaultEngravingText.trim() 
           : null,
+        model3DUrl: formData.model3DUrl || null,
         imageUrls: imageUrls,
       }
       
@@ -613,6 +618,12 @@ export default function ProductsPage() {
                 onChange={(urls) => setFormData({ ...formData, imageUrls: urls })}
                 maxImages={5}
                 multiple={true}
+              />
+            </div>
+            <div className="space-y-2">
+              <Model3DUpload
+                value={formData.model3DUrl}
+                onChange={(url) => setFormData({ ...formData, model3DUrl: url })}
               />
             </div>
             <div className="flex items-center justify-between p-4 border rounded-lg">

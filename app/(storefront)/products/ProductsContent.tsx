@@ -125,13 +125,17 @@ export function ProductsContent() {
         
         setCategories(categoriesData)
         
-        // Fetch full backend products for category filtering
+        // Fetch full backend products for category filtering (with caching)
         const { API_BASE_URL } = await import("@/lib/constants")
-        const response = await fetch(`${API_BASE_URL}/api/Products`, {
-          method: "GET",
-          headers: { "accept": "*/*" },
-        })
-        const backendProductsData = await response.json()
+        const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
+        const backendProductsData = await cachedFetch<BackendProduct[]>(
+          `${API_BASE_URL}/api/Products`,
+          {
+            method: "GET",
+            headers: { "accept": "*/*" },
+          },
+          cacheConfigs.products
+        )
         setBackendProducts(backendProductsData.filter((p: BackendProduct) => p.isActive))
         
         setProducts(productsData)

@@ -334,42 +334,48 @@ export const provincesApi = {
         console.warn("Province method failed:", provinceError)
       }
       
-      // Method 2: Try to get all provinces with depth=3 and filter
+      // Method 2: Try to get all provinces with depth=3 and filter (with caching)
       if (allWards.length === 0) {
         try {
           console.log("Trying to get all wards with depth=3...")
-          const response = await fetch(`${PROXY_API_BASE}?action=provinces&depth=3`)
-          if (response.ok) {
-            const allProvinces = await response.json()
-            const provinceCodeNum = typeof provinceCode === 'string' ? parseInt(provinceCode) : provinceCode
-            
-            // Find the province and collect all its wards
-            for (const province of allProvinces) {
-              const pCode = typeof province.code === 'number' ? province.code : parseInt(province.code || "0")
-              if (pCode === provinceCodeNum || province.code?.toString() === provinceCode) {
-                console.log(`Found province ${province.name}, collecting wards...`)
-                
-                // Check direct wards first
-                if (province.wards && Array.isArray(province.wards)) {
-                  addWards(province.wards)
-                  console.log(`Collected ${province.wards.length} wards directly from province`)
-                } else if (province.w && Array.isArray(province.w)) {
-                  addWards(province.w)
-                  console.log(`Collected ${province.w.length} wards directly from province (w property)`)
-                }
-                
-                // Then collect from districts if needed
-                if (allWards.length === 0) {
-                  const districts = province.districts || province.d || []
-                  for (const district of districts) {
-                    const districtWards = district.wards || district.w || []
-                    addWards(districtWards)
-                  }
-                }
-                
-                console.log(`Collected ${allWards.length} wards from province data`)
-                break
+          const allProvinces = await cachedFetch<any[]>(
+            `${PROXY_API_BASE}?action=provinces&depth=3`,
+            {
+              method: "GET",
+            },
+            {
+              ...cacheConfigs.provinces,
+              storageKey: "provinces_depth_3",
+            }
+          )
+          const provinceCodeNum = typeof provinceCode === 'string' ? parseInt(provinceCode) : provinceCode
+          
+          // Find the province and collect all its wards
+          for (const province of allProvinces) {
+            const pCode = typeof province.code === 'number' ? province.code : parseInt(province.code || "0")
+            if (pCode === provinceCodeNum || province.code?.toString() === provinceCode) {
+              console.log(`Found province ${province.name}, collecting wards...`)
+              
+              // Check direct wards first
+              if (province.wards && Array.isArray(province.wards)) {
+                addWards(province.wards)
+                console.log(`Collected ${province.wards.length} wards directly from province`)
+              } else if (province.w && Array.isArray(province.w)) {
+                addWards(province.w)
+                console.log(`Collected ${province.w.length} wards directly from province (w property)`)
               }
+              
+              // Then collect from districts if needed
+              if (allWards.length === 0) {
+                const districts = province.districts || province.d || []
+                for (const district of districts) {
+                  const districtWards = district.wards || district.w || []
+                  addWards(districtWards)
+                }
+              }
+              
+              console.log(`Collected ${allWards.length} wards from province data`)
+              break
             }
           }
         } catch (depth3Error) {
@@ -377,7 +383,7 @@ export const provincesApi = {
         }
       }
       
-      // Method 3: Try direct API endpoint /p/{code}/w (if available)
+      // Method 3: Try direct API endpoint /p/{code}/w (if available) - Note: External API, can't use proxy cache
       if (allWards.length === 0) {
         try {
           console.log("Trying direct wards endpoint /p/{code}/w...")

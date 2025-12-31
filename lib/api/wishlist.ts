@@ -106,6 +106,8 @@ export const wishlistApi = {
 
   /**
    * Check if a product is in wishlist
+   * Note: We don't use cachedFetch here because the response might be 404 (not in wishlist)
+   * and cachedFetch doesn't handle 404 gracefully. Instead, we handle caching in the component level if needed.
    */
   async check(accessToken: string, productId: string): Promise<boolean> {
     try {

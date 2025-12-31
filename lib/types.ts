@@ -304,6 +304,7 @@ export type AdminProduct = {
   imageUrl?: string | null
   images?: string[]
   imageUrls?: string[] // Backend field name
+  model3DUrl?: string | null // 3D Model URL (GLB file)
   isActive?: boolean
   hasVariants?: boolean
   variants?: any[]

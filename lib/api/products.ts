@@ -16,6 +16,7 @@ export interface BackendProduct {
   isActive: boolean
   images?: string[]
   imageUrls?: string[]
+  model3DUrl?: string | null // 3D Model URL (GLB file)
   hasVariants?: boolean
   variants?: any[]
   categoryId: string | null

@@ -49,21 +49,21 @@ export function initFacebookSDK() {
     
     let timeoutId: NodeJS.Timeout;
     let checkInterval: NodeJS.Timeout;
-
+    
     script.onload = () => {
       // Wait for window.FB to be available (sometimes it takes a moment)
       checkInterval = setInterval(() => {
         if (window.FB) {
           try {
-            window.FB.init({
-              appId: appId,
-              cookie: true,
-              xfbml: true,
-              version: 'v18.0',
-            });
+      window.FB.init({
+        appId: appId,
+        cookie: true,
+        xfbml: true,
+        version: 'v18.0',
+      });
             clearInterval(checkInterval);
             clearTimeout(timeoutId);
-            resolve();
+      resolve();
           } catch (error) {
             clearInterval(checkInterval);
             clearTimeout(timeoutId);

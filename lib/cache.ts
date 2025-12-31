@@ -23,6 +23,10 @@ const DEFAULT_TTL = {
   PRODUCTS: 5 * 60 * 1000, // 5 minutes
   PRODUCT_DETAIL: 10 * 60 * 1000, // 10 minutes
   CATEGORIES: 30 * 60 * 1000, // 30 minutes
+  TEMPLATES: 30 * 60 * 1000, // 30 minutes (static data, cache longer)
+  ACCESSORIES: 30 * 60 * 1000, // 30 minutes (static data, cache longer)
+  PRODUCT_RATING: 5 * 60 * 1000, // 5 minutes
+  SOLD_QUANTITY: 2 * 60 * 1000, // 2 minutes
   PROVINCES: 24 * 60 * 60 * 1000, // 24 hours
   DISTRICTS: 24 * 60 * 60 * 1000, // 24 hours
   WARDS: 24 * 60 * 60 * 1000, // 24 hours
@@ -430,6 +434,30 @@ export const cacheConfigs = {
 
   wishlist: {
     ttl: DEFAULT_TTL.WISHLIST,
+    useLocalStorage: false,
+    useSessionStorage: true,
+  } as CacheConfig,
+
+  templates: {
+    ttl: DEFAULT_TTL.TEMPLATES,
+    useLocalStorage: true,
+    useSessionStorage: true,
+  } as CacheConfig,
+
+  accessories: {
+    ttl: DEFAULT_TTL.ACCESSORIES,
+    useLocalStorage: true,
+    useSessionStorage: true,
+  } as CacheConfig,
+
+  productRating: {
+    ttl: DEFAULT_TTL.PRODUCT_RATING,
+    useLocalStorage: false,
+    useSessionStorage: true,
+  } as CacheConfig,
+
+  soldQuantity: {
+    ttl: DEFAULT_TTL.SOLD_QUANTITY,
     useLocalStorage: false,
     useSessionStorage: true,
   } as CacheConfig,

@@ -36,11 +36,13 @@ import { Label } from "@/components/ui/label"
 import Image from "next/image"
 import { formatCurrency } from "@/lib/utils"
 import { Minus, Plus, ChevronRight, Facebook, MessageCircle, X, Upload, Heart } from "lucide-react"
+import { Suspense } from "react"
 import { uploadImageToCloudinary } from "@/lib/cloudinary"
 import { wishlistApi } from "@/lib/api/wishlist"
 import { productCommentsApi, ProductComment } from "@/lib/api/productComments"
 import { productReviewsApi, ProductReview } from "@/lib/api/productReviews"
 import EngravingSection from "@/components/product/EngravingSection"
+import { Product3DViewer, Product3DViewerLoading, preload3DModel } from "@/components/products/Product3DViewer"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -133,29 +135,54 @@ export default function ProductDetailPage() {
         // Check if slug is a GUID (ID) or a slug string
         const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug as string)
         
-        const [foundProduct, templatesRes, accessoriesRes] = await Promise.all([
+        // Invalidate cache to ensure fresh data (especially for model3DUrl)
+        const { invalidateCache } = await import("@/lib/cache")
+        const productUrl = isGuid 
+          ? `${(await import("@/lib/constants")).API_BASE_URL}/api/Products/${slug}`
+          : `${(await import("@/lib/constants")).API_BASE_URL}/api/Products/${slug}`
+        invalidateCache(productUrl, { method: "GET" }, `product_detail_${slug}`)
+        
+        // Import cachedFetch and cacheConfigs
+        const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
+        
+        const [foundProduct, templatesData, accessoriesData] = await Promise.all([
           isGuid ? productsApi.getById(slug as string) : productsApi.getBySlug(slug as string),
-          fetch("/api/templates"),
-          fetch("/api/accessories"),
+          cachedFetch<Template[]>("/api/templates", { method: "GET" }, cacheConfigs.templates),
+          cachedFetch<Accessory[]>("/api/accessories", { method: "GET" }, cacheConfigs.accessories),
         ])
-
-        const templatesData = await templatesRes.json()
-        const accessoriesData = await accessoriesRes.json()
 
         if (!foundProduct) {
           router.push("/products")
           return
         }
 
+        // Debug: Log model3DUrl
+        console.log("Product data:", foundProduct)
+        console.log("model3DUrlmodel3DUrl:", foundProduct.model3DUrl)
+        console.log("model3DUrl type:", typeof foundProduct.model3DUrl)
+        console.log("model3DUrl value check:", foundProduct.model3DUrl ? "HAS VALUE" : "NO VALUE")
+        console.log("Full product object:", JSON.stringify(foundProduct, null, 2))
+
+        // Ensure model3DUrl is preserved
+        if (foundProduct.model3DUrl) {
+          console.log("✅ Product has model3DUrl:", foundProduct.model3DUrl)
+        } else {
+          console.warn("⚠️ Product does NOT have model3DUrl")
+        }
+
         setProduct(foundProduct)
         
-        // Fetch sold quantity for this product
+        // Fetch sold quantity for this product (with caching)
         try {
-          const soldQuantityRes = await fetch(`/api/products/${foundProduct.id}/sold-quantity`)
-          if (soldQuantityRes.ok) {
-            const data = await soldQuantityRes.json()
-            setSoldQuantity(data.soldQuantity || 0)
-          }
+          const data = await cachedFetch<{ soldQuantity: number }>(
+            `/api/products/${foundProduct.id}/sold-quantity`,
+            { method: "GET" },
+            {
+              ...cacheConfigs.soldQuantity,
+              storageKey: `sold_quantity_${foundProduct.id}`,
+            }
+          )
+          setSoldQuantity(data.soldQuantity || 0)
         } catch (err) {
           console.error("Error fetching sold quantity:", err)
           setSoldQuantity(0)
@@ -183,13 +210,18 @@ export default function ProductDetailPage() {
         try {
           const allProducts = await productsApi.getAll()
           
-          // Fetch backend products to get categoryId
+          // Fetch backend products to get categoryId (already cached by productsApi.getAll)
+          // But we need the full BackendProduct[] for categoryId filtering
+          // Use cachedFetch for consistency
           const { API_BASE_URL } = await import("@/lib/constants")
-          const backendResponse = await fetch(`${API_BASE_URL}/api/Products`, {
-            method: "GET",
-            headers: { "accept": "*/*" },
-          })
-          const allBackendProducts: BackendProduct[] = await backendResponse.json()
+          const allBackendProducts = await cachedFetch<BackendProduct[]>(
+            `${API_BASE_URL}/api/Products`,
+            {
+              method: "GET",
+              headers: { "accept": "*/*" },
+            },
+            cacheConfigs.products
+          )
           
           // Get current product's categoryId
           const currentProductCategoryId = foundProduct.categoryId
@@ -246,6 +278,18 @@ export default function ProductDetailPage() {
 
     fetchData()
   }, [slug, router, setCustomizerProduct, templateId])
+
+  // Preload 3D model when product data is loaded
+  useEffect(() => {
+    if (product?.model3DUrl) {
+      try {
+        preload3DModel(product.model3DUrl)
+        console.log("✅ Preloading 3D model:", product.model3DUrl)
+      } catch (error) {
+        console.error("Error preloading 3D model:", error)
+      }
+    }
+  }, [product?.model3DUrl])
 
   // Check if product is in wishlist
   useEffect(() => {
@@ -747,7 +791,7 @@ export default function ProductDetailPage() {
     : 0
 
   return (
-    <div className="container py-4 sm:py-6 px-4 sm:px-6">
+    <div className="container py-3 sm:py-6 px-3 sm:px-6 max-w-7xl">
       {/* Breadcrumbs */}
       <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 overflow-x-auto">
         <Link href="/" className="hover:text-primary whitespace-nowrap">Trang chủ</Link>
@@ -758,7 +802,7 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Product Detail Layout */}
-      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12">
+      <div className="grid lg:grid-cols-2 gap-3 sm:gap-6 md:gap-8 mb-6 sm:mb-12">
         {/* Left: Image Gallery or 2D/3D Preview */}
         <div className="space-y-3 sm:space-y-4">
           {/* Toggle Header - Show for all products if has images */}
@@ -782,7 +826,7 @@ export default function ProductDetailPage() {
                   <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                   <span className="hidden sm:inline">2D</span>
                 </Button>
-                {hasCustomizer && (
+                {(hasCustomizer || product.model3DUrl) && (
                   <Button
                     variant={previewMode === "3d" ? "default" : "outline"}
                     size="sm"
@@ -876,11 +920,27 @@ export default function ProductDetailPage() {
                 )}
               </div>
             ) : (
-              /* 3D Preview: Show Canvas3D for customizer products */
-              hasCustomizer ? (
+              /* 3D Preview: Prioritize model3DUrl from product data, then fallback to customizer */
+              product?.model3DUrl ? (
+                /* Show 3D Model from product.model3DUrl */
+                <div className="space-y-3 sm:space-y-4">
+                  <Suspense fallback={<Product3DViewerLoading />}>
+                    <Product3DViewer key={`${product.model3DUrl}-${previewMode}`} modelUrl={product.model3DUrl} />
+                  </Suspense>
+                  <div className="p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <p className="text-xs sm:text-sm text-green-700 dark:text-green-400">
+                      ✓ 3D Model Preview
+                    </p>
+                    <p className="text-[10px] sm:text-xs text-green-600 dark:text-green-500 mt-1">
+                      Kéo để xoay • Scroll để zoom
+                    </p>
+                  </div>
+                </div>
+              ) : hasCustomizer ? (
+                /* Fallback to customizer if no model3DUrl */
                 <Canvas3D accessories={accessories} />
               ) : (
-                /* Fallback to 2D if no customizer */
+                /* Fallback to 2D if no model3DUrl and no customizer */
                 <div className="relative aspect-square bg-transparent rounded-lg overflow-hidden">
                   {images.length > 0 ? (
                     <Image
@@ -902,10 +962,10 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Right: Product Info */}
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-3 sm:space-y-6">
           {/* Product Name */}
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight flex-1">{product.name}</h1>
+          <div className="flex items-start justify-between gap-2 sm:gap-4">
+            <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight flex-1">{product.name}</h1>
             {user && (
               <Button
                 variant="ghost"
@@ -926,7 +986,7 @@ export default function ProductDetailPage() {
           </div>
           
           {/* Rating */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 md:gap-4">
             <div className="flex items-center gap-0.5 sm:gap-1">
               {[1, 2, 3, 4, 5].map((star) => {
                 const averageRating = reviews.length > 0 
@@ -935,7 +995,7 @@ export default function ProductDetailPage() {
                 return (
                   <Star
                     key={star}
-                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                    className={`h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 ${
                       star <= Math.floor(averageRating)
                         ? "fill-yellow-400 text-yellow-400"
                         : star <= averageRating
@@ -946,11 +1006,11 @@ export default function ProductDetailPage() {
                 )
               })}
             </div>
-            <span className="text-xs sm:text-sm text-muted-foreground">
+            <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">
               ({reviews.length} đánh giá)
             </span>
             {product && (
-              <span className="text-xs sm:text-sm text-muted-foreground">
+              <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">
                 Đã bán {soldQuantity}
               </span>
             )}
@@ -959,20 +1019,20 @@ export default function ProductDetailPage() {
           {/* Color Selection */}
           {colors.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                <span className="font-medium text-sm sm:text-base">Màu sắc:</span>
-                <span className="text-xs sm:text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 md:mb-3">
+                <span className="font-medium text-[10px] sm:text-xs md:text-sm lg:text-base">Màu sắc:</span>
+                <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">
                   {selectedColor || colors[0]}
                 </span>
               </div>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-1.5 sm:gap-2 flex-wrap">
                 {colors.map((color) => (
                   <Button
                     key={color}
                     variant={selectedColor === color ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedColor(color)}
-                    className={`text-xs sm:text-sm ${selectedColor === color ? "bg-primary" : ""}`}
+                    className={`text-[10px] sm:text-xs md:text-sm h-7 sm:h-8 md:h-9 px-2 sm:px-3 ${selectedColor === color ? "bg-primary" : ""}`}
                   >
                     {color}
                   </Button>
@@ -985,30 +1045,30 @@ export default function ProductDetailPage() {
           <div className="space-y-1 sm:space-y-2">
             {isOnSale ? (
               <>
-                <div className="text-xs sm:text-sm text-muted-foreground">Giá khuyến mãi:</div>
-                <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-                  <span className="text-2xl sm:text-3xl font-bold text-primary">
+                <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Giá khuyến mãi:</div>
+                <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2 md:gap-3">
+                  <span className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
                     {formatCurrency(product.price)}
                   </span>
-                  <span className="text-lg sm:text-xl text-muted-foreground line-through">
+                  <span className="text-base sm:text-lg md:text-xl text-muted-foreground line-through">
                     {formatCurrency(product.originalPrice!)}
                   </span>
                   {discountPercent > 0 && (
-                    <Badge variant="destructive" className="text-xs sm:text-sm">
+                    <Badge variant="destructive" className="text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 py-0.5">
                       -{discountPercent}%
                     </Badge>
                   )}
                 </div>
                 {discount > 0 && (
-                  <div className="text-xs sm:text-sm text-green-600 font-medium">
+                  <div className="text-[10px] sm:text-xs md:text-sm text-green-600 dark:text-green-400 font-medium">
                     Tiết kiệm: {formatCurrency(discount)}
                   </div>
                 )}
               </>
             ) : (
-              <div className="flex items-baseline gap-2 sm:gap-3">
-                <span className="text-xs sm:text-sm text-muted-foreground">Giá:</span>
-                <span className="text-2xl sm:text-3xl font-bold text-primary">
+              <div className="flex items-baseline gap-1.5 sm:gap-2 md:gap-3">
+                <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Giá:</span>
+                <span className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
                   {formatCurrency(product.price)}
                 </span>
               </div>
@@ -1034,16 +1094,16 @@ export default function ProductDetailPage() {
           
           {/* Quantity */}
           <div>
-            <div className="text-xs sm:text-sm font-medium mb-2">Số lượng:</div>
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="text-[10px] sm:text-xs md:text-sm font-medium mb-1.5 sm:mb-2">Số lượng:</div>
+            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
               <Button
                 variant="outline"
                 size="icon"
-                className="h-9 w-9 sm:h-10 sm:w-10"
+                className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10"
                 onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
                 disabled={quantity <= 1}
               >
-                <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
+                <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
               </Button>
               <Input
                 type="number"
@@ -1054,18 +1114,18 @@ export default function ProductDetailPage() {
                   const val = parseInt(e.target.value) || 1
                   setQuantity(Math.max(1, Math.min(val, product.stockQuantity)))
                 }}
-                className="w-16 sm:w-20 text-center text-sm sm:text-base"
+                className="w-14 sm:w-16 md:w-20 text-center text-xs sm:text-sm md:text-base h-8 sm:h-9 md:h-10"
               />
               <Button
                 variant="outline"
                 size="icon"
-                className="h-9 w-9 sm:h-10 sm:w-10"
+                className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10"
                 onClick={() => setQuantity((prev) => 
                   Math.min(product.stockQuantity, prev + 1)
                 )}
                 disabled={quantity >= product.stockQuantity}
               >
-                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
               </Button>
             </div>
           </div>
@@ -1082,42 +1142,42 @@ export default function ProductDetailPage() {
           )}
           
           {/* Action Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 pt-2 sm:pt-4">
+          <div className="space-y-2 sm:space-y-0 sm:grid sm:grid-cols-2 gap-2 sm:gap-3 pt-2 sm:pt-4">
             <Button
               onClick={handleBuyNow}
-              className="w-full bg-white border-2 border-primary text-primary hover:bg-pink-50 hover:border-primary/90 text-sm sm:text-base"
+              className="w-full bg-white border-2 border-primary text-primary hover:bg-pink-50 hover:border-primary/90 text-xs sm:text-sm md:text-base h-10 sm:h-11 md:h-12"
               size="lg"
             >
               MUA NGAY
             </Button>
             <Button
               onClick={handleAddToCart}
-              className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base"
+              className="w-full bg-primary hover:bg-primary/90 text-xs sm:text-sm md:text-base h-10 sm:h-11 md:h-12"
               size="lg"
             >
-              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+              <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1.5 sm:mr-2" />
               <span className="hidden sm:inline">THÊM VÀO GIỎ HÀNG</span>
               <span className="sm:hidden">THÊM VÀO GIỎ</span>
             </Button>
             <Button
               variant="outline"
-              className="w-full text-xs sm:text-sm"
+              className="w-full text-[10px] sm:text-xs md:text-sm h-9 sm:h-10 md:h-11"
               onClick={() => {
                 window.open("https://zalo.me/your-zalo-id", "_blank")
               }}
             >
-              <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-              Tư vấn qua Zalo
+              <MessageCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 mr-1.5 sm:mr-2" />
+              <span className="truncate">Tư vấn qua Zalo</span>
             </Button>
             <Button
               variant="outline"
-              className="w-full text-xs sm:text-sm"
+              className="w-full text-[10px] sm:text-xs md:text-sm h-9 sm:h-10 md:h-11"
               onClick={() => {
                 window.open("https://facebook.com/your-page", "_blank")
               }}
             >
-              <Facebook className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-              Tư vấn qua Facebook
+              <Facebook className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 mr-1.5 sm:mr-2" />
+              <span className="truncate">Tư vấn qua Facebook</span>
             </Button>
           </div>
         </div>
@@ -1142,20 +1202,20 @@ export default function ProductDetailPage() {
         </div>
       )}
 
-      <Tabs defaultValue="details" className="space-y-4 sm:space-y-6">
-        <TabsList className="grid w-full max-w-full sm:max-w-md grid-cols-2">
-          <TabsTrigger value="details" className="text-xs sm:text-sm">CHI TIẾT SẢN PHẨM</TabsTrigger>
-          <TabsTrigger value="reviews" className="text-xs sm:text-sm">ĐÁNH GIÁ ({reviews.length})</TabsTrigger>
+      <Tabs defaultValue="details" className="space-y-3 sm:space-y-4 md:space-y-6">
+        <TabsList className="grid w-full max-w-full sm:max-w-md grid-cols-2 h-9 sm:h-10 md:h-11">
+          <TabsTrigger value="details" className="text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 md:px-4">CHI TIẾT SẢN PHẨM</TabsTrigger>
+          <TabsTrigger value="reviews" className="text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 md:px-4">ĐÁNH GIÁ ({reviews.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="space-y-4 sm:space-y-6">
-          <Card className="border-2 rounded-xl overflow-hidden">
-            <CardContent className="p-6 sm:p-8">
+        <TabsContent value="details" className="space-y-3 sm:space-y-4 md:space-y-6">
+          <Card className="border-2 rounded-lg sm:rounded-xl overflow-hidden">
+            <CardContent className="p-4 sm:p-6 md:p-8">
               <div className="prose max-w-none">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 sm:mb-4">1. Giới thiệu {product.name}</h2>
-                <div className="space-y-4">
+                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold mb-2 sm:mb-3 md:mb-4">1. Giới thiệu {product.name}</h2>
+                <div className="space-y-3 sm:space-y-4">
                   <div 
-                    className={`text-sm sm:text-base text-muted-foreground whitespace-pre-line leading-relaxed transition-all duration-300 ${
+                    className={`text-xs sm:text-sm md:text-base text-muted-foreground whitespace-pre-line leading-relaxed transition-all duration-300 ${
                       !isDescriptionExpanded ? "line-clamp-4" : ""
                     }`}
                   >
@@ -1203,37 +1263,37 @@ export default function ProductDetailPage() {
           
           {/* Only show specs/features if product has them (for customizer products) */}
           {(product as any).specs || (product as any).features ? (
-            <div className="grid sm:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
+            <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mt-4 sm:mt-6 md:mt-8">
               {(product as any).specs && (
                 <div>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 sm:mb-4 text-primary">Thông số kỹ thuật</h2>
-                  <div className="space-y-2 sm:space-y-3">
+                  <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold mb-2 sm:mb-3 md:mb-4 text-primary">Thông số kỹ thuật</h2>
+                  <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
                     {(product as any).specs.waterproof && (
-                      <div className="flex justify-between items-center py-2 border-b text-sm sm:text-base">
+                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b text-xs sm:text-sm md:text-base">
                         <span className="text-muted-foreground">Chống nước:</span>
-                        <Badge className="text-xs sm:text-sm">{(product as any).specs.waterproof}</Badge>
+                        <Badge className="text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2">{(product as any).specs.waterproof}</Badge>
                       </div>
                     )}
                     {(product as any).specs.battery && (
-                      <div className="flex justify-between items-center py-2 border-b text-sm sm:text-base">
+                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b text-xs sm:text-sm md:text-base">
                         <span className="text-muted-foreground">Pin:</span>
                         <span>{(product as any).specs.battery}</span>
                       </div>
                     )}
                     {(product as any).specs.gps !== undefined && (
-                      <div className="flex justify-between items-center py-2 border-b text-sm sm:text-base">
+                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b text-xs sm:text-sm md:text-base">
                         <span className="text-muted-foreground">GPS:</span>
                         <span>{(product as any).specs.gps ? "Có" : "Không"}</span>
                       </div>
                     )}
                     {(product as any).specs.simCard !== undefined && (
-                      <div className="flex justify-between items-center py-2 border-b text-sm sm:text-base">
+                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b text-xs sm:text-sm md:text-base">
                         <span className="text-muted-foreground">SIM:</span>
                         <span>{(product as any).specs.simCard ? "Có" : "Không"}</span>
                       </div>
                     )}
                     {(product as any).specs.weight && (
-                      <div className="flex justify-between items-center py-2 border-b text-sm sm:text-base">
+                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b text-xs sm:text-sm md:text-base">
                         <span className="text-muted-foreground">Trọng lượng:</span>
                         <span>{(product as any).specs.weight}</span>
                       </div>
@@ -1244,12 +1304,12 @@ export default function ProductDetailPage() {
 
               {(product as any).features && (product as any).features.length > 0 && (
                 <div>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 sm:mb-4">Tính năng</h2>
-                  <ul className="space-y-1.5 sm:space-y-2">
+                  <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold mb-2 sm:mb-3 md:mb-4 text-primary">Tính năng</h2>
+                  <ul className="space-y-1.5 sm:space-y-2 md:space-y-3">
                     {(product as any).features.map((feature: string, index: number) => (
-                      <li key={index} className="flex items-start gap-2 text-sm sm:text-base">
-                        <span className="text-primary mt-1 flex-shrink-0">✓</span>
-                        <span>{feature}</span>
+                      <li key={index} className="flex items-start gap-1.5 sm:gap-2 text-xs sm:text-sm md:text-base">
+                        <span className="text-primary mt-0.5 flex-shrink-0">✓</span>
+                        <span className="leading-relaxed">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -1269,28 +1329,28 @@ export default function ProductDetailPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="reviews" className="space-y-4 sm:space-y-6">
+        <TabsContent value="reviews" className="space-y-3 sm:space-y-4 md:space-y-6">
           {loadingReviews ? (
-            <div className="text-center py-8 sm:py-12 text-sm sm:text-base text-muted-foreground">
+            <div className="text-center py-6 sm:py-8 md:py-12 text-xs sm:text-sm md:text-base text-muted-foreground">
               Đang tải đánh giá...
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
                 {/* Rating Summary */}
                 <div className="text-center sm:col-span-2 md:col-span-1">
                   {reviews.length > 0 ? (
                     <>
-                      <div className="text-4xl sm:text-5xl font-bold mb-2">
+                      <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-1 sm:mb-2">
                         {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
                       </div>
-                      <div className="flex justify-center gap-0.5 sm:gap-1 mb-2">
+                      <div className="flex justify-center gap-0.5 sm:gap-1 mb-1 sm:mb-2">
                         {[1, 2, 3, 4, 5].map((star) => {
                           const averageRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
                           return (
                             <Star
                               key={star}
-                              className={`h-5 w-5 sm:h-6 sm:w-6 ${
+                              className={`h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 ${
                                 star <= averageRating
                                   ? "text-yellow-400 fill-yellow-400"
                                   : star <= Math.ceil(averageRating)
@@ -1304,36 +1364,36 @@ export default function ProductDetailPage() {
                     </>
                   ) : (
                     <>
-                      <div className="text-4xl sm:text-5xl font-bold mb-2">0.0</div>
-                      <div className="flex justify-center gap-0.5 sm:gap-1 mb-2">
+                      <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-1 sm:mb-2">0.0</div>
+                      <div className="flex justify-center gap-0.5 sm:gap-1 mb-1 sm:mb-2">
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className="h-5 w-5 sm:h-6 sm:w-6 text-muted fill-muted" />
+                          <Star key={star} className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 text-muted fill-muted" />
                         ))}
                       </div>
                     </>
                   )}
-                  <div className="text-xs sm:text-sm text-muted-foreground mb-1">ĐÁNH GIÁ TRUNG BÌNH</div>
-                  <div className="text-xs sm:text-sm text-muted-foreground">{reviews.length} đánh giá</div>
+                  <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mb-0.5 sm:mb-1">ĐÁNH GIÁ TRUNG BÌNH</div>
+                  <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">{reviews.length} đánh giá</div>
                 </div>
 
             {/* Rating Breakdown */}
-            <div className="space-y-2 sm:col-span-2 md:col-span-1">
+            <div className="space-y-1.5 sm:space-y-2 sm:col-span-2 md:col-span-1">
               {[5, 4, 3, 2, 1].map((rating) => {
                 const count = reviews.filter((r) => r.rating === rating).length
                 const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
                 return (
-                  <div key={rating} className="flex items-center gap-2">
-                    <span className="w-8 sm:w-10 text-xs sm:text-sm flex-shrink-0 flex items-center justify-start">
-                      <span className="text-yellow-400 mr-1">★</span>
+                  <div key={rating} className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="w-7 sm:w-8 md:w-10 text-[10px] sm:text-xs md:text-sm flex-shrink-0 flex items-center justify-start">
+                      <span className="text-yellow-400 mr-0.5 sm:mr-1">★</span>
                       <span>{rating}</span>
                     </span>
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden min-w-0">
+                    <div className="flex-1 h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden min-w-0">
                       <div
                         className="h-full bg-yellow-400"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
-                    <span className="text-xs sm:text-sm text-muted-foreground w-20 sm:w-24 text-right flex-shrink-0">
+                    <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground w-16 sm:w-20 md:w-24 text-right flex-shrink-0">
                       {percentage.toFixed(0)}% | {count}
                     </span>
                   </div>
@@ -1358,7 +1418,7 @@ export default function ProductDetailPage() {
                   }
                   setReviewDialogOpen(true)
                 }}
-                className="bg-primary hover:bg-primary/90 w-full sm:w-auto text-xs sm:text-sm"
+                className="bg-primary hover:bg-primary/90 w-full sm:w-auto text-[10px] sm:text-xs md:text-sm h-8 sm:h-9 md:h-10"
               >
                 ĐÁNH GIÁ NGAY
               </Button>
@@ -1431,53 +1491,53 @@ export default function ProductDetailPage() {
 
                     return (
                       <Card key={review.id} className="border">
-                        <CardContent className="p-4 sm:p-6">
-                          <div className="flex gap-4">
+                        <CardContent className="p-3 sm:p-4 md:p-6">
+                          <div className="flex gap-2 sm:gap-3 md:gap-4">
                             {/* Avatar - Show user avatar if logged in, otherwise show initial */}
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            <div className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                               {avatarUrl ? (
                                 <Image
                                   src={avatarUrl}
                                   alt={review.fullName}
                                   width={40}
                                   height={40}
-                                  className="rounded-full object-cover"
+                                  className="rounded-full object-cover w-full h-full"
                                   onError={(e) => {
                                     // Fallback to initial if image fails to load
                                     e.currentTarget.style.display = 'none'
                                     const parent = e.currentTarget.parentElement
                                     if (parent) {
                                       const fallback = document.createElement('span')
-                                      fallback.className = 'text-primary font-semibold'
+                                      fallback.className = 'text-primary font-semibold text-xs sm:text-sm'
                                       fallback.textContent = getInitial(review.fullName)
                                       parent.appendChild(fallback)
                                     }
                                   }}
                                 />
                               ) : (
-                                <span className="text-primary font-semibold">
+                                <span className="text-primary font-semibold text-xs sm:text-sm">
                                   {getInitial(review.fullName)}
                                 </span>
                               )}
                             </div>
 
                             {/* Review Content */}
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-start justify-between gap-4 flex-wrap">
-                                <div>
-                                  <div className="font-semibold text-sm sm:text-base">{review.fullName}</div>
-                                  <div className="flex items-center gap-2 mt-1">
+                            <div className="flex-1 space-y-1.5 sm:space-y-2 min-w-0">
+                              <div className="flex items-start justify-between gap-2 sm:gap-4 flex-wrap">
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-xs sm:text-sm md:text-base truncate">{review.fullName}</div>
+                                  <div className="flex items-center gap-1 sm:gap-2 mt-0.5 sm:mt-1">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                       <Star
                                         key={star}
-                                        className={`h-4 w-4 ${
+                                        className={`h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 ${
                                           star <= review.rating
                                             ? "text-yellow-400 fill-yellow-400"
                                             : "text-gray-300 fill-gray-300"
                                         }`}
                                       />
                                     ))}
-                                    <span className="text-xs sm:text-sm text-muted-foreground ml-2">
+                                    <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground ml-1 sm:ml-2">
                                       {formatDate(review.createdAt)}
                                     </span>
                                   </div>
@@ -1485,19 +1545,19 @@ export default function ProductDetailPage() {
                               </div>
 
                               {review.comment && (
-                                <p className="text-sm sm:text-base text-foreground whitespace-pre-wrap">
+                                <p className="text-xs sm:text-sm md:text-base text-foreground whitespace-pre-wrap leading-relaxed">
                                   {review.comment}
                                 </p>
                               )}
 
                               {review.reviewImageUrl && (
-                                <div className="mt-3">
+                                <div className="mt-2 sm:mt-3">
                                   <Image
                                     src={review.reviewImageUrl}
                                     alt="Review image"
                                     width={200}
                                     height={200}
-                                    className="rounded-lg object-cover"
+                                    className="rounded-lg object-cover max-w-[150px] sm:max-w-[200px]"
                                   />
                                 </div>
                               )}
@@ -1516,16 +1576,26 @@ export default function ProductDetailPage() {
 
       {/* Similar Products */}
       {similarProducts.length > 0 && (
-        <div className="mt-8 sm:mt-12 md:mt-16">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold">SẢN PHẨM TƯƠNG TỰ</h2>
-            <Button variant="outline" asChild size="sm" className="w-full sm:w-auto text-xs sm:text-sm">
+        <div className="mt-6 sm:mt-12 md:mt-16">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4 md:mb-6 px-3 sm:px-0">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold">SẢN PHẨM TƯƠNG TỰ</h2>
+            <Button variant="outline" asChild size="sm" className="w-full sm:w-auto text-[10px] sm:text-xs md:text-sm h-7 sm:h-8 md:h-9">
               <Link href="/products">
-                Xem thêm <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 ml-2 rotate-[-90deg]" />
+                Xem thêm <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 ml-1.5 sm:ml-2 rotate-[-90deg]" />
               </Link>
             </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+          {/* Mobile: Horizontal scroll, Desktop: Grid */}
+          <div className="sm:hidden -mx-3 sm:mx-0">
+            <div className="flex gap-3 overflow-x-auto px-3 pb-4 snap-x snap-mandatory scrollbar-hide">
+              {similarProducts.map((similarProduct) => (
+                <div key={similarProduct.id} className="flex-shrink-0 w-[160px] snap-start">
+                  <ProductCard product={similarProduct} />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
             {similarProducts.map((similarProduct) => (
               <ProductCard key={similarProduct.id} product={similarProduct} />
             ))}
@@ -1534,18 +1604,18 @@ export default function ProductDetailPage() {
       )}
 
       {/* Comments Section */}
-      <div className="mt-8 sm:mt-12 md:mt-16">
-        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Bình luận</h2>
+      <div className="mt-6 sm:mt-12 md:mt-16">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6">Bình luận</h2>
         
         {/* Comment Form */}
-        <div className="mb-4 sm:mb-6">
-          <div className="pt-4 sm:pt-6 px-0">
+        <div className="mb-3 sm:mb-4 md:mb-6">
+          <div className="pt-3 sm:pt-4 md:pt-6 px-0">
             <Textarea
               placeholder={user ? "Viết bình luận của bạn..." : "Đăng nhập để bình luận"}
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               disabled={!user}
-              className="min-h-[80px] sm:min-h-[100px] mb-3 sm:mb-4 text-sm sm:text-base"
+              className="min-h-[70px] sm:min-h-[80px] md:min-h-[100px] mb-2 sm:mb-3 md:mb-4 text-xs sm:text-sm md:text-base"
             />
             <div className="flex justify-end">
               <Button
@@ -1586,17 +1656,19 @@ export default function ProductDetailPage() {
                 }}
                 disabled={!commentText.trim() || loadingComments}
                 size="sm"
-                className="text-xs sm:text-sm"
+                className="text-[10px] sm:text-xs md:text-sm h-7 sm:h-8 md:h-9"
               >
                 {loadingComments ? (
                   <>
-                    <div className="h-3 w-3 sm:h-4 sm:w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Đang gửi...
+                    <div className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1.5 sm:mr-2" />
+                    <span className="hidden sm:inline">Đang gửi...</span>
+                    <span className="sm:hidden">Đang gửi</span>
                   </>
                 ) : (
                   <>
-                    <Send className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                    Gửi bình luận
+                    <Send className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 mr-1.5 sm:mr-2" />
+                    <span className="hidden sm:inline">Gửi bình luận</span>
+                    <span className="sm:hidden">Gửi</span>
                   </>
                 )}
               </Button>
@@ -1606,16 +1678,16 @@ export default function ProductDetailPage() {
 
         {/* Comments List */}
         {loadingComments ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+          <div className="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground">
+            <div className="h-6 w-6 sm:h-8 sm:w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
             Đang tải bình luận...
           </div>
         ) : comments.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground">
             Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
           </div>
         ) : (
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
             {comments.map((comment) => (
               <CommentItem
                 key={comment.id}
@@ -2213,38 +2285,38 @@ function CommentItem({
   const canDelete = user && (user.role === 1 || user.role === "1")
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-4">
-        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+    <div className="space-y-2 sm:space-y-3 md:space-y-4">
+      <div className="flex gap-2 sm:gap-3 md:gap-4">
+        <div className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {authorAvatar ? (
-            <Image src={authorAvatar} alt={authorName} width={40} height={40} className="rounded-full" />
+            <Image src={authorAvatar} alt={authorName} width={40} height={40} className="rounded-full w-full h-full object-cover" />
           ) : (
-            <span className="text-primary font-semibold">
+            <span className="text-primary font-semibold text-xs sm:text-sm">
               {authorName.charAt(0).toUpperCase()}
             </span>
           )}
         </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold">{authorName}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
+            <span className="font-semibold text-xs sm:text-sm md:text-base truncate">{authorName}</span>
             {comment.isShop && (
-              <Badge variant="secondary" className="bg-green-500 text-white">
+              <Badge variant="secondary" className="bg-green-500 text-white text-[9px] sm:text-[10px] md:text-xs px-1.5 sm:px-2 py-0">
                 Shop
               </Badge>
             )}
-            <span className="text-sm text-muted-foreground">
+            <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground whitespace-nowrap">
               {formatDate(comment.createdAt)}
             </span>
           </div>
-          <p className="text-sm mb-2">{comment.content}</p>
-          <div className="flex gap-4">
+          <p className="text-xs sm:text-sm md:text-base mb-1.5 sm:mb-2 leading-relaxed break-words">{comment.content}</p>
+          <div className="flex gap-2 sm:gap-3 md:gap-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onReply(comment.id)}
-              className="h-8 text-xs"
+              className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3"
             >
-              <Reply className="h-3 w-3 mr-1" />
+              <Reply className="h-3 w-3 mr-0.5 sm:mr-1" />
               Trả lời
             </Button>
             {canDelete && (
@@ -2252,9 +2324,9 @@ function CommentItem({
                 variant="ghost"
                 size="sm"
                 onClick={() => onDelete(comment.id)}
-                className="h-8 text-xs text-destructive hover:text-destructive"
+                className="h-7 sm:h-8 text-[10px] sm:text-xs text-destructive hover:text-destructive px-2 sm:px-3"
               >
-                <Trash2 className="h-3 w-3 mr-1" />
+                <Trash2 className="h-3 w-3 mr-0.5 sm:mr-1" />
                 Xóa
               </Button>
             )}
@@ -2262,21 +2334,21 @@ function CommentItem({
 
           {/* Reply Form */}
           {isReplying && onReplySubmit && onReplyTextChange !== undefined && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-2 sm:mt-3 md:mt-4 space-y-1.5 sm:space-y-2">
               <Textarea
                 placeholder="Viết phản hồi của bạn..."
                 value={replyText || ""}
                 onChange={(e) => onReplyTextChange(e.target.value)}
-                className="min-h-[60px] text-sm"
+                className="min-h-[55px] sm:min-h-[60px] text-xs sm:text-sm"
               />
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 sm:gap-2">
                 <Button
                   size="sm"
                   onClick={() => onReplySubmit(comment.id, replyText || "")}
                   disabled={!replyText?.trim()}
-                  className="text-xs"
+                  className="text-[10px] sm:text-xs h-7 sm:h-8"
                 >
-                  <Send className="h-3 w-3 mr-1" />
+                  <Send className="h-3 w-3 mr-0.5 sm:mr-1" />
                   Gửi
                 </Button>
                 <Button
@@ -2286,7 +2358,7 @@ function CommentItem({
                     if (onReply) onReply(null)
                     if (onReplyTextChange) onReplyTextChange("")
                   }}
-                  className="text-xs"
+                  className="text-[10px] sm:text-xs h-7 sm:h-8"
                 >
                   Hủy
                 </Button>
@@ -2298,7 +2370,7 @@ function CommentItem({
 
       {/* Replies */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className={isNestedReply ? "space-y-4" : "ml-14 space-y-4"}>
+        <div className={isNestedReply ? "space-y-2 sm:space-y-3 md:space-y-4" : "ml-8 sm:ml-10 md:ml-14 space-y-2 sm:space-y-3 md:space-y-4"}>
           {comment.replies.map((reply) => (
             <CommentItem
               key={reply.id}
