@@ -24,7 +24,8 @@ export function ProductCard({ product, featured }: ProductCardProps) {
   useEffect(() => {
     const fetchRating = async () => {
       try {
-        // Use slug to be consistent with product detail & backend reviews endpoint
+        // Backend API reviews endpoint accepts both ID and slug
+        // Try with slug first as it's more consistent with product detail pages
         // Use cachedFetch for better performance
         const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
         const data = await cachedFetch<{ averageRating: number; reviewCount: number }>(
@@ -35,10 +36,11 @@ export function ProductCard({ product, featured }: ProductCardProps) {
             storageKey: `product_rating_${product.slug}`,
           }
         )
-        setAverageRating(data.averageRating || 0)
-        setReviewCount(data.reviewCount || 0)
+          setAverageRating(data.averageRating || 0)
+          setReviewCount(data.reviewCount || 0)
       } catch (error) {
         console.error("Error fetching rating:", error)
+        // On error, keep default values (0, 0)
       } finally {
         setLoadingRating(false)
       }
@@ -60,7 +62,7 @@ export function ProductCard({ product, featured }: ProductCardProps) {
             storageKey: `sold_quantity_${product.id}`,
           }
         )
-        setSoldQuantity(typeof data.soldQuantity === "number" ? data.soldQuantity : 0)
+          setSoldQuantity(typeof data.soldQuantity === "number" ? data.soldQuantity : 0)
       } catch (error) {
         console.error("Error fetching sold quantity:", error)
         setSoldQuantity(0)
@@ -136,21 +138,19 @@ export function ProductCard({ product, featured }: ProductCardProps) {
                 <h3 className="font-semibold text-sm sm:text-base md:text-lg line-clamp-2">
                   {product.name}
                 </h3>
-                {/* Dynamic rating display based on actual reviews - only show stars */}
+                {/* Dynamic rating display based on actual reviews - always show stars */}
                 <div className="flex flex-col gap-0.5 mt-1">
-                  {!loadingRating && averageRating > 0 && (
+                  {!loadingRating && (
                     <div className="flex items-center gap-0.5">
-                      {renderStars()}
-                    </div>
-                  )}
-                  {!loadingRating && averageRating === 0 && reviewCount === 0 && (
-                    <div className="flex items-center gap-0.5">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <Star
-                          key={index}
-                          className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-gray-300 fill-gray-300"
-                        />
-                      ))}
+                      {averageRating > 0 ? renderStars() : (
+                        // Show empty stars if no rating yet
+                        Array.from({ length: 5 }).map((_, index) => (
+                          <Star
+                            key={index}
+                            className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-gray-300 fill-gray-300"
+                          />
+                        ))
+                      )}
                     </div>
                   )}
                   {loadingRating && (

@@ -278,16 +278,17 @@ export function Header() {
                 onMouseEnter={() => setProductsDropdownOpen(true)}
                 onMouseLeave={() => setProductsDropdownOpen(false)}
               >
-                <Link 
-                  href="/products" 
-                  className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1"
+                <button
+                  type="button"
+                  className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
+                  onClick={() => setProductsDropdownOpen(!productsDropdownOpen)}
                 >
                   Sản phẩm
                   <ChevronDown className={cn(
                     "h-4 w-4 transition-transform duration-200",
                     productsDropdownOpen && "rotate-180"
                   )} />
-                </Link>
+                </button>
                 
                 {/* Invisible bridge to prevent gap */}
                 {productsDropdownOpen && (

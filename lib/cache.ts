@@ -25,7 +25,7 @@ const DEFAULT_TTL = {
   CATEGORIES: 30 * 60 * 1000, // 30 minutes
   TEMPLATES: 30 * 60 * 1000, // 30 minutes (static data, cache longer)
   ACCESSORIES: 30 * 60 * 1000, // 30 minutes (static data, cache longer)
-  PRODUCT_RATING: 5 * 60 * 1000, // 5 minutes
+  PRODUCT_RATING: 1 * 60 * 1000, // 1 minute (ratings change frequently with new reviews)
   SOLD_QUANTITY: 2 * 60 * 1000, // 2 minutes
   PROVINCES: 24 * 60 * 60 * 1000, // 24 hours
   DISTRICTS: 24 * 60 * 60 * 1000, // 24 hours
@@ -453,7 +453,7 @@ export const cacheConfigs = {
   productRating: {
     ttl: DEFAULT_TTL.PRODUCT_RATING,
     useLocalStorage: false,
-    useSessionStorage: true,
+    useSessionStorage: false, // Don't persist ratings to sessionStorage - they change frequently with new reviews
   } as CacheConfig,
 
   soldQuantity: {
