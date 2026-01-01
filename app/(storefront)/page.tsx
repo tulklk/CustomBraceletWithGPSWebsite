@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -22,8 +22,10 @@ import {
   ChevronRight,
 } from "lucide-react"
 import { Product, Template } from "@/lib/types"
+import { productsApi, BackendProduct } from "@/lib/api/products"
+import { categoriesApi, Category } from "@/lib/api/categories"
 
-// Mock data - same as API routes
+// Mock data - same as API routes (for templates)
 const MOCK_PRODUCTS: Product[] = [
   {
     id: 'bunny-baby-pink',
@@ -460,61 +462,154 @@ const MOCK_TEMPLATES: Template[] = [
 ]
 
 export default function HomePage() {
-  const products = MOCK_PRODUCTS
   const templates = MOCK_TEMPLATES
-  
-  // Chọn 4 sản phẩm đại diện: 2 vòng tay, 1 dây chuyền, 1 pin kẹp
-  const featuredProducts = [
-    products.find(p => p.id === 'bunny-baby-pink'),
-    products.find(p => p.id === 'bunny-lavender'),
-    products.find(p => p.id === 'necklace-baby-pink'),
-    products.find(p => p.id === 'clip-baby-pink'),
-  ].filter(Boolean)
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Carousel ref and state
+  // Fetch products from API and group by category
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true)
+        const [productsData, categoriesData] = await Promise.all([
+          productsApi.getAll(),
+          categoriesApi.getAll(),
+        ])
+        
+        // Store categories in state
+        setCategories(categoriesData)
+        
+        // Fetch backend products to get categoryId mapping
+        const { API_BASE_URL } = await import("@/lib/constants")
+        const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
+        const backendProductsData = await cachedFetch<BackendProduct[]>(
+          `${API_BASE_URL}/api/Products`,
+          {
+            method: "GET",
+            headers: { "accept": "*/*" },
+          },
+          cacheConfigs.products
+        )
+        
+        // Create a map of product ID to category
+        const productIdToCategoryMap = new Map<string, Category>()
+        backendProductsData.forEach((bp: BackendProduct) => {
+          if (bp.categoryId) {
+            const category = categoriesData.find(cat => cat.id === bp.categoryId)
+            if (category) {
+              productIdToCategoryMap.set(bp.id, category)
+            }
+          }
+        })
+        
+        // Define category order: Vòng tay thông minh -> Dây chuyền -> Pin kẹp
+        // Use case-insensitive matching to handle variations in category names
+        const categoryOrder = ['Vòng tay thông minh', 'Dây chuyền', 'Pin kẹp', 'Pin Kẹp']
+        
+        // Create a normalized map for category matching (case-insensitive)
+        const categoryNameMap = new Map<string, Category>()
+        categoriesData.forEach(cat => {
+          const normalizedName = cat.name.toLowerCase().trim()
+          if (!categoryNameMap.has(normalizedName)) {
+            categoryNameMap.set(normalizedName, cat)
+          }
+        })
+        
+        // Sort categories by order (case-insensitive matching)
+        const sortedCategories = categoryOrder
+          .map(name => {
+            const normalized = name.toLowerCase().trim()
+            return categoryNameMap.get(normalized) || categoriesData.find(cat => 
+              cat.name.toLowerCase().trim() === normalized
+            )
+          })
+          .filter(Boolean) as Category[]
+        
+        // Group products by category
+        const productsByCategory = new Map<string, Product[]>()
+        productsData.forEach((product: Product) => {
+          const backendProduct = backendProductsData.find(bp => bp.id === product.id)
+          if (backendProduct?.categoryId) {
+            const category = productIdToCategoryMap.get(backendProduct.id)
+            if (category) {
+              // Use normalized category name for grouping
+              const normalizedCategoryName = category.name.toLowerCase().trim()
+              if (!productsByCategory.has(normalizedCategoryName)) {
+                productsByCategory.set(normalizedCategoryName, [])
+              }
+              productsByCategory.get(normalizedCategoryName)!.push(product)
+            }
+          }
+        })
+        
+        // Combine products in category order
+        const orderedProducts: Product[] = []
+        sortedCategories.forEach(category => {
+          const normalizedCategoryName = category.name.toLowerCase().trim()
+          const categoryProducts = productsByCategory.get(normalizedCategoryName) || []
+          orderedProducts.push(...categoryProducts)
+        })
+        
+        // Also include any categories that weren't in the order list
+        categoriesData.forEach(category => {
+          const normalizedCategoryName = category.name.toLowerCase().trim()
+          if (!sortedCategories.find(c => c.name.toLowerCase().trim() === normalizedCategoryName)) {
+            const categoryProducts = productsByCategory.get(normalizedCategoryName) || []
+            orderedProducts.push(...categoryProducts)
+          }
+        })
+        
+        // Add products without category at the end
+        productsData.forEach((product: Product) => {
+          const backendProduct = backendProductsData.find(bp => bp.id === product.id)
+          if (!backendProduct?.categoryId || !productIdToCategoryMap.has(product.id)) {
+            if (!orderedProducts.find(p => p.id === product.id)) {
+              orderedProducts.push(product)
+            }
+          }
+        })
+        
+        setProducts(orderedProducts)
+      } catch (error) {
+        console.error("Error fetching products:", error)
+        setProducts([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchProducts()
+  }, [])
+
+  // All products are now "featured" (displayed in category order)
+  const featuredProducts = products
+
+  // Carousel refs and state
   const carouselRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const [isPaused, setIsPaused] = useState(false)
+  const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const isScrollingRef = useRef(false)
 
-  // Duplicate products for infinite loop
-  const duplicatedProducts = [...featuredProducts, ...featuredProducts, ...featuredProducts]
-
-  // Check scroll position
+  // Check scroll position for arrow buttons visibility
   const checkScrollButtons = () => {
     if (carouselRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current
-      setCanScrollLeft(scrollLeft > 0)
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
-    }
-  }
-
-  // Reset scroll position seamlessly for infinite loop
-  const resetScrollPosition = () => {
-    if (carouselRef.current && !isScrollingRef.current) {
-      const { scrollLeft, scrollWidth } = carouselRef.current
-      const singleSetWidth = scrollWidth / 3 // We have 3 sets of products
+      const threshold = 5 // Small threshold to account for rounding
       
-      // If we're in the third set (near the end), reset to first set seamlessly
-      if (scrollLeft >= singleSetWidth * 2) {
-        isScrollingRef.current = true
-        carouselRef.current.scrollLeft = scrollLeft - singleSetWidth
-        isScrollingRef.current = false
-      }
-      // If we're before the first set (scrolled left), reset to last set
-      else if (scrollLeft < singleSetWidth) {
-        isScrollingRef.current = true
-        carouselRef.current.scrollLeft = scrollLeft + singleSetWidth
-        isScrollingRef.current = false
-      }
+      // Show left arrow if not at the start
+      setCanScrollLeft(scrollLeft > threshold)
+      
+      // Show right arrow if not at the end
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - threshold)
     }
   }
 
   // Scroll functions
   const scrollLeft = () => {
-    if (carouselRef.current && !isScrollingRef.current) {
+    if (carouselRef.current) {
       const cardWidth = carouselRef.current.querySelector('.product-card')?.clientWidth || 300
       const gap = 24 // gap-6 = 24px
       carouselRef.current.scrollBy({
@@ -523,87 +618,92 @@ export default function HomePage() {
       })
       setTimeout(() => {
         checkScrollButtons()
-        resetScrollPosition()
       }, 300)
     }
   }
 
-  const scrollRight = () => {
+  const scrollRight = useCallback(() => {
     if (carouselRef.current && !isScrollingRef.current) {
+      isScrollingRef.current = true
       const cardWidth = carouselRef.current.querySelector('.product-card')?.clientWidth || 300
       const gap = 24 // gap-6 = 24px
-      carouselRef.current.scrollBy({
-        left: cardWidth + gap,
-        behavior: 'smooth'
-      })
+      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current
+      
+      // Check if we're at the end
+      const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 10
+      
+      if (isAtEnd) {
+        // Scroll back to the beginning
+        carouselRef.current.scrollTo({
+          left: 0,
+          behavior: 'smooth'
+        })
+      } else {
+        // Scroll right
+        carouselRef.current.scrollBy({
+          left: cardWidth + gap,
+          behavior: 'smooth'
+        })
+      }
+      
       setTimeout(() => {
         checkScrollButtons()
-        resetScrollPosition()
-      }, 300)
+        isScrollingRef.current = false
+      }, 500)
     }
-  }
+  }, [])
 
-  // Initialize scroll position to middle set for seamless infinite loop
+  // Initialize scroll position and check buttons on mount/resize
   useEffect(() => {
     if (carouselRef.current && featuredProducts.length > 0) {
       // Wait for layout to calculate
-      setTimeout(() => {
-        if (carouselRef.current) {
-          const cardWidth = carouselRef.current.querySelector('.product-card')?.clientWidth || 300
-          const gap = 24
-          const singleSetWidth = (cardWidth + gap) * featuredProducts.length
-          // Start at the middle set (second set)
-          carouselRef.current.scrollLeft = singleSetWidth
-        }
+      const initTimeout = setTimeout(() => {
         checkScrollButtons()
       }, 100)
+      
+      return () => {
+        clearTimeout(initTimeout)
+      }
     }
     
     const handleResize = () => {
       checkScrollButtons()
-      resetScrollPosition()
     }
     window.addEventListener('resize', handleResize)
     
     return () => {
       window.removeEventListener('resize', handleResize)
     }
-  }, [featuredProducts])
+  }, [featuredProducts.length])
 
   // Auto-scroll effect
   useEffect(() => {
-    if (isPaused) {
-      // Clear interval when paused
-      if (autoScrollIntervalRef.current) {
-        clearInterval(autoScrollIntervalRef.current)
-        autoScrollIntervalRef.current = null
-      }
+    if (!carouselRef.current || featuredProducts.length === 0 || isPaused) {
       return
     }
 
-    // Start auto-scroll
-    autoScrollIntervalRef.current = setInterval(() => {
-      if (carouselRef.current && !isScrollingRef.current) {
-        const cardWidth = carouselRef.current.querySelector('.product-card')?.clientWidth || 300
-        const gap = 24
-        carouselRef.current.scrollBy({
-          left: cardWidth + gap,
-          behavior: 'smooth'
-        })
-        setTimeout(() => {
-          checkScrollButtons()
-          resetScrollPosition()
-        }, 300)
-      }
-    }, 3000) // Scroll every 3 seconds
-    
+    // Clear any existing interval
+    if (autoScrollIntervalRef.current) {
+      clearInterval(autoScrollIntervalRef.current)
+    }
+
+    // Start auto-scroll after a delay to ensure layout is ready
+    const startTimeout = setTimeout(() => {
+      autoScrollIntervalRef.current = setInterval(() => {
+        if (!isPaused && !isScrollingRef.current && carouselRef.current) {
+          scrollRight()
+        }
+      }, 3000) // Scroll every 3 seconds
+    }, 2000) // Wait 2 seconds before starting
+
     return () => {
+      clearTimeout(startTimeout)
       if (autoScrollIntervalRef.current) {
         clearInterval(autoScrollIntervalRef.current)
-        autoScrollIntervalRef.current = null
       }
     }
-  }, [isPaused, featuredProducts])
+  }, [featuredProducts.length, isPaused, scrollRight])
+
 
   return (
     <div className="flex flex-col">
@@ -656,7 +756,7 @@ export default function HomePage() {
             <ScrollAnimation direction="right" delay={0.2}>
               <div className="relative order-1 lg:order-2 mb-4 sm:mb-0">
                 <motion.div 
-                  className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl sm:rounded-3xl flex items-center justify-center p-6 sm:p-8 md:p-12 relative overflow-hidden max-w-md mx-auto lg:max-w-none"
+                  className="aspect-square  dark:bg-gray-900 rounded-2xl sm:rounded-3xl flex items-center justify-center p-6 sm:p-8 md:p-12 relative overflow-hidden max-w-md mx-auto lg:max-w-none"
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -973,7 +1073,7 @@ export default function HomePage() {
           </ScrollAnimation>
 
           <div className="relative max-w-7xl mx-auto">
-            {/* Left Arrow */}
+            {/* Left Arrow - Only show when can scroll left */}
             {canScrollLeft && (
               <Button
                 variant="outline"
@@ -987,30 +1087,42 @@ export default function HomePage() {
             )}
 
             {/* Carousel Container */}
-            <div
-              ref={carouselRef}
-              className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide scroll-smooth px-2 sm:px-0"
-              onScroll={() => {
-                checkScrollButtons()
-                resetScrollPosition()
-              }}
-              onMouseEnter={() => setIsPaused(true)}
-              onMouseLeave={() => setIsPaused(false)}
-            >
-              {duplicatedProducts.map((product: any, index: number) => (
-                <div
-                  key={`${product.id}-${index}`}
-                  className="product-card flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]"
-                >
-                  <ProductCard
-                    product={product}
-                    featured={index % featuredProducts.length === 0}
-                  />
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-muted-foreground">Đang tải sản phẩm...</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : featuredProducts.length > 0 ? (
+              <div
+                ref={carouselRef}
+                className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide scroll-smooth px-2 sm:px-0"
+                onScroll={() => {
+                  checkScrollButtons()
+                }}
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+              >
+                {featuredProducts.map((product: Product) => (
+                  <div
+                    key={product.id}
+                    className="product-card flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]"
+                  >
+                    <ProductCard
+                      product={product}
+                      featured={true}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                Không có sản phẩm nào
+              </div>
+            )}
 
-            {/* Right Arrow */}
+            {/* Right Arrow - Only show when can scroll right */}
             {canScrollRight && (
               <Button
                 variant="outline"
@@ -1023,16 +1135,6 @@ export default function HomePage() {
               </Button>
             )}
           </div>
-
-          <ScrollAnimation direction="fade" delay={0.3}>
-            <div className="text-center mt-8 sm:mt-10 md:mt-12">
-              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto text-sm sm:text-base">
-                <Link href="/products">
-                  Xem tất cả {products.length} sản phẩm
-                </Link>
-              </Button>
-            </div>
-          </ScrollAnimation>
         </div>
       </section>
 
@@ -1051,43 +1153,48 @@ export default function HomePage() {
           </ScrollAnimation>
 
           <StaggerContainer className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-            {templates.slice(0, 4).map((template: any) => (
-              <StaggerItem key={template.id}>
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-                    <Link href={`/products`}>
-                      <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center p-4 sm:p-6 relative">
-                        <Image 
-                          src={template.preview} 
-                          alt={template.name}
-                          fill
-                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 25vw"
-                          className="object-contain p-2 sm:p-4"
-                        />
-                      </div>
-                      <CardContent className="p-3 sm:p-4">
-                        <h3 className="font-semibold mb-1 text-pink-500 text-sm sm:text-base">{template.name}</h3>
-                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                          {template.description}
-                        </p>
-                      </CardContent>
-                    </Link>
-                  </Card>
-                </motion.div>
-              </StaggerItem>
-            ))}
+            {templates.slice(0, 4).map((template: any) => {
+              // Find "Vòng tay thông minh" category (case-insensitive)
+              const braceletCategory = categories.find(cat => 
+                cat.name.toLowerCase().trim() === 'vòng tay thông minh' || 
+                cat.name.toLowerCase().trim() === 'vòng tay thông minh'
+              )
+              
+              // Build category URL
+              const categoryUrl = braceletCategory
+                ? `/products?category=${encodeURIComponent(braceletCategory.name)}${braceletCategory.id ? `&categoryId=${braceletCategory.id}` : ''}`
+                : '/products'
+              
+              return (
+                <StaggerItem key={template.id}>
+                  <motion.div
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                      <Link href={categoryUrl}>
+                        <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center p-4 sm:p-6 relative">
+                          <Image 
+                            src={template.preview} 
+                            alt={template.name}
+                            fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 25vw"
+                            className="object-contain p-2 sm:p-4"
+                          />
+                        </div>
+                        <CardContent className="p-3 sm:p-4">
+                          <h3 className="font-semibold mb-1 text-pink-500 text-sm sm:text-base">{template.name}</h3>
+                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                            {template.description}
+                          </p>
+                        </CardContent>
+                      </Link>
+                    </Card>
+                  </motion.div>
+                </StaggerItem>
+              )
+            })}
           </StaggerContainer>
-
-          <ScrollAnimation direction="fade" delay={0.3}>
-            <div className="text-center mt-6 sm:mt-8">
-              <Button asChild size="lg" className="w-full sm:w-auto text-sm sm:text-base">
-                <Link href="/products">Xem tất cả mẫu</Link>
-              </Button>
-            </div>
-          </ScrollAnimation>
         </div>
       </section>
 

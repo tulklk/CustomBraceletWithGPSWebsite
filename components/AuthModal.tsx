@@ -549,25 +549,25 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
-        <div className="p-6">
+      <DialogContent className="max-w-[95vw] sm:max-w-[480px] mx-2 sm:mx-auto">
+        <div className="p-3 sm:p-6">
           {/* Hidden div for Google Sign-In button */}
           <div ref={googleSignInButtonRef} style={{ position: 'fixed', left: '-9999px', opacity: 0, pointerEvents: 'none' }} />
           
           {/* Social Login Buttons */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-6">
             <Button
               variant="outline"
-              className="h-12 text-base font-semibold hover:bg-accent hover:border-primary transition-all"
+              className="h-9 sm:h-12 text-xs sm:text-base font-semibold hover:bg-accent hover:border-primary transition-all"
               onClick={handleGoogleLoginClick}
               disabled={isLoading || !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}
               title={!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? "Vui lòng cấu hình NEXT_PUBLIC_GOOGLE_CLIENT_ID trong .env.local" : undefined}
             >
               {isLoading ? (
-                <div className="h-5 w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                <div className="h-4 w-4 sm:h-5 sm:w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <Chrome className="h-5 w-5 mr-2 text-red-500" />
+                  <Chrome className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 text-red-500" />
                   Google
                 </>
               )}
@@ -575,15 +575,15 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
             <FacebookLoginButton
               onSuccess={handleFacebookLoginSuccess}
-              className="h-12 text-base font-semibold"
+              className="h-9 sm:h-12 text-xs sm:text-base font-semibold"
             />
           </div>
 
-          <div className="relative mb-6">
+          <div className="relative mb-3 sm:mb-6">
             <div className="absolute inset-0 flex items-center">
               <Separator />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
+            <div className="relative flex justify-center text-[10px] sm:text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
                 Hoặc
               </span>
@@ -592,50 +592,50 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
           {/* Login/Register Tabs */}
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Đăng nhập</TabsTrigger>
-              <TabsTrigger value="register">Đăng ký</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-3 sm:mb-6 h-9 sm:h-10">
+              <TabsTrigger value="login" className="text-xs sm:text-sm">Đăng nhập</TabsTrigger>
+              <TabsTrigger value="register" className="text-xs sm:text-sm">Đăng ký</TabsTrigger>
             </TabsList>
 
             {/* Login Form */}
             <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+              <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="login-email" className="text-xs sm:text-sm">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                     <Input
                       id="login-email"
                       type="email"
                       placeholder="email@example.com"
-                      className="pl-10"
+                      className="pl-8 sm:pl-10 h-9 sm:h-10 text-xs sm:text-sm"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Mật khẩu</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="login-password" className="text-xs sm:text-sm">Mật khẩu</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                     <Input
                       id="login-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
-                      className="pl-10 pr-10"
+                      className="pl-8 sm:pl-10 pr-8 sm:pr-10 h-9 sm:h-10 text-xs sm:text-sm"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      className="absolute right-2.5 sm:right-3 top-2.5 sm:top-3 text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
+                        <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       ) : (
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       )}
                     </button>
                   </div>
@@ -644,18 +644,18 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    className="text-sm text-primary hover:underline"
+                    className="text-[10px] sm:text-sm text-primary hover:underline"
                     onClick={handleForgotPassword}
                   >
                     Quên mật khẩu?
                   </button>
                 </div>
 
-                <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={isLoading}>
+                <Button type="submit" className="w-full h-9 sm:h-11 text-xs sm:text-base font-semibold" disabled={isLoading}>
                   {isLoading ? (
                     <>
-                      <div className="h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      Đang đăng nhập...
+                      <div className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs sm:text-base">Đang đăng nhập...</span>
                     </>
                   ) : (
                     "Đăng nhập"
@@ -666,118 +666,118 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
             {/* Register Form */}
             <TabsContent value="register">
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="register-name">Họ và tên</Label>
+              <form onSubmit={handleRegister} className="space-y-3 sm:space-y-4">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="register-name" className="text-xs sm:text-sm">Họ và tên</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <User className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                     <Input
                       id="register-name"
                       placeholder="Nguyễn Văn A"
-                      className="pl-10"
+                      className="pl-8 sm:pl-10 h-9 sm:h-10 text-xs sm:text-sm"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="register-email" className="text-xs sm:text-sm">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                     <Input
                       id="register-email"
                       type="email"
                       placeholder="email@example.com"
-                      className="pl-10"
+                      className="pl-8 sm:pl-10 h-9 sm:h-10 text-xs sm:text-sm"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="register-phone">Số điện thoại</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="register-phone" className="text-xs sm:text-sm">Số điện thoại</Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Phone className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                     <Input
                       id="register-phone"
                       type="tel"
                       placeholder="0901234567"
-                      className="pl-10"
+                      className="pl-8 sm:pl-10 h-9 sm:h-10 text-xs sm:text-sm"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Mật khẩu</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="register-password" className="text-xs sm:text-sm">Mật khẩu</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                     <Input
                       id="register-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
-                      className="pl-10 pr-10"
+                      className="pl-8 sm:pl-10 pr-8 sm:pr-10 h-9 sm:h-10 text-xs sm:text-sm"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      className="absolute right-2.5 sm:right-3 top-2.5 sm:top-3 text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
+                        <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       ) : (
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       )}
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="register-confirm-password">Xác nhận mật khẩu</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="register-confirm-password" className="text-xs sm:text-sm">Xác nhận mật khẩu</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                     <Input
                       id="register-confirm-password"
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
-                      className="pl-10 pr-10"
+                      className="pl-8 sm:pl-10 pr-8 sm:pr-10 h-9 sm:h-10 text-xs sm:text-sm"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      className="absolute right-2.5 sm:right-3 top-2.5 sm:top-3 text-muted-foreground hover:text-foreground"
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
+                        <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       ) : (
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       )}
                     </button>
                   </div>
                   {confirmPassword && password !== confirmPassword && (
-                    <p className="text-xs text-red-500">Mật khẩu không khớp</p>
+                    <p className="text-[10px] sm:text-xs text-red-500">Mật khẩu không khớp</p>
                   )}
                 </div>
 
-                <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={isLoading}>
+                <Button type="submit" className="w-full h-9 sm:h-11 text-xs sm:text-base font-semibold" disabled={isLoading}>
                   {isLoading ? (
                     <>
-                      <div className="h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      Đang đăng ký...
+                      <div className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs sm:text-base">Đang đăng ký...</span>
                     </>
                   ) : (
                     "Đăng ký"
                   )}
                 </Button>
 
-                <p className="text-xs text-center text-muted-foreground">
+                <p className="text-[10px] sm:text-xs text-center text-muted-foreground">
                   Bằng việc đăng ký, bạn đồng ý với{" "}
                   <a href="/terms" className="text-primary hover:underline">
                     Điều khoản

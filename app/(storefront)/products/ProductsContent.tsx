@@ -332,11 +332,7 @@ export function ProductsContent() {
         <Link href="/" className="hover:text-primary">Trang chủ</Link>
         <ChevronRight className="h-4 w-4" />
         {selectedCategory ? (
-          <>
-            <Link href="/products" className="hover:text-primary">Sản phẩm</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">{selectedCategory.name}</span>
-          </>
+          <span className="text-foreground">{selectedCategory.name}</span>
         ) : (
           <span className="text-foreground">Sản phẩm</span>
         )}

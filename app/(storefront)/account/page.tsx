@@ -1185,21 +1185,19 @@ export default function AccountPage() {
                       if (totalPages <= 1) return null
                       
                       return (
-                        <div className="flex items-center justify-between mt-6 pt-4 border-t">
-                          <div className="text-sm text-muted-foreground">
-                            Hiển thị {(currentPage - 1) * ordersPerPage + 1} - {Math.min(currentPage * ordersPerPage, filteredOrders.length)} trong tổng số {filteredOrders.length} đơn hàng
-                          </div>
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-center sm:justify-end mt-4 sm:mt-6 pt-3 sm:pt-4 border-t">
+                          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-hide">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                               disabled={currentPage === 1}
+                              className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex-shrink-0"
                             >
-                              <ChevronLeft className="h-4 w-4 mr-1" />
-                              Trước
+                              <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
+                              <span className="hidden sm:inline">Trước</span>
                             </Button>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-0.5 sm:gap-1">
                               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
                                 // Show first page, last page, current page, and pages around current
                                 if (
@@ -1213,7 +1211,7 @@ export default function AccountPage() {
                                       variant={currentPage === page ? "default" : "outline"}
                                       size="sm"
                                       onClick={() => setCurrentPage(page)}
-                                      className="w-10"
+                                      className="h-8 w-8 sm:h-9 sm:w-10 text-xs sm:text-sm flex-shrink-0 p-0"
                                     >
                                       {page}
                                     </Button>
@@ -1223,7 +1221,7 @@ export default function AccountPage() {
                                   page === currentPage + 2
                                 ) {
                                   return (
-                                    <span key={page} className="px-2 text-muted-foreground">
+                                    <span key={page} className="px-1 sm:px-2 text-muted-foreground text-xs sm:text-sm flex-shrink-0">
                                       ...
                                     </span>
                                   )
@@ -1236,9 +1234,10 @@ export default function AccountPage() {
                               size="sm"
                               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                               disabled={currentPage === totalPages}
+                              className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex-shrink-0"
                             >
-                              Sau
-                              <ChevronRight className="h-4 w-4 ml-1" />
+                              <span className="hidden sm:inline">Sau</span>
+                              <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:ml-1" />
                             </Button>
                           </div>
                         </div>

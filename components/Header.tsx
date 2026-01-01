@@ -306,16 +306,8 @@ export function Header() {
                   )}
                 >
                   <div className="py-2">
-                    <Link
-                      href="/products"
-                      className="block px-4 py-2 text-sm hover:bg-accent transition-colors"
-                      onClick={() => setProductsDropdownOpen(false)}
-                    >
-                      Tất cả sản phẩm
-                    </Link>
                     {categories.length > 0 && (
                       <>
-                        <div className="border-t my-1" />
                         {categories.map((category) => (
                           <Link
                             key={category.id || category.name}

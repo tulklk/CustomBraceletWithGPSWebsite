@@ -43,6 +43,7 @@ import { productCommentsApi, ProductComment } from "@/lib/api/productComments"
 import { productReviewsApi, ProductReview } from "@/lib/api/productReviews"
 import EngravingSection from "@/components/product/EngravingSection"
 import { Product3DViewer, Product3DViewerLoading, preload3DModel } from "@/components/products/Product3DViewer"
+import { categoriesApi, Category } from "@/lib/api/categories"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -50,6 +51,7 @@ export default function ProductDetailPage() {
   const slug = params.slug as string
 
   const [product, setProduct] = useState<BackendProduct | null>(null)
+  const [productCategory, setProductCategory] = useState<Category | null>(null)
   const [templates, setTemplates] = useState<Template[]>([])
   const [accessories, setAccessories] = useState<Accessory[]>([])
   const [similarProducts, setSimilarProducts] = useState<Product[]>([])
@@ -145,15 +147,24 @@ export default function ProductDetailPage() {
         // Import cachedFetch and cacheConfigs
         const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
         
-        const [foundProduct, templatesData, accessoriesData] = await Promise.all([
+        const [foundProduct, templatesData, accessoriesData, categoriesData] = await Promise.all([
           isGuid ? productsApi.getById(slug as string) : productsApi.getBySlug(slug as string),
           cachedFetch<Template[]>("/api/templates", { method: "GET" }, cacheConfigs.templates),
           cachedFetch<Accessory[]>("/api/accessories", { method: "GET" }, cacheConfigs.accessories),
+          categoriesApi.getAll(),
         ])
 
         if (!foundProduct) {
           router.push("/products")
           return
+        }
+
+        // Find category for this product
+        if (foundProduct.categoryId) {
+          const category = categoriesData.find(cat => cat.id === foundProduct.categoryId)
+          if (category) {
+            setProductCategory(category)
+          }
         }
 
         // Debug: Log model3DUrl
@@ -796,8 +807,17 @@ export default function ProductDetailPage() {
       <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 overflow-x-auto">
         <Link href="/" className="hover:text-primary whitespace-nowrap">Trang chủ</Link>
         <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-        <Link href="/products" className="hover:text-primary whitespace-nowrap">Sản phẩm</Link>
-        <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+        {productCategory ? (
+          <>
+            <Link 
+              href={`/products?category=${encodeURIComponent(productCategory.name)}${productCategory.id ? `&categoryId=${productCategory.id}` : ''}`}
+              className="hover:text-primary whitespace-nowrap"
+            >
+              {productCategory.name}
+            </Link>
+            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+          </>
+        ) : null}
         <span className="text-primary font-medium truncate">{product.name}</span>
       </div>
 
