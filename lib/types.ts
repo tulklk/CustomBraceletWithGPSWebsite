@@ -167,17 +167,48 @@ export type AdminCategory = {
   updatedAt?: string
 }
 
-export type AdminNews = {
+// News Types
+export type NewsDto = {
   id: string
   title: string
+  slug: string
   content: string
+  summary: string | null
+  thumbnailUrl: string | null
+  authorId: string | null
+  authorName: string | null
+  category: string | null
+  tags: string | null
+  publishedAt: string | null // ISO DateTime
+  viewCount: number
+  createdAt: string // ISO DateTime
+}
+
+// Admin News (extends NewsDto with additional fields)
+export type AdminNews = NewsDto & {
+  isPublished: boolean
+  updatedAt: string | null
+}
+
+// Create/Update News Request
+export type CreateNewsRequest = {
+  title: string // Required
+  content: string // Required
   summary?: string | null
-  imageUrl?: string | null
-  categoryId?: string | null
-  published: boolean
-  views?: number
-  createdAt?: string
-  updatedAt?: string
+  thumbnailUrl?: string | null
+  category?: string | null
+  tags?: string | null
+  isPublished: boolean // Required
+}
+
+export type UpdateNewsRequest = CreateNewsRequest
+
+// News List Query Params
+export type NewsListParams = {
+  page?: number
+  pageSize?: number
+  category?: string
+  search?: string
 }
 
 export type AdminVoucher = {

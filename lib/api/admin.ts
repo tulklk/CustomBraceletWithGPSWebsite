@@ -12,6 +12,8 @@ import {
   OrderStatus,
   UpdateOrderStatusRequest,
   UpdateOrderStatusResponse,
+  CreateNewsRequest,
+  UpdateNewsRequest,
 } from "@/lib/types"
 
 // Admin API Service
@@ -81,22 +83,30 @@ export const adminApi = {
       return handleResponse<AdminNews>(response)
     },
 
-    async create(accessToken: string, data: Partial<AdminNews>): Promise<AdminNews> {
+    async create(accessToken: string, data: CreateNewsRequest): Promise<{ id: string; title: string; slug: string }> {
       const response = await fetch(`${API_BASE_URL}/api/admin/AdminNews`, {
         method: "POST",
-        headers: createAuthHeaders(accessToken),
+        headers: {
+          ...createAuthHeaders(accessToken),
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       })
-      return handleResponse<AdminNews>(response)
+      return handleResponse<{ id: string; title: string; slug: string }>(response)
     },
 
-    async update(accessToken: string, id: string, data: Partial<AdminNews>): Promise<AdminNews> {
+    async update(accessToken: string, id: string, data: UpdateNewsRequest): Promise<void> {
       const response = await fetch(`${API_BASE_URL}/api/admin/AdminNews/${id}`, {
         method: "PUT",
-        headers: createAuthHeaders(accessToken),
+        headers: {
+          ...createAuthHeaders(accessToken),
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       })
-      return handleResponse<AdminNews>(response)
+      if (!response.ok) {
+        await handleResponse(response)
+      }
     },
 
     async delete(accessToken: string, id: string): Promise<void> {

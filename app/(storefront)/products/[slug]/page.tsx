@@ -1098,9 +1098,23 @@ export default function ProductDetailPage() {
           {/* Additional Benefits */}
           <div>
             <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2">Ưu đãi thêm:</div>
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600">
-              <span>✓</span>
-              <span>Freeship khi thanh toán trước đơn hàng</span>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600">
+                <span>✓</span>
+                <span>Freeship toàn quốc khi mua từ 3 sản phẩm trở lên</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600">
+                <span>✓</span>
+                <span>Khắc tên miễn phí</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600">
+                <span>✓</span>
+                <span>Đổi mới 7 ngày nếu lỗi sản xuất</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600">
+                <span>✓</span>
+                <span>Thay pin miễn phí lần đầu cho sản phẩm</span>
+              </div>
             </div>
           </div>
           
