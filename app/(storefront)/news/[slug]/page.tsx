@@ -11,7 +11,7 @@ import Link from "next/link"
 import Image from "next/image"
 import dayjs from "dayjs"
 import "dayjs/locale/vi"
-import { Calendar, Eye, User, ArrowLeft, Share2, Facebook, Twitter } from "lucide-react"
+import { Calendar, Eye, User, ArrowLeft, Facebook, Twitter } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 dayjs.locale("vi")
 

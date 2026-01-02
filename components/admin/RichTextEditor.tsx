@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useEffect } from "react"
+import { useMemo, useRef } from "react"
 import dynamic from "next/dynamic"
 import { uploadImageToCloudinary } from "@/lib/cloudinary"
 import { useToast } from "@/hooks/use-toast"
@@ -17,13 +17,6 @@ interface RichTextEditorProps {
 export function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung..." }: RichTextEditorProps) {
   const quillRef = useRef<any>(null)
   const { toast } = useToast()
-
-  // Load Quill CSS
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      import("react-quill/dist/quill.snow.css")
-    }
-  }, [])
 
   // Custom image handler
   const imageHandler = () => {

@@ -28,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Plus, Edit, Trash2, Eye, ExternalLink, Upload, Loader2, X } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, Upload, Loader2, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useUser } from "@/store/useUser"
 import { adminApi } from "@/lib/api/admin"
