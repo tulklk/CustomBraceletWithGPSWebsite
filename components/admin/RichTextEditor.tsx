@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef } from "react"
+import { useMemo, useRef, useCallback, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { uploadImageToCloudinary } from "@/lib/cloudinary"
 import { useToast } from "@/hooks/use-toast"
@@ -15,11 +15,32 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ value, onChange, placeholder = "Nhập nội dung..." }: RichTextEditorProps) {
-  const quillRef = useRef<any>(null)
+  const quillInstanceRef = useRef<any>(null)
+  const editorContainerRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
+  // Get Quill instance from DOM
+  const getQuill = () => {
+    if (quillInstanceRef.current) {
+      return quillInstanceRef.current
+    }
+    // Try to get from DOM
+    if (editorContainerRef.current) {
+      const editorElement = editorContainerRef.current.querySelector(".ql-editor")
+      if (editorElement) {
+        // @ts-ignore - Quill instance is attached to the element
+        const quill = editorElement.__quill || (window as any).Quill?.find(editorElement)
+        if (quill) {
+          quillInstanceRef.current = quill
+          return quill
+        }
+      }
+    }
+    return null
+  }
+
   // Custom image handler
-  const imageHandler = () => {
+  const imageHandler = useCallback(() => {
     const input = document.createElement("input")
     input.setAttribute("type", "file")
     input.setAttribute("accept", "image/*")
@@ -49,11 +70,18 @@ export function RichTextEditor({ value, onChange, placeholder = "Nhập nội du
       }
 
       try {
-        // Show loading
-        const quill = quillRef.current?.getEditor()
-        if (!quill) return
+        // Get Quill instance
+        const quill = getQuill()
+        if (!quill) {
+          toast({
+            title: "Lỗi",
+            description: "Editor chưa sẵn sàng, vui lòng thử lại",
+            variant: "destructive",
+          })
+          return
+        }
 
-        const range = quill.getSelection(true)
+        const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 }
         quill.insertText(range.index, "Đang upload ảnh...", "user")
         quill.setSelection(range.index + 20)
 
@@ -77,7 +105,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Nhập nội du
         })
       }
     }
-  }
+  }, [toast])
 
   const modules = useMemo(
     () => ({
@@ -101,7 +129,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Nhập nội du
         matchVisual: false,
       },
     }),
-    [toast]
+    [imageHandler]
   )
 
   const formats = [
@@ -124,10 +152,26 @@ export function RichTextEditor({ value, onChange, placeholder = "Nhập nội du
     "video",
   ]
 
+  // Store Quill instance when editor is ready
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (editorContainerRef.current) {
+        const editorElement = editorContainerRef.current.querySelector(".ql-editor")
+        if (editorElement) {
+          // @ts-ignore - Quill instance is attached to the element
+          const quill = editorElement.__quill || (window as any).Quill?.find(editorElement)
+          if (quill) {
+            quillInstanceRef.current = quill
+          }
+        }
+      }
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [value])
+
   return (
-    <div className="rich-text-editor">
+    <div className="rich-text-editor" ref={editorContainerRef}>
       <ReactQuill
-        ref={quillRef}
         theme="snow"
         value={value}
         onChange={onChange}
