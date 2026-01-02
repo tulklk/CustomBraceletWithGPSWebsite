@@ -13,6 +13,7 @@ import dayjs from "dayjs"
 import "dayjs/locale/vi"
 import { Calendar, Eye, User, ArrowLeft, Facebook, Twitter } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { NewsContent } from "@/components/NewsContent"
 dayjs.locale("vi")
 
 export default function NewsDetailPage() {
@@ -185,10 +186,7 @@ export default function NewsDetailPage() {
             )}
 
             {/* Content */}
-            <div
-              className="prose prose-sm md:prose-base max-w-none mb-8"
-              dangerouslySetInnerHTML={{ __html: news.content }}
-            />
+            <NewsContent content={news.content} />
 
             {/* Share Buttons */}
             <Separator className="my-8" />

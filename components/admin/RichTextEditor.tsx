@@ -2,7 +2,8 @@
 
 import { useMemo, useRef, useCallback, useEffect } from "react"
 import dynamic from "next/dynamic"
-import { uploadImageToCloudinary } from "@/lib/cloudinary"
+import { adminApi } from "@/lib/api/admin"
+import { useUser } from "@/store/useUser"
 import { useToast } from "@/hooks/use-toast"
 
 // Dynamically import ReactQuill to avoid SSR issues
@@ -18,6 +19,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Nhập nội du
   const quillInstanceRef = useRef<any>(null)
   const editorContainerRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
+  const { user } = useUser()
 
   // Get Quill instance from DOM
   const getQuill = () => {
@@ -51,10 +53,10 @@ export function RichTextEditor({ value, onChange, placeholder = "Nhập nội du
       if (!file) return
 
       // Validate file
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > 10 * 1024 * 1024) {
         toast({
           title: "Lỗi",
-          description: "Kích thước ảnh phải nhỏ hơn 5MB",
+          description: "Kích thước ảnh phải nhỏ hơn 10MB",
           variant: "destructive",
         })
         return
@@ -64,6 +66,26 @@ export function RichTextEditor({ value, onChange, placeholder = "Nhập nội du
         toast({
           title: "Lỗi",
           description: "File phải là ảnh",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Check allowed formats
+      const allowedFormats = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
+      if (!allowedFormats.includes(file.type.toLowerCase())) {
+        toast({
+          title: "Lỗi",
+          description: "Định dạng ảnh không được hỗ trợ. Chỉ chấp nhận JPG, PNG, GIF, WEBP",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (!user?.accessToken) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng đăng nhập lại",
           variant: "destructive",
         })
         return
@@ -85,12 +107,14 @@ export function RichTextEditor({ value, onChange, placeholder = "Nhập nội du
         quill.insertText(range.index, "Đang upload ảnh...", "user")
         quill.setSelection(range.index + 20)
 
-        // Upload to Cloudinary
-        const result = await uploadImageToCloudinary(file)
+        // Upload to API
+        const result = await adminApi.news.uploadImage(user.accessToken, file)
 
         // Remove loading text and insert image
         quill.deleteText(range.index, 20)
-        quill.insertEmbed(range.index, "image", result.secure_url)
+        // URL từ API là relative path: /uploads/news/{filename}
+        // Browser sẽ tự động resolve relative path
+        quill.insertEmbed(range.index, "image", result.url)
         quill.setSelection(range.index + 1)
 
         toast({
@@ -129,7 +153,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Nhập nội du
         matchVisual: false,
       },
     }),
-    [imageHandler]
+    [imageHandler, user?.accessToken]
   )
 
   const formats = [

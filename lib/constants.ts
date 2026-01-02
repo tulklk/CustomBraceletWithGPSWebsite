@@ -21,7 +21,6 @@ export const MAX_ENGRAVE_LENGTH = 12
 export const ENGRAVE_FONTS = ["Sans", "Rounded", "Mono"] as const
 
 export const QUICK_CHAT_CHIPS = [
-  "Tư vấn size",
   "Bảo hành",
   "Thời gian giao hàng",
   "Cách khắc tên",

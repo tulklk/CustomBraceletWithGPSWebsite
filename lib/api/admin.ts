@@ -118,6 +118,18 @@ export const adminApi = {
         await handleResponse(response)
       }
     },
+
+    async uploadImage(accessToken: string, file: File): Promise<{ url: string; fileName: string; size: number }> {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/AdminNews/upload-image`, {
+        method: "POST",
+        headers: createAuthHeaders(accessToken),
+        body: formData,
+      })
+      return handleResponse<{ url: string; fileName: string; size: number }>(response)
+    },
   },
 
   // Orders API
