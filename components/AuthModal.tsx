@@ -54,6 +54,9 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false)
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false)
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("")
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false)
   const { setAuth } = useUser()
   const { fetchCart } = useCart()
   const { toast } = useToast()
@@ -511,8 +514,18 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     resetForm()
   }
 
-  const handleForgotPassword = async () => {
-    if (!email) {
+  const handleForgotPasswordClick = () => {
+    // Pre-fill email nếu đã nhập trong login form
+    if (email) {
+      setForgotPasswordEmail(email)
+    }
+    setForgotPasswordOpen(true)
+  }
+
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!forgotPasswordEmail.trim()) {
       toast({
         title: "Lỗi",
         description: "Vui lòng nhập email của bạn",
@@ -521,19 +534,35 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       return
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(forgotPasswordEmail.trim())) {
+      toast({
+        title: "Lỗi",
+        description: "Email không hợp lệ",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setForgotPasswordLoading(true)
     try {
-      await authApi.forgotPassword({ email })
+      await authApi.forgotPassword({ email: forgotPasswordEmail.trim() })
       toast({
         title: "Đã gửi email",
-        description: "Vui lòng kiểm tra email để đặt lại mật khẩu",
+        description: "Vui lòng kiểm tra hộp thư email để đặt lại mật khẩu. Nếu không thấy email, vui lòng kiểm tra thư mục spam.",
       })
+      setForgotPasswordOpen(false)
+      setForgotPasswordEmail("")
     } catch (error) {
       const apiError = error as ApiError
       toast({
         title: "Gửi email thất bại",
-        description: apiError.message || "Có lỗi xảy ra, vui lòng thử lại",
+        description: apiError.message || "Có lỗi xảy ra, vui lòng thử lại sau",
         variant: "destructive",
       })
+    } finally {
+      setForgotPasswordLoading(false)
     }
   }
 
@@ -645,7 +674,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                   <button
                     type="button"
                     className="text-[10px] sm:text-sm text-primary hover:underline"
-                    onClick={handleForgotPassword}
+                    onClick={handleForgotPasswordClick}
                   >
                     Quên mật khẩu?
                   </button>
@@ -792,6 +821,64 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
           </Tabs>
         </div>
       </DialogContent>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[420px] mx-2 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg">Quên mật khẩu</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
+              Nhập email của bạn để nhận link đặt lại mật khẩu
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleForgotPasswordSubmit} className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="forgot-email" className="text-xs sm:text-sm">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="email@example.com"
+                  className="pl-8 sm:pl-10 h-9 sm:h-10 text-xs sm:text-sm"
+                  value={forgotPasswordEmail}
+                  onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                  disabled={forgotPasswordLoading}
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 sm:gap-3 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setForgotPasswordOpen(false)
+                  setForgotPasswordEmail("")
+                }}
+                disabled={forgotPasswordLoading}
+                className="h-9 sm:h-10 text-xs sm:text-sm"
+              >
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                disabled={forgotPasswordLoading}
+                className="h-9 sm:h-10 text-xs sm:text-sm"
+              >
+                {forgotPasswordLoading ? (
+                  <>
+                    <div className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    <span>Đang gửi...</span>
+                  </>
+                ) : (
+                  "Gửi email"
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }
