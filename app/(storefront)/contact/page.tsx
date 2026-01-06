@@ -210,8 +210,8 @@ export default function ContactPage() {
                 {
                   icon: Phone,
                   title: "Điện thoại",
-                  content: "+84 123 456 789",
-                  href: "tel:+84123456789",
+                  content: "0924 512 422",
+                  href: "tel:+84924512422",
                   color: "text-green-500"
                 },
                 {

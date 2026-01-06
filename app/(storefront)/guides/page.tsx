@@ -84,7 +84,7 @@ export default function GuidesPage() {
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                 <li>Tránh để ở nơi nhiệt độ cao (trên 50°C)</li>
                 <li>Không để tiếp xúc trực tiếp ánh nắng mặt trời lâu</li>
-                <li>Tháo ra khi tắm nước nóng hoặc đi sauna</li>
+                <li>Tháo ra khi tắm nước nóng hoặc đi tắm hơi</li>
                 <li>Sạc pin khi còn dưới 20%</li>
               </ul>
             </div>

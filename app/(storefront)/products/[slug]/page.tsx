@@ -599,10 +599,10 @@ export default function ProductDetailPage() {
       }
     }
 
-    await addItem(design)
+    await addItem(design, quantity)
     toast({
       title: "Đã thêm vào giỏ hàng!",
-      description: "Xem giỏ hàng để thanh toán",
+      description: `${product.name} x${quantity}`,
     })
     // Reset engraving text after adding to cart
     setEngravingText("")
@@ -674,10 +674,10 @@ export default function ProductDetailPage() {
           }
         }
 
-        await addItem(design)
+        await addItem(design, quantity)
         toast({
           title: "Đã thêm vào giỏ hàng!",
-          description: "Xem giỏ hàng để thanh toán",
+          description: `${product.name} x${quantity}`,
         })
         setEngravingText("")
       }

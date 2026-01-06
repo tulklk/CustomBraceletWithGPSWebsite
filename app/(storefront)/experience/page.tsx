@@ -329,7 +329,7 @@ export default function ExperiencePage() {
                   <div>
                     <div className="text-3xl font-bold text-purple-600 mb-1">Free-Custom</div>
                     <p className="text-sm text-muted-foreground">
-                      có thể trang trí đa dạng với nhiều loại template, phụ kiện và khắc tên
+                       nhiều màu sắc và tự do khắc tên theo sở thích
                     </p>
                   </div>
                 </div>
@@ -386,19 +386,16 @@ export default function ExperiencePage() {
               {
                 name: "Chị Nguyễn Thảo",
                 role: "Mẹ của bé Minh, 6 tuổi",
-                image: "https://i.pravatar.cc/150?img=5",
                 text: "Con tôi từng bị lạc 2 tiếng ở siêu thị. Khoảng thời gian đó là địa ngục. Giờ có ARTEMIS, tôi luôn yên tâm."
               },
               {
                 name: "Anh Trần Hoàng",
                 role: "Bố của bé An, 5 tuổi",
-                image: "https://i.pravatar.cc/150?img=12",
                 text: "Lần đầu tiên con tôi đi chơi công viên, tôi hoảng loạn không thấy con đâu. May có vòng tay GPS, tìm được con chỉ sau 3 phút!"
               },
               {
                 name: "Chị Lê Mai",
                 role: "Mẹ của 2 bé",
-                image: "https://i.pravatar.cc/150?img=9",
                 text: "Sản phẩm này không chỉ là công nghệ, mà là sự yên tâm cho ba mẹ. Trẻ thích đeo vì đẹp, mình yên tâm vì an toàn."
               }
             ].map((testimonial, index) => (
@@ -418,17 +415,9 @@ export default function ExperiencePage() {
                   <p className="text-muted-foreground italic mb-6 leading-relaxed">
                     &ldquo;{testimonial.text}&rdquo;
                   </p>
-                  <div className="flex items-center gap-4">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={testimonial.image}
-                      alt={testimonial.name}
-                      className="w-14 h-14 rounded-full object-cover ring-2 ring-primary/20"
-                    />
-                    <div>
-                      <p className="font-semibold">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                    </div>
+                  <div>
+                    <p className="font-semibold">{testimonial.name}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
                   </div>
                 </Card>
               </motion.div>

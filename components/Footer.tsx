@@ -22,7 +22,7 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                 <Phone className="h-4 w-4 flex-shrink-0" />
-                <a href="tel:+84123456789">+84 123 456 789</a>
+                <a href="tel:+84924512422">0924 512 422</a>
               </div>
               <div className="flex items-start gap-2 text-muted-foreground">
                 <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
@@ -35,18 +35,18 @@ export function Footer() {
             <h3 className="font-semibold mb-4 text-primary">Sản phẩm</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/products" className="text-muted-foreground hover:text-primary transition-colors">
-                  Danh sách sản phẩm
+                <Link href={`/products?category=${encodeURIComponent("Vòng tay thông minh")}`} className="text-muted-foreground hover:text-primary transition-colors">
+                  ARTEMIS Vòng tay thông minh
                 </Link>
               </li>
               <li>
-                <Link href="/products/artemis-mini" className="text-muted-foreground hover:text-primary transition-colors">
-                  ARTEMIS Mini
+                <Link href={`/products?category=${encodeURIComponent("Dây chuyền")}`} className="text-muted-foreground hover:text-primary transition-colors">
+                  ARTEMIS Dây chuyền
                 </Link>
               </li>
               <li>
-                <Link href="/products/artemis-active" className="text-muted-foreground hover:text-primary transition-colors">
-                  ARTEMIS Active
+                <Link href={`/products?category=${encodeURIComponent("Pin kẹp quần áo")}`} className="text-muted-foreground hover:text-primary transition-colors">
+                  ARTEMIS Pin kẹp
                 </Link>
               </li>
             </ul>

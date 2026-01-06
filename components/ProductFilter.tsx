@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -69,19 +68,7 @@ export function ProductFilter({
     })
   }
 
-  const handleProductTypeToggle = (value: string) => {
-    const newProductTypes = safeProductTypes.includes(value)
-      ? safeProductTypes.filter((t) => t !== value)
-      : [...safeProductTypes, value]
-    onFilterChange({ 
-      ...safeFilters, 
-      productTypes: newProductTypes,
-      priceRange: safePriceRange,
-    })
-  }
-
   const activeFiltersCount =
-    (safeProductTypes.length > 0 ? 1 : 0) +
     (safePriceRange[0] !== minPrice || safePriceRange[1] !== maxPrice ? 1 : 0)
 
   return (
@@ -159,56 +146,6 @@ export function ProductFilter({
               </span>
             </div>
           </div>
-
-          <Separator />
-
-          {/* Product Type */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">Loại sản phẩm</Label>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="bracelet"
-                  checked={safeProductTypes.includes("bracelet")}
-                  onCheckedChange={() => handleProductTypeToggle("bracelet")}
-                />
-                <label
-                  htmlFor="bracelet"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Vòng tay thông minh
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="necklace"
-                  checked={safeProductTypes.includes("necklace")}
-                  onCheckedChange={() => handleProductTypeToggle("necklace")}
-                />
-                <label
-                  htmlFor="necklace"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Dây chuyền
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="clip"
-                  checked={safeProductTypes.includes("clip")}
-                  onCheckedChange={() => handleProductTypeToggle("clip")}
-                />
-                <label
-                  htmlFor="clip"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Pin kẹp quần áo
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
 
           {/* Results & Reset */}
           <div className="space-y-3 pt-2">

@@ -55,7 +55,7 @@ export const useCart = create<CartStore>()(
       isSyncing: false,
       
       // Add item with custom design (for customizer products)
-      addItem: async (design) => {
+      addItem: async (design, quantity: number = 1) => {
         // For authenticated users, try to sync with backend
         const userStore = await import('./useUser').then(m => m.useUser.getState())
         const user = userStore.user
@@ -80,7 +80,7 @@ export const useCart = create<CartStore>()(
               set({
                 items: items.map((item) =>
                   item.id === existingItem.id
-                    ? { ...item, qty: item.qty + 1 }
+                    ? { ...item, qty: item.qty + quantity }
                     : item
                 ),
               })
@@ -88,7 +88,7 @@ export const useCart = create<CartStore>()(
               const newItem: CartItem = {
                 id: `${Date.now()}-${Math.random()}`,
                 design,
-                qty: 1,
+                qty: quantity,
               }
               set({ items: [...items, newItem] })
             }
@@ -109,7 +109,7 @@ export const useCart = create<CartStore>()(
               set({
                 items: items.map((item) =>
                   item.id === existingItem.id
-                    ? { ...item, qty: item.qty + 1 }
+                    ? { ...item, qty: item.qty + quantity }
                     : item
                 ),
               })
@@ -117,7 +117,7 @@ export const useCart = create<CartStore>()(
               const newItem: CartItem = {
                 id: `${Date.now()}-${Math.random()}`,
                 design,
-                qty: 1,
+                qty: quantity,
               }
               set({ items: [...items, newItem] })
             }
@@ -140,7 +140,7 @@ export const useCart = create<CartStore>()(
             set({
               items: items.map((item) =>
                 item.id === existingItem.id
-                  ? { ...item, qty: item.qty + 1 }
+                  ? { ...item, qty: item.qty + quantity }
                   : item
               ),
             })
@@ -148,7 +148,7 @@ export const useCart = create<CartStore>()(
             const newItem: CartItem = {
               id: `${Date.now()}-${Math.random()}`,
               design,
-              qty: 1,
+              qty: quantity,
             }
             set({ items: [...items, newItem] })
           }

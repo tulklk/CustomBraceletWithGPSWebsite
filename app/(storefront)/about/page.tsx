@@ -483,7 +483,7 @@ export default function AboutPage() {
                   >
                     {[
                       { icon: Mail, title: "Email", content: "contact@artemis.vn", href: "mailto:contact@artemis.vn" },
-                      { icon: Phone, title: "Điện thoại", content: "+84 123 456 789", href: "tel:+84123456789" },
+                      { icon: Phone, title: "Điện thoại", content: "0924 512 422", href: "tel:+84924512422" },
                       { icon: MapPinIcon, title: "Địa chỉ", content: "Lô E2a-7, Đường D1, Đ. D1, Long Thạnh Mỹ, Thành Phố Thủ Đức, Hồ Chí Minh", href: null },
                     ].map((contact, index) => {
                       const Icon = contact.icon

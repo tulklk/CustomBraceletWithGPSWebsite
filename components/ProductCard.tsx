@@ -111,10 +111,10 @@ export function ProductCard({ product, featured }: ProductCardProps) {
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
-      className="w-full h-full"
+      className="w-full h-full relative"
     >
       <Link href={`/products/${product.slug}`}>
-        <Card className="overflow-hidden h-full hover:shadow-lg transition-shadow">
+        <Card className="overflow-hidden h-full hover:shadow-lg transition-shadow relative">
           <div className="aspect-square bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center p-4 sm:p-6 md:p-8 relative">
             <Image 
               src={product.images[0]} 
@@ -135,7 +135,7 @@ export function ProductCard({ product, featured }: ProductCardProps) {
           <CardContent className="p-2 sm:p-3 md:p-4">
             <div className="flex items-start justify-between mb-1 sm:mb-2 gap-1 sm:gap-2">
               <div className="flex-1">
-                <h3 className="font-semibold text-sm sm:text-base md:text-lg line-clamp-2">
+                <h3 className="font-semibold text-[9px] sm:text-xs md:text-sm truncate">
                   {product.name}
                 </h3>
                 {/* Dynamic rating display based on actual reviews - always show stars */}
@@ -166,11 +166,6 @@ export function ProductCard({ product, featured }: ProductCardProps) {
                 </div>
               </div>
               <div className="flex flex-col gap-0.5 sm:gap-1 flex-shrink-0">
-                {featured && (
-                  <Badge className="whitespace-nowrap text-[10px] sm:text-xs">
-                    ⭐ Bán chạy
-                  </Badge>
-                )}
                 {product.slug === "bunny-baby-pink" && (
                   <Badge
                     variant="secondary"
@@ -223,6 +218,12 @@ export function ProductCard({ product, featured }: ProductCardProps) {
               )}
             </div>
           </CardFooter>
+          {/* Bán chạy badge - bottom right corner - only show if soldQuantity > 0 */}
+          {soldQuantity !== null && soldQuantity > 0 && (
+            <Badge className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 text-[10px] sm:text-xs font-bold px-2 py-1 z-10 bg-primary text-primary-foreground">
+              ⭐ Bán chạy
+            </Badge>
+          )}
         </Card>
       </Link>
     </motion.div>

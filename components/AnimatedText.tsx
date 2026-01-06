@@ -49,25 +49,37 @@ export function AnimatedText({ text, className = "" }: AnimatedTextProps) {
     }
   }, [visibleChars, text, currentPhase])
 
+  // Find the position of "y" in "yêu" to add a break point on desktop
+  const findYeuIndex = () => {
+    const yeuIndex = text.indexOf("yêu")
+    return yeuIndex !== -1 ? yeuIndex : -1
+  }
+  const yeuIndex = findYeuIndex()
+
   return (
     <h1 className={className}>
       {text.split("").map((char, index) => {
         const isVisible = index < visibleChars
         const isTyping = currentPhase === "typing" && index === visibleChars
+        const isYInYeu = index === yeuIndex
         
         return (
-          <motion.span
-            key={index}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{
-              opacity: isVisible ? 1 : 0,
-              x: isVisible ? 0 : (currentPhase === "erasing" && !isVisible ? 20 : -20),
-            }}
-            transition={{ duration: 0.3 }}
-            className="inline-block"
-          >
-            {char === " " ? "\u00A0" : char}
-          </motion.span>
+          <span key={index}>
+            {isYInYeu && (
+              <br className="hidden lg:block" />
+            )}
+            <motion.span
+              initial={{ opacity: 0, x: -20 }}
+              animate={{
+                opacity: isVisible ? 1 : 0,
+                x: isVisible ? 0 : (currentPhase === "erasing" && !isVisible ? 20 : -20),
+              }}
+              transition={{ duration: 0.3 }}
+              className="inline-block"
+            >
+              {char === " " ? "\u00A0" : char}
+            </motion.span>
+          </span>
         )
       })}
     </h1>

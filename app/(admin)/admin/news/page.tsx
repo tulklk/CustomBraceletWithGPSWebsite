@@ -98,11 +98,11 @@ export default function NewsPage() {
           variant: "destructive",
         })
       } else {
-        toast({
-          title: "Lỗi",
-          description: error.message || "Không thể tải dữ liệu",
-          variant: "destructive",
-        })
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể tải dữ liệu",
+        variant: "destructive",
+      })
       }
     } finally {
       setLoading(false)
@@ -199,11 +199,11 @@ export default function NewsPage() {
           variant: "destructive",
         })
       } else {
-        toast({
-          title: "Lỗi",
-          description: error.message || "Không thể lưu tin tức",
-          variant: "destructive",
-        })
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể lưu tin tức",
+        variant: "destructive",
+      })
       }
     }
   }
@@ -228,13 +228,13 @@ export default function NewsPage() {
           variant: "destructive",
         })
       } else {
-        toast({
-          title: "Lỗi",
-          description: error.message || "Không thể xóa tin tức",
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể xóa tin tức",
+        variant: "destructive",
+      })
     }
+  }
   }
 
   const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -382,13 +382,13 @@ export default function NewsPage() {
           <CardTitle>Danh sách tin tức ({filteredNews.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredNews.length === 0 ? (
+        {filteredNews.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              {searchQuery || categoryFilter !== "all" || statusFilter !== "all"
-                ? "Không tìm thấy tin tức nào"
-                : "Chưa có tin tức nào"}
-            </div>
-          ) : (
+            {searchQuery || categoryFilter !== "all" || statusFilter !== "all"
+              ? "Không tìm thấy tin tức nào"
+              : "Chưa có tin tức nào"}
+          </div>
+        ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -413,7 +413,7 @@ export default function NewsPage() {
                           <Badge variant="outline">{item.category}</Badge>
                         ) : (
                           <span className="text-muted-foreground">-</span>
-                        )}
+              )}
                       </TableCell>
                       <TableCell>
                         {item.authorName || (
@@ -423,13 +423,13 @@ export default function NewsPage() {
                       <TableCell>
                         <Badge variant={item.isPublished ? "default" : "secondary"}>
                           {item.isPublished ? "Đã publish" : "Chưa publish"}
-                        </Badge>
+                  </Badge>
                       </TableCell>
                       <TableCell>{item.viewCount || 0}</TableCell>
                       <TableCell>
-                        {item.createdAt
+                    {item.createdAt
                           ? dayjs(item.createdAt).format("DD/MM/YYYY")
-                          : "N/A"}
+                      : "N/A"}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -442,23 +442,23 @@ export default function NewsPage() {
                               <Link href={`/news/${item.slug}`} target="_blank">
                                 <Eye className="h-4 w-4" />
                               </Link>
-                            </Button>
+                  </Button>
                           )}
-                          <Button
+                  <Button
                             variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenDialog(item)}
-                          >
+                    size="sm"
+                    onClick={() => handleOpenDialog(item)}
+                  >
                             <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
+                  </Button>
+                  <Button
                             variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(item.id)}
-                          >
+                    size="sm"
+                    onClick={() => handleDelete(item.id)}
+                  >
                             <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                  </Button>
+                </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -466,8 +466,8 @@ export default function NewsPage() {
               </Table>
             </div>
           )}
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -558,8 +558,8 @@ export default function NewsPage() {
                   accept="image/*"
                   onChange={handleThumbnailUpload}
                   className="hidden"
-                />
-              </div>
+              />
+            </div>
               
               {/* Preview */}
               {formData.thumbnailUrl && (

@@ -722,12 +722,12 @@ export default function HomePage() {
               </ScrollAnimation>
               <AnimatedText
                 text="An tâm theo dõi con yêu mọi lúc mọi nơi"
-                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight text-pink-500"
+                className="text-xl sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl font-bold leading-tight text-pink-500"
               />
               <ScrollAnimation direction="up" delay={0.2}>
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed">
                   Thiết kế vòng tay GPS độc nhất cho bé với hàng trăm tùy chọn màu sắc,
-                  phụ kiện và khắc tên. Công nghệ định vị hiện đại, an toàn tuyệt đối.
+                  khắc tên. Công nghệ định vị hiện đại, an toàn tuyệt đối.
                 </p>
               </ScrollAnimation>
               <ScrollAnimation direction="up" delay={0.3}>
@@ -1025,7 +1025,7 @@ export default function HomePage() {
                     </motion.div>
                     <h3 className="font-bold text-base sm:text-lg">Tùy biến không giới hạn</h3>
                     <p className="text-muted-foreground text-sm sm:text-base">
-                      Hàng trăm tùy chọn màu, phụ kiện, khắc tên theo sở thích
+                      Hàng trăm tùy chọn màu, khắc tên theo sở thích
                     </p>
                   </CardContent>
                 </Card>
@@ -1271,7 +1271,7 @@ export default function HomePage() {
               className="inline-block"
             >
               <Button asChild size="lg" variant="secondary" className="w-full sm:w-auto text-sm sm:text-base">
-                <Link href="/products">Khám phá ngay</Link>
+                <Link href={`/products?category=${encodeURIComponent("Vòng tay thông minh")}`}>Khám phá ngay</Link>
               </Button>
             </motion.div>
           </ScrollAnimation>
