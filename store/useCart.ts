@@ -7,7 +7,7 @@ interface CartStore {
   items: CartItem[]
   isLoading: boolean
   isSyncing: boolean
-  addItem: (design: CustomDesign) => void
+  addItem: (design: CustomDesign, quantity?: number) => Promise<void>
   addItemByProductId: (productId: string, quantity: number, engravingText?: string | null) => Promise<void>
   removeItem: (id: string) => void
   updateQuantity: (id: string, qty: number) => void
