@@ -1,164 +1,109 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { User, CustomDesign, AuthResponse } from '@/lib/types'
+import { User, AuthResponse } from '@/lib/types'
 import { authApi } from '@/lib/api/auth'
 
 interface UserStore {
   user: User | null
-  // Legacy login for backward compatibility (deprecated)
-  login: (email: string, name: string) => void
-  // New auth methods
   setAuth: (authResponse: AuthResponse) => void
-  logout: () => Promise<void>
-  saveDesign: (design: CustomDesign) => void
-  removeDesign: (index: number) => void
-  refreshAccessToken: () => Promise<void>
-  updateUser: (updates: Partial<User>) => void
-  makeAuthenticatedRequest: <T>(apiCall: (token: string) => Promise<T>) => Promise<T>
+  logout: () => void
+  makeAuthenticatedRequest: <T>(request: (token: string) => Promise<T>) => Promise<T>
 }
 
-export const useUser = create<UserStore>()(
-  persist(
-    (set, get) => ({
-      user: null,
+// Helper functions for localStorage
+export const getLocalAuth = () => {
+  if (typeof window === 'undefined') return null
+  const data = localStorage.getItem('artemis_admin_auth')
+  return data ? JSON.parse(data) : null
+}
 
-      // Legacy login - kept for backward compatibility but should use setAuth instead
-      login: (email, name) => {
-        set({
-          user: {
-            id: `user-${Date.now()}`,
-            email,
-            name,
-            savedDesigns: [],
-          },
-        })
-      },
+export const setLocalAuth = (data: any) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('artemis_admin_auth', JSON.stringify(data))
+  }
+}
 
-      // Set authentication data from API response
-      setAuth: (authResponse: AuthResponse) => {
-        const { user: backendUser, accessToken, refreshToken } = authResponse
-        
-        set({
-          user: {
-            id: backendUser.id,
-            email: backendUser.email,
-            name: backendUser.fullName,
-            fullName: backendUser.fullName,
-            phoneNumber: backendUser.phoneNumber,
-            avatar: backendUser.avatar,
-            role: backendUser.role,
-            emailVerified: backendUser.emailVerified,
-            accessToken,
-            refreshToken,
-            savedDesigns: get().user?.savedDesigns || [],
-          },
-        })
-      },
+export const removeLocalAuth = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('artemis_admin_auth')
+  }
+}
 
-      // Logout - calls API and clears local state
-      logout: async () => {
-        const user = get().user
-        if (user?.accessToken) {
+export const useUser = create<UserStore>((set, get) => {
+  // Sync initialization from localStorage
+  const auth = getLocalAuth();
+  const initialUser = auth?.user ? {
+    ...auth.user,
+    accessToken: auth.accessToken,
+    refreshToken: auth.refreshToken
+  } : null;
+
+  return {
+    user: initialUser,
+
+    setAuth: (authResponse: AuthResponse) => {
+      const { user: backendUser, accessToken, refreshToken } = authResponse;
+      const frontendUser: User = {
+        id: backendUser.id,
+        email: backendUser.email,
+        name: backendUser.fullName,
+        fullName: backendUser.fullName,
+        phoneNumber: backendUser.phoneNumber,
+        avatar: backendUser.avatar,
+        role: backendUser.role,
+        emailVerified: backendUser.emailVerified,
+        savedDesigns: [],
+        accessToken,
+        refreshToken,
+      };
+
+      const authData = {
+        user: frontendUser,
+        accessToken,
+        refreshToken
+      };
+
+      setLocalAuth(authData);
+      set({ user: frontendUser });
+    },
+
+    logout: () => {
+      removeLocalAuth();
+      set({ user: null });
+    },
+
+    makeAuthenticatedRequest: async <T>(
+      request: (token: string) => Promise<T>
+    ): Promise<T> => {
+      const { user } = get()
+      if (!user?.accessToken) {
+        throw new Error("No access token available")
+      }
+
+      try {
+        return await request(user.accessToken)
+      } catch (error: any) {
+        // If 401 Unauthorized, try to refresh token
+        if (error.statusCode === 401 && user.refreshToken) {
           try {
-            await authApi.logout(user.accessToken)
-          } catch (error) {
-            // Even if API call fails, we still want to clear local state
-            console.warn("Logout API call failed:", error)
+            const refreshResponse = await authApi.refreshToken({
+              refreshToken: user.refreshToken,
+            })
+
+            // Update auth state with new token
+            const { setAuth } = get()
+            setAuth(refreshResponse)
+
+            // Retry the original request with new token
+            return await request(refreshResponse.accessToken)
+          } catch (refreshError) {
+            // Refresh failed, logout user
+            const { logout } = get()
+            logout()
+            throw refreshError
           }
         }
-        set({ user: null })
-      },
-
-      // Refresh access token using refresh token
-      refreshAccessToken: async () => {
-        const user = get().user
-        if (!user?.refreshToken) {
-          throw new Error("No refresh token available")
-        }
-
-        try {
-          const authResponse = await authApi.refreshToken({
-            refreshToken: user.refreshToken,
-          })
-          get().setAuth(authResponse)
-        } catch (error) {
-          // If refresh fails, logout the user
-          console.error("Failed to refresh token:", error)
-          await get().logout()
-          throw error
-        }
-      },
-
-      saveDesign: (design) => {
-        const user = get().user
-        if (!user) return
-
-        set({
-          user: {
-            ...user,
-            savedDesigns: [...user.savedDesigns, design],
-          },
-        })
-      },
-
-      removeDesign: (index) => {
-        const user = get().user
-        if (!user) return
-
-        set({
-          user: {
-            ...user,
-            savedDesigns: user.savedDesigns.filter((_, i) => i !== index),
-          },
-        })
-      },
-
-      // Update user information (e.g., after profile update)
-      updateUser: (updates) => {
-        const user = get().user
-        if (!user) return
-
-        set({
-          user: {
-            ...user,
-            ...updates,
-          },
-        })
-      },
-
-      // Helper to make authenticated API calls with auto token refresh
-      async makeAuthenticatedRequest<T>(
-        apiCall: (token: string) => Promise<T>
-      ): Promise<T> {
-        const user = get().user
-        if (!user?.accessToken) {
-          throw new Error("No access token available")
-        }
-
-        try {
-          return await apiCall(user.accessToken)
-        } catch (error: any) {
-          // If 401 and we have refresh token, try to refresh and retry
-          if (error?.statusCode === 401 && user.refreshToken) {
-            try {
-              await get().refreshAccessToken()
-              const newUser = get().user
-              if (newUser?.accessToken) {
-                return await apiCall(newUser.accessToken)
-              }
-            } catch (refreshError) {
-              // If refresh fails, logout user
-              await get().logout()
-              throw new Error("Session expired. Please login again.")
-            }
-          }
-          throw error
-        }
-      },
-    }),
-    {
-      name: 'artemis-user',
-    }
-  )
-)
-
+        throw error
+      }
+    },
+  };
+});

@@ -1,0 +1,85 @@
+/*
+ * HƯỚNG DẪN: Thay thế toàn bộ RescueScene (Scene 5) bằng code này
+ * Tìm function RescueScene và thay thế toàn bộ
+ */
+
+// Scene 5: Giải pháp - GPS cứu hộ
+function RescueScene({ isActive }: { isActive: boolean }) {
+  const lightRef = useRef<THREE.PointLight>(null)
+  const braceletRef = useRef<THREE.Group>(null)
+
+  useFrame((state) => {
+    if (isActive) {
+      if (lightRef.current) {
+        lightRef.current.intensity = 2 + Math.sin(state.clock.elapsedTime * 3) * 0.5
+      }
+      if (braceletRef.current) {
+        // Vòng tay xoay và nhấp nhô
+        braceletRef.current.rotation.y = state.clock.elapsedTime
+        braceletRef.current.position.y = 1.5 + Math.sin(state.clock.elapsedTime * 2) * 0.2
+      }
+    }
+  })
+
+  if (!isActive) return null
+
+  return (
+    <group>
+      <ambientLight intensity={1} />
+      <pointLight ref={lightRef} position={[0, 5, 0]} intensity={2} color="#FFD700" />
+      <Sky sunPosition={[100, 20, 100]} />
+
+      {/* Đứa trẻ vui mừng - được tìm thấy */}
+      <CheeringChildFBX position={[0, 0, 0]} rotation={[0, 0, 0]} />
+
+      {/* Vòng tay GPS - Hiển thị sản phẩm */}
+      <group ref={braceletRef} position={[0, 1.5, 1.5]}>
+        <BraceletModel position={[0, 0, 0]} />
+      </group>
+
+      {/* Trái tim bay xung quanh */}
+      {Array.from({ length: 8 }).map((_, i) => {
+        const angle = (i / 8) * Math.PI * 2
+        const radius = 2
+        const x = Math.cos(angle) * radius
+        const z = Math.sin(angle) * radius
+        const yOffset = Math.sin(angle * 3) * 0.5
+
+        return (
+          <Text
+            key={`heart-${i}`}
+            position={[x, 2 + yOffset, z]}
+            fontSize={0.5}
+            color="#FF69B4"
+          >
+            ❤️
+          </Text>
+        )
+      })}
+
+      {/* Ánh sáng vàng xung quanh */}
+      {Array.from({ length: 6 }).map((_, i) => {
+        const angle = (i / 6) * Math.PI * 2
+        const radius = 3
+        const x = Math.cos(angle) * radius
+        const z = Math.sin(angle) * radius
+
+        return (
+          <pointLight
+            key={`light-${i}`}
+            position={[x, 1, z]}
+            intensity={0.5}
+            color="#FFD700"
+            distance={2}
+          />
+        )
+      })}
+
+      {/* Mặt đất */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+        <planeGeometry args={[20, 20]} />
+        <meshStandardMaterial color="#90EE90" />
+      </mesh>
+    </group>
+  )
+}

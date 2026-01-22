@@ -42,7 +42,7 @@ export const productsApi = {
       },
       cacheConfigs.products
     )
-    
+
     // Map backend products to frontend Product type
     return backendProducts
       .filter((p) => p.isActive) // Only show active products
@@ -84,7 +84,7 @@ export const productsApi = {
   async getBySlug(slug: string): Promise<BackendProduct | null> {
     try {
       const backendProduct = await cachedFetch<BackendProduct>(
-        `${API_BASE_URL}/api/Products/${slug}`,
+        `https://customerbraceletwithgpswebsite-backend.fly.dev/api/Products/${slug}`,
         {
           method: "GET",
           headers: {
@@ -124,8 +124,8 @@ export const productsApi = {
     const images = backendProduct.images && backendProduct.images.length > 0
       ? backendProduct.images
       : backendProduct.imageUrls && backendProduct.imageUrls.length > 0
-      ? backendProduct.imageUrls
-      : []
+        ? backendProduct.imageUrls
+        : []
 
     // Extract specs from description or use defaults
     // You may need to adjust this based on your backend structure
@@ -140,11 +140,11 @@ export const productsApi = {
     // Extract features from description or use defaults
     const features = backendProduct.description
       ? [
-          "Định vị GPS/LBS chính xác",
-          "Thiết kế độc quyền",
-          "Chống nước IP67",
-          "Pin lâu dài",
-        ]
+        "Định vị GPS/LBS chính xác",
+        "Thiết kế độc quyền",
+        "Chống nước IP67",
+        "Pin lâu dài",
+      ]
       : []
 
     return {

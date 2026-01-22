@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { DataTable } from "@/components/admin/DataTable"
 import { Button } from "@/components/ui/button"
@@ -72,12 +72,7 @@ export default function ProductsPage() {
     }>,
   })
 
-  useEffect(() => {
-    if (!user?.accessToken) return
-    fetchData()
-  }, [user?.accessToken])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user?.accessToken) return
     try {
       setLoading(true)
@@ -97,7 +92,11 @@ export default function ProductsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.accessToken, makeAuthenticatedRequest, toast])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const handleOpenDialog = (product?: AdminProduct) => {
     if (product) {

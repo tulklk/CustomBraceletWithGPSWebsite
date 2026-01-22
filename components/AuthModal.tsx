@@ -76,7 +76,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     setIsLoading(true)
     try {
       const authResponse = await authApi.login({ email, password })
-      
+
       // Fetch full user info including isActive from /me endpoint
       let isActive: boolean | undefined = authResponse.user.isActive
       if (isActive === undefined && authResponse.accessToken) {
@@ -88,7 +88,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
           console.warn("Failed to fetch user details:", error)
         }
       }
-      
+
       // Check if account is active (explicitly check for false, undefined/null means active)
       if (isActive === false) {
         toast({
@@ -99,27 +99,34 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
         setIsLoading(false)
         return
       }
-      
+
       // Update authResponse with isActive if we fetched it from /me
       if (isActive !== undefined && authResponse.user.isActive === undefined) {
         authResponse.user.isActive = isActive
       }
-      
+
       setAuth(authResponse)
-      
+
       // Fetch cart from backend after login
       try {
         await fetchCart()
       } catch (error) {
         console.warn("Failed to fetch cart after login:", error)
       }
-      
+
       toast({
         title: "Đăng nhập thành công! 🎉",
         description: `Chào mừng trở lại, ${authResponse.user.fullName}`,
       })
+
       onOpenChange(false)
       resetForm()
+
+      // Redirect if admin (after closing modal)
+      if (authResponse.user.role === 1) {
+        router.push("/admin")
+        return
+      }
     } catch (error) {
       const apiError = error as ApiError
       toast({
@@ -183,20 +190,20 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
         fullName: name,
         phoneNumber: phoneNumber.replace(/\s/g, ""), // Remove spaces from phone number
       })
-      
+
       // Lưu email vào localStorage để có thể resend verification
       if (typeof window !== 'undefined') {
         localStorage.setItem('pendingVerificationEmail', email)
       }
-      
+
       toast({
         title: "Đăng ký thành công! 🎉",
         description: "Vui lòng kiểm tra email để xác thực tài khoản",
       })
-      
+
       onOpenChange(false)
       resetForm()
-      
+
       // Redirect đến trang verify-email
       router.push('/verify-email?registered=true')
     } catch (error) {
@@ -220,7 +227,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       const authResponse = await authApi.verifyGoogleToken({
         idToken: response.credential,
       })
-      
+
       // Fetch full user info including isActive from /me endpoint
       let isActive: boolean | undefined = authResponse.user.isActive
       if (isActive === undefined && authResponse.accessToken) {
@@ -232,7 +239,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
           console.warn("Failed to fetch user details:", error)
         }
       }
-      
+
       // Check if account is active (explicitly check for false, undefined/null means active)
       if (isActive === false) {
         toast({
@@ -243,27 +250,34 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
         setIsLoading(false)
         return
       }
-      
+
       // Update authResponse with isActive if we fetched it from /me
       if (isActive !== undefined && authResponse.user.isActive === undefined) {
         authResponse.user.isActive = isActive
       }
-      
+
       setAuth(authResponse)
-      
+
       // Fetch cart from backend after Google sign in
       try {
         await fetchCart()
       } catch (error) {
         console.warn("Failed to fetch cart after Google sign in:", error)
       }
-      
+
       toast({
         title: "Đăng nhập thành công! 🎉",
         description: `Chào mừng ${authResponse.user.fullName}`,
       })
+
       onOpenChange(false)
       resetForm()
+
+      // Redirect if admin (after closing modal)
+      if (authResponse.user.role === 1) {
+        router.push("/admin")
+        return
+      }
     } catch (error) {
       const apiError = error as ApiError
       toast({
@@ -299,11 +313,11 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
         console.error("Google button ref not available")
         return
       }
-      
+
       try {
         // Clear any existing button
         googleSignInButtonRef.current.innerHTML = ''
-        
+
         // Initialize Google Identity Services
         window.google.accounts.id.initialize({
           client_id: clientId,
@@ -317,7 +331,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
           size: 'large',
           text: 'signin_with',
         })
-        
+
         setGoogleScriptLoaded(true)
         console.log("Google Sign-In initialized successfully")
       } catch (error) {
@@ -348,7 +362,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
           console.error("Timeout waiting for Google Identity Services")
         }
       }, 100)
-      
+
       return () => clearInterval(checkInterval)
     }
 
@@ -372,7 +386,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       setGoogleScriptLoaded(false)
     }
     document.head.appendChild(script)
-    
+
     return () => {
       // Cleanup if component unmounts
       setGoogleScriptLoaded(false)
@@ -383,7 +397,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   // Handle Google login button click - trigger sign-in popup directly
   const handleGoogleLoginClick = () => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-    
+
     if (!clientId) {
       toast({
         title: "Lỗi cấu hình",
@@ -399,7 +413,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
         description: "Vui lòng đợi Google Sign-In tải xong và thử lại",
         variant: "default",
       })
-      
+
       // Check if script is loading, if not, try to load it
       const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]')
       if (!existingScript) {
@@ -509,7 +523,11 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     }
   }
 
-  const handleFacebookLoginSuccess = () => {
+  const handleFacebookLoginSuccess = (user: any) => {
+    // Redirect if admin
+    if (user?.role === 1) {
+      router.push("/admin")
+    }
     onOpenChange(false)
     resetForm()
   }
@@ -524,7 +542,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!forgotPasswordEmail.trim()) {
       toast({
         title: "Lỗi",
@@ -582,7 +600,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
         <div className="p-3 sm:p-6">
           {/* Hidden div for Google Sign-In button */}
           <div ref={googleSignInButtonRef} style={{ position: 'fixed', left: '-9999px', opacity: 0, pointerEvents: 'none' }} />
-          
+
           {/* Social Login Buttons */}
           <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-6">
             <Button

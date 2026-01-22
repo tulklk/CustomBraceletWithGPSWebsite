@@ -26,7 +26,7 @@ export function ProductsContent() {
   const searchParams = useSearchParams()
   const categoryParam = searchParams.get("category")
   const filterContext = useFilterContext()
-  
+
   const [products, setProducts] = useState<Product[]>([])
   const [backendProducts, setBackendProducts] = useState<BackendProduct[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -42,7 +42,7 @@ export function ProductsContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
-  
+
   // Use refs to track previous values and prevent infinite loops
   const prevFiltersRef = useRef<FilterState | null>(null)
   const prevPriceRangeRef = useRef<[number, number] | null>(null)
@@ -96,7 +96,7 @@ export function ProductsContent() {
     const filtersChanged = JSON.stringify(prevFiltersRef.current) !== JSON.stringify(filters)
     const priceRangeChanged = JSON.stringify(prevPriceRangeRef.current) !== JSON.stringify(priceRange)
     const productCountChanged = prevProductCountRef.current !== filteredProducts.length
-    
+
     if (filtersChanged) {
       filterContext.setFilters(filters)
       prevFiltersRef.current = filters
@@ -117,14 +117,14 @@ export function ProductsContent() {
       try {
         setLoading(true)
         setError(null)
-        
+
         const [productsData, categoriesData] = await Promise.all([
           productsApi.getAll(),
           categoriesApi.getAll(),
         ])
-        
+
         setCategories(categoriesData)
-        
+
         // Fetch full backend products for category filtering (with caching)
         const { API_BASE_URL } = await import("@/lib/constants")
         const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
@@ -137,9 +137,9 @@ export function ProductsContent() {
           cacheConfigs.products
         )
         setBackendProducts(backendProductsData.filter((p: BackendProduct) => p.isActive))
-        
+
         setProducts(productsData)
-        
+
         // Calculate price range from all products
         if (productsData.length > 0) {
           const prices = productsData.map(p => p.priceFrom).filter(p => p > 0)
@@ -180,8 +180,8 @@ export function ProductsContent() {
     } else {
       setSelectedCategory(null)
       // When no category param, reset filters to show all products
-      if (priceRange && Array.isArray(priceRange) && priceRange.length === 2 && 
-          (priceRange[0] !== 0 || priceRange[1] !== 10000000)) {
+      if (priceRange && Array.isArray(priceRange) && priceRange.length === 2 &&
+        (priceRange[0] !== 0 || priceRange[1] !== 10000000)) {
         setFilters(prev => ({
           priceRange: priceRange,
           productTypes: [],
@@ -201,11 +201,11 @@ export function ProductsContent() {
       productTypes: [],
       sortBy: "default",
     }
-    const safePriceRange: [number, number] = 
-      (priceRange && Array.isArray(priceRange) && priceRange.length === 2) 
-        ? priceRange 
+    const safePriceRange: [number, number] =
+      (priceRange && Array.isArray(priceRange) && priceRange.length === 2)
+        ? priceRange
         : [0, 10000000]
-    const safeFiltersPriceRange: [number, number] = 
+    const safeFiltersPriceRange: [number, number] =
       (safeFilters.priceRange && Array.isArray(safeFilters.priceRange) && safeFilters.priceRange.length === 2)
         ? safeFilters.priceRange
         : safePriceRange
@@ -241,9 +241,9 @@ export function ProductsContent() {
     // Product type filter
     if (safeFilters.productTypes && Array.isArray(safeFilters.productTypes) && safeFilters.productTypes.length > 0) {
       result = result.filter((p) => {
-        const productType = p.id.startsWith('necklace-') ? 'necklace' 
+        const productType = p.id.startsWith('necklace-') ? 'necklace'
           : p.id.startsWith('clip-') ? 'clip'
-          : 'bracelet'
+            : 'bracelet'
         return safeFilters.productTypes.includes(productType)
       })
     }
@@ -268,10 +268,10 @@ export function ProductsContent() {
         result.sort((a, b) => {
           const productA = backendProducts.find((bp) => bp.id === a.id)
           const productB = backendProducts.find((bp) => bp.id === b.id)
-          
+
           const dateA = productA?.createdAt ? new Date(productA.createdAt).getTime() : 0
           const dateB = productB?.createdAt ? new Date(productB.createdAt).getTime() : 0
-          
+
           // Newest first (descending order)
           return dateB - dateA
         })
@@ -345,13 +345,13 @@ export function ProductsContent() {
               {selectedCategory ? selectedCategory.name.toUpperCase() : "Sản phẩm vòng tay ARTEMIS"}
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base md:text-lg">
-              {selectedCategory 
+              {selectedCategory
                 ? `Danh sách sản phẩm thuộc danh mục ${selectedCategory.name}`
                 : "Chọn sản phẩm phù hợp và bắt đầu tùy biến theo phong cách của bé"
               }
             </p>
           </div>
-          
+
           {/* Filter Button - Mobile Only */}
           <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
             <SheetTrigger asChild>
