@@ -38,11 +38,11 @@ export default function NewsPage() {
   // Use useMemo to filter articles (avoids re-render issues)
   const filteredArticles = useMemo(() => {
     if (!allArticles.length) return []
-    
+
     if (searchQuery.trim() === "") {
       return allArticles
     }
-    
+
     return allArticles.filter((article) =>
       article.title.toLowerCase().includes(searchQuery.toLowerCase())
     )
@@ -149,7 +149,7 @@ export default function NewsPage() {
         </div>
         {searchQuery && (
           <p className="text-sm text-muted-foreground mt-2">
-            Tìm thấy <strong>{filteredArticles.length}</strong> bài viết phù hợp với "{searchQuery}"
+            Tìm thấy <strong>{filteredArticles.length}</strong> bài viết phù hợp với &quot;{searchQuery}&quot;
           </p>
         )}
       </div>
