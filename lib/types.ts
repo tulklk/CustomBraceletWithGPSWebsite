@@ -211,6 +211,28 @@ export type NewsListParams = {
   search?: string
 }
 
+// Child Abduction News Article
+export type ChildAbductionArticle = {
+  id: string
+  title: string
+  description: string
+  link: string
+  publishedDate: string // ISO DateTime
+  imageUrl: string | null
+  source: string
+  category: string
+}
+
+// Child Abduction News Response (with pagination)
+export type ChildAbductionNewsResponse = {
+  page: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+  sources: string[]
+  articles: ChildAbductionArticle[]
+}
+
 export type AdminVoucher = {
   id: string
   code: string
@@ -230,7 +252,7 @@ export type AdminVoucher = {
 }
 
 // Order Status Types
-export type OrderStatus = 
+export type OrderStatus =
   | "Processing"
   | "Confirmed"
   | "Preparing"

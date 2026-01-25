@@ -1,43 +1,43 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo, Suspense } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { OrbitControls, PerspectiveCamera, Text, Box, Sphere, Environment, Sky } from "@react-three/drei"
+import { OrbitControls, PerspectiveCamera, Text, Box, Sphere, Environment, Sky, useFBX, useGLTF, useAnimations } from "@react-three/drei"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Volume2, VolumeX, Play, RotateCcw, X, AlertTriangle } from "lucide-react"
+import { Volume2, VolumeX, Play, RotateCcw, X, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react"
 import * as THREE from "three"
 
-// Mô hình người lớn 3D
+// Mô hình người lớn 3D - được làm cao lớn hơn để tạo cảm giác áp lực
 function AdultPerson({ position, color, ...props }: any) {
   return (
-    <group position={position} {...props}>
+    <group position={position} scale={[1.2, 1.6, 1.2]} {...props}>
       {/* Đầu */}
       <Sphere position={[0, 1.6, 0]} args={[0.15, 16, 16]} castShadow>
         <meshStandardMaterial color="#FFE4C4" />
       </Sphere>
-      
+
       {/* Thân */}
       <Box position={[0, 1, 0]} args={[0.4, 0.8, 0.25]} castShadow>
         <meshStandardMaterial color={color || "#4169E1"} />
       </Box>
-      
+
       {/* Tay trái */}
       <Box position={[-0.3, 1, 0]} args={[0.12, 0.6, 0.12]} rotation={[0, 0, 0.3]} castShadow>
         <meshStandardMaterial color={color || "#4169E1"} />
       </Box>
-      
+
       {/* Tay phải */}
       <Box position={[0.3, 1, 0]} args={[0.12, 0.6, 0.12]} rotation={[0, 0, -0.3]} castShadow>
         <meshStandardMaterial color={color || "#4169E1"} />
       </Box>
-      
+
       {/* Chân trái */}
       <Box position={[-0.12, 0.35, 0]} args={[0.15, 0.7, 0.15]} castShadow>
         <meshStandardMaterial color="#2C3E50" />
       </Box>
-      
+
       {/* Chân phải */}
       <Box position={[0.12, 0.35, 0]} args={[0.15, 0.7, 0.15]} castShadow>
         <meshStandardMaterial color="#2C3E50" />
@@ -49,21 +49,21 @@ function AdultPerson({ position, color, ...props }: any) {
 // Mô hình trẻ em 3D (nhỏ hơn)
 function ChildPerson({ position, emotion, withBracelet, ...props }: any) {
   const childRef = useRef<THREE.Group>(null)
-  
+
   useFrame((state) => {
     if (childRef.current && emotion === "scared") {
       // Rung lắc khi sợ
       childRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 8) * 0.05
     }
   })
-  
+
   return (
     <group ref={childRef} position={position} {...props}>
       {/* Đầu */}
       <Sphere position={[0, 1.05, 0]} args={[0.12, 16, 16]} castShadow>
         <meshStandardMaterial color="#FFDAB9" />
       </Sphere>
-      
+
       {/* Mặt - emoji */}
       {emotion && (
         <Text
@@ -74,22 +74,22 @@ function ChildPerson({ position, emotion, withBracelet, ...props }: any) {
           {emotion === "happy" ? "😊" : emotion === "scared" ? "😢" : emotion === "crying" ? "😭" : "😰"}
         </Text>
       )}
-      
+
       {/* Thân */}
       <Box position={[0, 0.65, 0]} args={[0.32, 0.55, 0.2]} castShadow>
         <meshStandardMaterial color="#FF69B4" />
       </Box>
-      
+
       {/* Tay trái */}
       <Box position={[-0.22, 0.7, 0]} args={[0.1, 0.45, 0.1]} rotation={[0, 0, 0.4]} castShadow>
         <meshStandardMaterial color="#FFB6C1" />
       </Box>
-      
+
       {/* Tay phải */}
       <Box position={[0.22, 0.7, 0]} args={[0.1, 0.45, 0.1]} rotation={[0, 0, -0.4]} castShadow>
         <meshStandardMaterial color="#FFB6C1" />
       </Box>
-      
+
       {/* Vòng tay GPS */}
       {withBracelet && (
         <group>
@@ -101,7 +101,7 @@ function ChildPerson({ position, emotion, withBracelet, ...props }: any) {
               metalness={0.8}
             />
           </Sphere>
-          
+
           {/* Sóng GPS */}
           {[1, 2, 3].map((i) => (
             <mesh
@@ -119,12 +119,12 @@ function ChildPerson({ position, emotion, withBracelet, ...props }: any) {
           ))}
         </group>
       )}
-      
+
       {/* Chân trái */}
       <Box position={[-0.1, 0.25, 0]} args={[0.12, 0.5, 0.12]} castShadow>
         <meshStandardMaterial color="#4169E1" />
       </Box>
-      
+
       {/* Chân phải */}
       <Box position={[0.1, 0.25, 0]} args={[0.12, 0.5, 0.12]} castShadow>
         <meshStandardMaterial color="#4169E1" />
@@ -133,13 +133,200 @@ function ChildPerson({ position, emotion, withBracelet, ...props }: any) {
   )
 }
 
-// Scene 1: Bị lạc trong siêu thị đông người
-function SupermarketScene({ isActive }: { isActive: boolean }) {
+// Mô hình tòa nhà bối cảnh
+function Building({ position, scale = [4, 15, 4], color = "#2c3e50" }: any) {
+  return (
+    <group position={position}>
+      <Box args={scale} castShadow receiveShadow>
+        <meshStandardMaterial color={color} />
+      </Box>
+      {/* Cửa sổ */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Box
+          key={i}
+          position={[0, (i - 3.5) * (scale[1] / 10), scale[2] / 2 + 0.05]}
+          args={[scale[0] * 0.7, scale[1] / 20, 0.1]}
+        >
+          <meshStandardMaterial color="#f1c40f" emissive="#f1c40f" emissiveIntensity={0.5} />
+        </Box>
+      ))}
+    </group>
+  )
+}
+
+// Mô hình đứa trẻ đang khóc (GLB)
+function CryingChild({ position, ...props }: any) {
+  const { scene, animations } = useGLTF("/models/crying_child_rig.glb")
+  const { actions } = useAnimations(animations, scene)
+
+  useEffect(() => {
+    scene.traverse((child: any) => {
+      if ((child as any).isMesh) {
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
+
+    if (actions) {
+      const animName = Object.keys(actions)[0]
+      if (animName && actions[animName]) {
+        actions[animName].reset().fadeIn(0.5).play()
+      }
+    }
+  }, [scene, actions])
+
+  return (
+    <primitive
+      object={scene}
+      position={position}
+      scale={0.5} // Thường GLB từ Mixamo/Blender cần scale lại
+      rotation={[0, 0, 0]}
+      dispose={null}
+      {...props}
+    />
+  )
+}
+
+// Mô hình đứa trẻ sợ hãi (FBX)
+function TerrifiedChild({ position, ...props }: any) {
+  const fbx = useFBX("/models/Terrified.fbx")
+  const { actions } = useAnimations(fbx.animations, fbx)
+
+  useEffect(() => {
+    fbx.traverse((child: any) => {
+      if ((child as any).isMesh) {
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
+
+    if (actions) {
+      const animName = Object.keys(actions)[0]
+      if (animName && actions[animName]) {
+        actions[animName].reset().fadeIn(0.5).play()
+      }
+    }
+  }, [fbx, actions])
+
+  return (
+    <primitive
+      object={fbx}
+      position={position}
+      scale={0.007} // Điều chỉnh scale cho FBX
+      rotation={[0, 0, 0]}
+      dispose={null}
+      {...props}
+    />
+  )
+}
+
+// Mô hình đứa trẻ đang chạy (FBX)
+function RunningChild({ position, ...props }: any) {
+  const fbx = useFBX("/models/Running.fbx")
+  const { actions } = useAnimations(fbx.animations, fbx)
+
+  useEffect(() => {
+    fbx.traverse((child: any) => {
+      if ((child as any).isMesh) {
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
+
+    if (actions) {
+      const animName = Object.keys(actions)[0]
+      if (animName && actions[animName]) {
+        actions[animName].reset().fadeIn(0.5).play()
+      }
+    }
+  }, [fbx, actions])
+
+  return (
+    <primitive
+      object={fbx}
+      position={position}
+      scale={0.007}
+      rotation={[0, 0, 0]}
+      dispose={null}
+      {...props}
+    />
+  )
+}
+
+// Mô hình đứa trẻ đang vùng vẫy dưới nước (FBX)
+function TreadingWaterChild({ position, ...props }: any) {
+  const fbx = useFBX("/models/Treading Water.fbx")
+  const { actions } = useAnimations(fbx.animations, fbx)
+
+  useEffect(() => {
+    fbx.traverse((child: any) => {
+      if ((child as any).isMesh) {
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
+
+    if (actions) {
+      const animName = Object.keys(actions)[0]
+      if (animName && actions[animName]) {
+        actions[animName].reset().fadeIn(0.5).play()
+      }
+    }
+  }, [fbx, actions])
+
+  return (
+    <primitive
+      object={fbx}
+      position={position}
+      scale={0.007}
+      rotation={[0, 0, 0]}
+      dispose={null}
+      {...props}
+    />
+  )
+}
+
+// Mô hình đứa trẻ vui mừng (FBX)
+function CheeringChild({ position, ...props }: any) {
+  const fbx = useFBX("/models/Cheering.fbx")
+  const { actions } = useAnimations(fbx.animations, fbx)
+
+  useEffect(() => {
+    fbx.traverse((child: any) => {
+      if ((child as any).isMesh) {
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
+
+    if (actions) {
+      const animName = Object.keys(actions)[0]
+      if (animName && actions[animName]) {
+        actions[animName].reset().fadeIn(0.5).play()
+      }
+    }
+  }, [fbx, actions])
+
+  return (
+    <primitive
+      object={fbx}
+      position={position}
+      scale={0.007}
+      rotation={[0, 0, 0]}
+      dispose={null}
+      {...props}
+    />
+  )
+}
+
+// Scene 1: Bị lạc trong đám đông đô thị
+function UrbanCrowdScene({ isActive }: { isActive: boolean }) {
   const groupRef = useRef<THREE.Group>(null)
-  
+
   useFrame((state) => {
     if (groupRef.current && isActive) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * Math.PI * 0.3
+      // Nhẹ nhàng xoay để tạo cảm giác động
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.1) * 0.05
     }
   })
 
@@ -147,59 +334,79 @@ function SupermarketScene({ isActive }: { isActive: boolean }) {
 
   return (
     <group ref={groupRef}>
-      {/* Kệ hàng siêu thị */}
+      <Environment preset="city" />
+
+      {/* Những tòa nhà bối cảnh xung quanh */}
       {Array.from({ length: 12 }).map((_, i) => {
         const angle = (i / 12) * Math.PI * 2
-        const radius = 6
+        const radius = 15
         const x = Math.cos(angle) * radius
         const z = Math.sin(angle) * radius
-        
+        const height = 15 + Math.random() * 15
+
         return (
-          <Box
-            key={i}
-            position={[x, 1.5, z]}
-            args={[1, 3, 0.5]}
-            castShadow
-          >
-            <meshStandardMaterial color="#8B4513" />
-          </Box>
+          <Building
+            key={`building-${i}`}
+            position={[x, height / 2, z]}
+            scale={[6, height, 6]}
+            color={i % 3 === 0 ? "#2c3e50" : i % 3 === 1 ? "#34495e" : "#535c68"}
+          />
         )
       })}
-      
-      {/* Người lớn xung quanh - đám đông */}
-      {Array.from({ length: 15 }).map((_, i) => {
-        const angle = (i / 15) * Math.PI * 2 + Math.sin(i) * 0.5
-        const radius = 4 + Math.random() * 2
+
+      {/* Đám đông humanoid bao quanh */}
+      {Array.from({ length: 30 }).map((_, i) => {
+        const seed = i * 437
+        const angle = (i / 30) * Math.PI * 2
+        const radius = 5 + (Math.sin(seed) * 2)
         const x = Math.cos(angle) * radius
         const z = Math.sin(angle) * radius
-        const colors = ["#4169E1", "#8B4513", "#2F4F4F", "#696969", "#556B2F"]
-        
+
+        // Xóa những humanoid che model (ở quá gần camera - camera z là 4)
+        if (z > 3) return null
+
+        const colors = ["#4169E1", "#8B4513", "#2F4F4F", "#696969", "#556B2F", "#1e272e"]
+
         return (
           <AdultPerson
             key={`adult-${i}`}
             position={[x, 0, z]}
             color={colors[i % colors.length]}
+            rotation={[0, -angle + Math.PI, 0]} // Hướng mặt vào tâm
           />
         )
       })}
-      
-      {/* Đứa trẻ ở giữa */}
-      <ChildPerson position={[0, 0, 0]} emotion="scared" />
-      
-      {/* Icon nước mắt */}
+
+      {/* Đứa trẻ đang khóc hoảng loạn ở giữa */}
+      <Suspense fallback={<ChildPerson position={[0, 0, 0]} emotion="scared" />}>
+        <CryingChild position={[0, 0, 0]} scale={0.4} />
+      </Suspense>
+
+      {/* Icon giọt nước mắt / hoảng sợ */}
       <Text
-        position={[0, 1.5, 0.5]}
-        fontSize={0.3}
+        position={[0, 3, 0]}
+        fontSize={0.5}
         color="#4169E1"
       >
         💧
       </Text>
-      
-      {/* Mặt đất */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[50, 50]} />
-        <meshStandardMaterial color="#E0E0E0" />
+
+      {/* Mặt đất đường phố */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+        <planeGeometry args={[100, 100]} />
+        <meshStandardMaterial color="#34495e" roughness={0.8} />
       </mesh>
+
+      {/* Vạch kẻ đường trang trí */}
+      {Array.from({ length: 10 }).map((_, i) => (
+        <Box
+          key={`stripe-${i}`}
+          position={[0, 0, -20 + i * 5]}
+          args={[0.2, 0.02, 2]}
+        >
+          <meshBasicMaterial color="white" transparent opacity={0.3} />
+        </Box>
+      ))}
     </group>
   )
 }
@@ -207,7 +414,7 @@ function SupermarketScene({ isActive }: { isActive: boolean }) {
 // Scene 2: Nguy hiểm từ người lạ
 function StrangerDangerScene({ isActive }: { isActive: boolean }) {
   const strangerRef = useRef<THREE.Group>(null)
-  
+
   useFrame((state) => {
     if (strangerRef.current && isActive) {
       const distance = 3 - Math.min(state.clock.elapsedTime * 0.3, 2)
@@ -221,36 +428,38 @@ function StrangerDangerScene({ isActive }: { isActive: boolean }) {
     <group>
       <ambientLight intensity={0.2} />
       <pointLight position={[0, 5, 0]} intensity={0.5} color="#FF0000" />
-      
+
       {/* Đứa trẻ - sợ hãi */}
-      <ChildPerson position={[0, 0, 0]} emotion="crying" />
-      
+      <Suspense fallback={<ChildPerson position={[0, 0, 0]} emotion="crying" />}>
+        <TerrifiedChild position={[0, 0, 0]} />
+      </Suspense>
+
       {/* Người lạ đáng sợ - tối màu */}
       <group ref={strangerRef} position={[0, 0, -3]}>
         {/* Đầu */}
         <Sphere position={[0, 1.6, 0]} args={[0.15, 16, 16]} castShadow>
           <meshStandardMaterial color="#2C1810" emissive="#8B0000" emissiveIntensity={0.3} />
         </Sphere>
-        
+
         {/* Mặt nạ/mặt đáng sợ */}
         <Text position={[0, 1.6, 0.16]} fontSize={0.12} color="#FF0000">
           😈
         </Text>
-        
+
         {/* Thân - áo đen */}
         <Box position={[0, 1, 0]} args={[0.5, 0.9, 0.3]} castShadow>
           <meshStandardMaterial color="#000000" emissive="#8B0000" emissiveIntensity={0.3} />
         </Box>
-        
+
         {/* Tay chìa ra - cố bắt */}
         <Box position={[-0.35, 1, 0.3]} args={[0.15, 0.7, 0.15]} rotation={[0.5, 0, 0.5]} castShadow>
           <meshStandardMaterial color="#1a1a1a" />
         </Box>
-        
+
         <Box position={[0.35, 1, 0.3]} args={[0.15, 0.7, 0.15]} rotation={[0.5, 0, -0.5]} castShadow>
           <meshStandardMaterial color="#1a1a1a" />
         </Box>
-        
+
         {/* Chân */}
         <Box position={[-0.15, 0.35, 0]} args={[0.18, 0.7, 0.18]} castShadow>
           <meshStandardMaterial color="#000000" />
@@ -258,32 +467,32 @@ function StrangerDangerScene({ isActive }: { isActive: boolean }) {
         <Box position={[0.15, 0.35, 0]} args={[0.18, 0.7, 0.18]} castShadow>
           <meshStandardMaterial color="#000000" />
         </Box>
-        
+
         {/* Cảnh báo */}
         <Text position={[0, 2.2, 0]} fontSize={0.4} color="#FF0000">
           ⚠️
         </Text>
       </group>
-      
+
       {/* Icon sợ hãi lớn */}
       <Text position={[0, 1.8, 0.5]} fontSize={0.5} color="#FFFF00">
         😱
       </Text>
-      
+
       {/* Bóng tối */}
       {Array.from({ length: 8 }).map((_, i) => {
         const angle = (i / 8) * Math.PI * 2
         const radius = 5
         const x = Math.cos(angle) * radius
         const z = Math.sin(angle) * radius
-        
+
         return (
           <Sphere key={i} position={[x, 1, z]} args={[0.5, 16, 16]}>
             <meshStandardMaterial color="#1a1a1a" opacity={0.6} transparent />
           </Sphere>
         )
       })}
-      
+
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[50, 50]} />
         <meshStandardMaterial color="#2a2a2a" />
@@ -295,14 +504,36 @@ function StrangerDangerScene({ isActive }: { isActive: boolean }) {
 // Scene 3: Nguy hiểm giao thông
 function TrafficDangerScene({ isActive }: { isActive: boolean }) {
   const carsRef = useRef<THREE.Group[]>([])
-  
+  const childRef = useRef<THREE.Group>(null)
+
   useFrame((state) => {
     if (isActive) {
+      // Di chuyển xe hơi ở 2 làn đường ngược chiều
       carsRef.current.forEach((car, i) => {
         if (car) {
-          car.position.x = -15 + ((state.clock.elapsedTime * 5 + i * 3) % 30)
+          const laneOffset = i % 2 === 0 ? -3.5 : 3.5
+          const direction = i % 2 === 0 ? 1 : -1
+          const speed = 12 + (i * 2)
+          const startX = direction === 1 ? -25 : 25
+
+          car.position.x = startX + direction * ((state.clock.elapsedTime * speed + i * 8) % 50)
+          car.position.z = laneOffset
         }
       })
+
+      // Đứa trẻ băng qua đường (di chuyển theo trục Z)
+      if (childRef.current) {
+        const crossingCycle = 6 // 6 giây một vòng
+        const time = (state.clock.elapsedTime % crossingCycle)
+        if (time < 4) {
+          // Đang băng qua đường
+          childRef.current.position.z = 8 - (time / 4) * 16
+          childRef.current.rotation.y = Math.PI // Hướng mặt về phía trước
+        } else {
+          // Chờ một chút rồi quay lại vị trí bắt đầu
+          childRef.current.position.z = 8
+        }
+      }
     }
   })
 
@@ -312,77 +543,85 @@ function TrafficDangerScene({ isActive }: { isActive: boolean }) {
     <group>
       <ambientLight intensity={0.7} />
       <directionalLight position={[10, 10, 5]} intensity={0.8} castShadow />
-      
-      {/* Đứa trẻ giữa đường */}
-      <ChildPerson position={[0, 0, 0]} emotion="scared" />
-      
+
+      {/* Đứa trẻ đang băng qua đường */}
+      <Suspense fallback={<ChildPerson position={[0, 0, 8]} emotion="scared" />}>
+        <group ref={childRef} position={[0, 0, 8]}>
+          <RunningChild />
+        </group>
+      </Suspense>
+
       {/* Icon hoảng sợ */}
-      <Text position={[0, 1.8, 0.5]} fontSize={0.5} color="#FF0000">
+      <Text position={[0, 2.5, 0]} fontSize={0.5} color="#FF0000">
         😰
       </Text>
-      
-      {/* Đường phố */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-        <planeGeometry args={[50, 20]} />
-        <meshStandardMaterial color="#333333" />
+
+      {/* Đường phố 2 làn */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+        <planeGeometry args={[100, 16]} />
+        <meshStandardMaterial color="#2c3e50" />
       </mesh>
-      
-      {/* Vạch kẻ trắng */}
-      {Array.from({ length: 10 }).map((_, i) => (
+
+      {/* Vạch kẻ phân làn (đứt đoạn) */}
+      {Array.from({ length: 20 }).map((_, i) => (
         <Box
-          key={`line-${i}`}
-          position={[-12 + i * 2.5, 0.01, 0]}
-          args={[1.5, 0.02, 0.3]}
+          key={`lane-divider-${i}`}
+          position={[-25 + i * 2.5, 0.01, 0]}
+          args={[1, 0.05, 0.2]}
         >
-          <meshStandardMaterial color="#FFFFFF" />
+          <meshBasicMaterial color="#f1c40f" />
         </Box>
       ))}
-      
+
+      {/* Vạch kẻ lề đường */}
+      <Box position={[0, 0.01, 7.8]} args={[100, 0.05, 0.3]}>
+        <meshBasicMaterial color="#ecf0f1" />
+      </Box>
+      <Box position={[0, 0.01, -7.8]} args={[100, 0.05, 0.3]}>
+        <meshBasicMaterial color="#ecf0f1" />
+      </Box>
+
       {/* Xe hơi chạy nhanh */}
-      {Array.from({ length: 3 }).map((_, i) => (
+      {Array.from({ length: 4 }).map((_, i) => (
         <group
           key={`car-${i}`}
           ref={(el) => {
             if (el) carsRef.current[i] = el
           }}
-          position={[-15 + i * 10, 0, i % 2 === 0 ? -3 : 3]}
+          position={[0, 0, 0]}
         >
           {/* Thân xe */}
-          <Box position={[0, 0.4, 0]} args={[2, 0.8, 1.2]} castShadow>
-            <meshStandardMaterial color={i === 1 ? "#FF0000" : "#0066CC"} metalness={0.8} roughness={0.2} />
+          <Box position={[0, 0.45, 0]} args={[2.5, 0.8, 1.4]} castShadow>
+            <meshStandardMaterial color={i % 2 === 0 ? "#e74c3c" : "#3498db"} metalness={0.6} roughness={0.3} />
           </Box>
           {/* Nóc xe */}
-          <Box position={[0.3, 0.9, 0]} args={[0.8, 0.4, 1]} castShadow>
+          <Box position={[0.2, 1, 0]} args={[1.2, 0.5, 1.2]} castShadow>
             <meshStandardMaterial color="#87CEEB" transparent opacity={0.6} />
           </Box>
+          {/* Đèn xe */}
+          <Box position={[1.2, 0.5, 0.4]} args={[0.1, 0.2, 0.3]}>
+            <meshStandardMaterial color="#f1c40f" emissive="#f1c40f" emissiveIntensity={2} />
+          </Box>
+          <Box position={[1.2, 0.5, -0.4]} args={[0.1, 0.2, 0.3]}>
+            <meshStandardMaterial color="#f1c40f" emissive="#f1c40f" emissiveIntensity={2} />
+          </Box>
+
           {/* Bánh xe */}
-          <Sphere position={[-0.6, 0.2, 0.6]} args={[0.25, 16, 16]}>
-            <meshStandardMaterial color="#000000" />
-          </Sphere>
-          <Sphere position={[-0.6, 0.2, -0.6]} args={[0.25, 16, 16]}>
-            <meshStandardMaterial color="#000000" />
-          </Sphere>
-          <Sphere position={[0.6, 0.2, 0.6]} args={[0.25, 16, 16]}>
-            <meshStandardMaterial color="#000000" />
-          </Sphere>
-          <Sphere position={[0.6, 0.2, -0.6]} args={[0.25, 16, 16]}>
-            <meshStandardMaterial color="#000000" />
-          </Sphere>
-          
-          {i === 1 && (
-            <Text position={[0, 1.5, 0]} fontSize={0.4} color="#FF0000">
-              ⚠️
-            </Text>
-          )}
+          {[-0.8, 0.8].map(x => [-0.6, 0.6].map(z => (
+            <mesh key={`${x}-${z}`} position={[x, 0.2, z]} rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.25, 0.25, 0.2, 16]} />
+              <meshStandardMaterial color="#000000" />
+            </mesh>
+          )))}
         </group>
       ))}
-      
-      {/* Vỉa hè */}
-      <Box position={[0, 0.1, -8]} args={[50, 0.2, 4]}>
-        <meshStandardMaterial color="#808080" />
+
+      {/* Vỉa hè 2 bên */}
+      <Box position={[0, 0.1, 10]} args={[100, 0.3, 4]} receiveShadow>
+        <meshStandardMaterial color="#7f8c8d" />
       </Box>
-      <Box position={[0, 0.1, 8]} args={[50, 0.2, 4]}>
-        <meshStandardMaterial color="#808080" />
+      <Box position={[0, 0.1, -10]} args={[100, 0.3, 4]} receiveShadow>
+        <meshStandardMaterial color="#7f8c8d" />
       </Box>
     </group>
   )
@@ -392,7 +631,7 @@ function TrafficDangerScene({ isActive }: { isActive: boolean }) {
 function WaterDangerScene({ isActive }: { isActive: boolean }) {
   const waterRef = useRef<THREE.Mesh>(null)
   const childRef = useRef<THREE.Group>(null)
-  
+
   useFrame((state) => {
     if (isActive) {
       if (waterRef.current) {
@@ -411,17 +650,17 @@ function WaterDangerScene({ isActive }: { isActive: boolean }) {
     <group>
       <ambientLight intensity={0.6} />
       <directionalLight position={[10, 10, 5]} intensity={0.7} />
-      
+
       {/* Bờ sông */}
       <Box position={[0, 0.1, 5]} args={[30, 0.2, 8]}>
         <meshStandardMaterial color="#8B7355" />
       </Box>
-      
+
       {/* Cỏ */}
       <Box position={[0, 0.05, 8]} args={[30, 0.1, 4]}>
         <meshStandardMaterial color="#90EE90" />
       </Box>
-      
+
       {/* Mặt nước nguy hiểm */}
       <mesh
         ref={waterRef}
@@ -437,17 +676,19 @@ function WaterDangerScene({ isActive }: { isActive: boolean }) {
           emissiveIntensity={0.3}
         />
       </mesh>
-      
-      {/* Đứa trẻ gần bờ - sắp té */}
+
+      {/* Đứa trẻ vùng vẫy dưới nước - drowning effect */}
       <group ref={childRef}>
-        <ChildPerson position={[0, 0, 2]} emotion="scared" />
+        <Suspense fallback={<ChildPerson position={[0, -0.5, -3]} emotion="scared" />}>
+          <TreadingWaterChild position={[0, -0.6, -3]} />
+        </Suspense>
       </group>
-      
+
       {/* Cảnh báo */}
       <Text position={[0, 2, 2]} fontSize={0.6} color="#FF0000">
         ⚠️ NGUY HIỂM
       </Text>
-      
+
       {/* Sóng nước */}
       {Array.from({ length: 10 }).map((_, i) => (
         <mesh
@@ -468,7 +709,7 @@ function RescueScene({ isActive }: { isActive: boolean }) {
   const lightRef = useRef<THREE.PointLight>(null)
   const phoneRef = useRef<THREE.Group>(null)
   const parentsRef = useRef<THREE.Group[]>([])
-  
+
   useFrame((state) => {
     if (isActive) {
       if (lightRef.current) {
@@ -494,10 +735,12 @@ function RescueScene({ isActive }: { isActive: boolean }) {
       <ambientLight intensity={1} />
       <pointLight ref={lightRef} position={[0, 5, 0]} intensity={2} color="#FFD700" />
       <Sky sunPosition={[100, 20, 100]} />
-      
-      {/* Đứa trẻ - được tìm thấy - VUI VẺ */}
-      <ChildPerson position={[0, 0, 0]} emotion="happy" withBracelet />
-      
+
+      {/* Đứa trẻ - được tìm thấy - AN TOÀN & VUI MỪNG */}
+      <Suspense fallback={<ChildPerson position={[0, 0, 0]} emotion="happy" withBracelet />}>
+        <CheeringChild position={[0, 0, 0]} />
+      </Suspense>
+
       {/* Ba (bên trái) */}
       <group
         ref={(el) => {
@@ -508,7 +751,7 @@ function RescueScene({ isActive }: { isActive: boolean }) {
         <AdultPerson position={[0, 0, 0]} color="#4169E1" />
         <Text position={[0, 2, 0]} fontSize={0.4}>👨</Text>
       </group>
-      
+
       {/* Mẹ (bên phải) */}
       <group
         ref={(el) => {
@@ -519,7 +762,7 @@ function RescueScene({ isActive }: { isActive: boolean }) {
         <AdultPerson position={[0, 0, 0]} color="#FF1493" />
         <Text position={[0, 2, 0]} fontSize={0.4}>👩</Text>
       </group>
-      
+
       {/* Điện thoại hiển thị vị trí */}
       <group ref={phoneRef} position={[0, 1.5, -2]}>
         <Box args={[0.8, 1.2, 0.1]}>
@@ -535,19 +778,19 @@ function RescueScene({ isActive }: { isActive: boolean }) {
           Đã tìm thấy!
         </Text>
       </group>
-      
+
       {/* Trái tim bay */}
       <Text position={[0, 2.5, 0]} fontSize={0.8} color="#FF69B4">
         ❤️
       </Text>
-      
+
       {/* Hiệu ứng sáng xung quanh */}
       {Array.from({ length: 8 }).map((_, i) => {
         const angle = (i / 8) * Math.PI * 2
         const radius = 3
         const x = Math.cos(angle) * radius
         const z = Math.sin(angle) * radius
-        
+
         return (
           <pointLight
             key={`light-${i}`}
@@ -558,11 +801,11 @@ function RescueScene({ isActive }: { isActive: boolean }) {
           />
         )
       })}
-      
+
       {/* Mặt đất sáng - an toàn */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[50, 50]} />
-        <meshStandardMaterial color="#90EE90" />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+        <planeGeometry args={[100, 100]} />
+        <meshStandardMaterial color="#2ecc71" roughness={0.6} />
       </mesh>
     </group>
   )
@@ -571,25 +814,25 @@ function RescueScene({ isActive }: { isActive: boolean }) {
 // Camera Controller
 function CameraController({ scene }: { scene: number }) {
   const { camera } = useThree()
-  
+
   useFrame(() => {
     const targetPositions = [
       { x: 0, y: 1.2, z: 4 },
       { x: 0, y: 0.8, z: 2.5 },
-      { x: 0, y: 0.7, z: 3 },
+      { x: 0, y: 4, z: 10 }, // Tăng y lên cao hơn cho bối cảnh giao thông
       { x: 0, y: 1, z: 5 },
       { x: 0, y: 2.5, z: 8 },
     ]
-    
+
     const target = targetPositions[scene] || targetPositions[0]
-    
+
     camera.position.lerp(
       new THREE.Vector3(target.x, target.y, target.z),
       0.05
     )
     camera.lookAt(0, 0.8, 0)
   })
-  
+
   return null
 }
 
@@ -601,7 +844,7 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
   const [scene, setScene] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
-  
+
   const audioContextRef = useRef<AudioContext | null>(null)
   const currentSoundRef = useRef<OscillatorNode | null>(null)
 
@@ -652,7 +895,7 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
     if (typeof window !== "undefined") {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
     }
-    
+
     return () => {
       if (audioContextRef.current) {
         audioContextRef.current.close()
@@ -673,45 +916,45 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
 
     const oscillator = audioContext.createOscillator()
     const gainNode = audioContext.createGain()
-    
+
     oscillator.type = sceneData.sound.type
     oscillator.frequency.value = sceneData.sound.frequency
-    
+
     gainNode.gain.setValueAtTime(0, audioContext.currentTime)
     gainNode.gain.linearRampToValueAtTime(
       scene === scenes.length - 1 ? 0.15 : 0.08,
       audioContext.currentTime + 0.5
     )
     gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + (sceneData.duration / 1000) - 0.5)
-    
+
     oscillator.connect(gainNode)
     gainNode.connect(audioContext.destination)
-    
+
     oscillator.start()
     oscillator.stop(audioContext.currentTime + (sceneData.duration / 1000))
-    
+
     currentSoundRef.current = oscillator
 
     if (scene >= 1 && scene <= 3) {
       const playAlarm = () => {
         if (!soundEnabled || !audioContext) return
-        
+
         const alarm = audioContext.createOscillator()
         const alarmGain = audioContext.createGain()
-        
+
         alarm.type = "square"
         alarm.frequency.value = scene === 1 ? 440 : scene === 2 ? 880 : 660
-        
+
         alarmGain.gain.setValueAtTime(0.1, audioContext.currentTime)
         alarmGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2)
-        
+
         alarm.connect(alarmGain)
         alarmGain.connect(audioContext.destination)
-        
+
         alarm.start()
         alarm.stop(audioContext.currentTime + 0.2)
       }
-      
+
       const alarmInterval = setInterval(playAlarm, 1000)
       return () => clearInterval(alarmInterval)
     }
@@ -722,21 +965,21 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
           if (!soundEnabled || !audioContext) return
           const chime = audioContext.createOscillator()
           const chimeGain = audioContext.createGain()
-          
+
           chime.type = "sine"
           chime.frequency.value = freq
-          
+
           chimeGain.gain.setValueAtTime(0.15, audioContext.currentTime)
           chimeGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5)
-          
+
           chime.connect(chimeGain)
           chimeGain.connect(audioContext.destination)
-          
+
           chime.start()
           chime.stop(audioContext.currentTime + 0.5)
         }, delay)
       }
-      
+
       playChime(500, 523)
       playChime(700, 659)
       playChime(900, 784)
@@ -769,23 +1012,39 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
     setIsPlaying(false)
   }
 
+  const handleNext = () => {
+    if (scene < scenes.length - 1) {
+      setScene(prev => prev + 1)
+    } else {
+      setIsPlaying(false)
+    }
+  }
+
+  const handlePrev = () => {
+    if (scene > 0) {
+      setScene(prev => prev - 1)
+    }
+  }
+
   return (
     <div className="relative w-full h-[700px] bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-2xl overflow-hidden shadow-2xl border border-white/10">
       <Canvas shadows>
         <CameraController scene={scene} />
-        
+
         <ambientLight intensity={scene === 4 ? 0.8 : scene >= 1 && scene <= 3 ? 0.3 : 0.5} />
         <directionalLight
           position={[10, 10, 5]}
           intensity={scene === 4 ? 1 : 0.5}
           castShadow
         />
-        
-        <SupermarketScene isActive={scene === 0} />
-        <StrangerDangerScene isActive={scene === 1} />
-        <TrafficDangerScene isActive={scene === 2} />
-        <WaterDangerScene isActive={scene === 3} />
-        <RescueScene isActive={scene === 4} />
+
+        <Suspense fallback={null}>
+          <UrbanCrowdScene isActive={scene === 0} />
+          <StrangerDangerScene isActive={scene === 1} />
+          <TrafficDangerScene isActive={scene === 2} />
+          <WaterDangerScene isActive={scene === 3} />
+          <RescueScene isActive={scene === 4} />
+        </Suspense>
       </Canvas>
 
       <div className="absolute inset-0 pointer-events-none">
@@ -810,11 +1069,10 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
               transition={{ duration: 0.5 }}
               className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent"
             >
-              <Card className={`p-6 border-2 ${
-                scene === 4 ? 'bg-green-500/20 border-green-500/50 backdrop-blur-lg' :
+              <Card className={`p-6 border-2 ${scene === 4 ? 'bg-green-500/20 border-green-500/50 backdrop-blur-lg' :
                 scene >= 1 && scene <= 3 ? 'bg-red-500/20 border-red-500/50 backdrop-blur-lg' :
-                'bg-black/50 border-white/10 backdrop-blur-lg'
-              }`}>
+                  'bg-black/50 border-white/10 backdrop-blur-lg'
+                }`}>
                 <div className="flex items-start gap-4">
                   <div className="text-5xl">{scenes[scene].emotion}</div>
                   <div className="flex-1">
@@ -839,7 +1097,7 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="mt-4 w-full h-2 bg-white/10 rounded-full overflow-hidden">
                   <motion.div
                     className={`h-full ${scene === 4 ? 'bg-green-500' : scene >= 1 && scene <= 3 ? 'bg-red-500' : 'bg-primary'}`}
@@ -875,12 +1133,12 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
                   </>
                 ) : (
                   <>
-                    Với vòng tay <span className="text-primary font-bold">ARTEMIS GPS</span>, 
+                    Với vòng tay <span className="text-primary font-bold">ARTEMIS GPS</span>,
                     những nguy hiểm này có thể <span className="text-green-400 font-bold">NGĂN CHẶN HOÀN TOÀN</span>!
                   </>
                 )}
               </p>
-              
+
               <div className="flex gap-3 justify-center pointer-events-auto">
                 <Button
                   size="lg"
@@ -890,7 +1148,7 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
                   <Play className="h-5 w-5" />
                   {scene === 0 ? "Bắt đầu trải nghiệm" : "Xem lại"}
                 </Button>
-                
+
                 {scene > 0 && (
                   <Button
                     size="lg"
@@ -903,7 +1161,7 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
                   </Button>
                 )}
               </div>
-              
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -944,7 +1202,7 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
                   Với ARTEMIS GPS, bạn luôn biết con mình ở đâu và giữ con an toàn!
                 </span>
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center pointer-events-auto">
                 <Button size="lg" className="text-lg h-14 px-8" asChild>
                   <a href="/products">
@@ -966,15 +1224,45 @@ export function LostChildSimulation3D({ onClose }: LostChildSimulation3DProps) {
           {scenes.map((_, i) => (
             <div
               key={i}
-              className={`h-2 w-16 rounded-full transition-all ${
-                i === scene
-                  ? i === 4 ? "bg-green-500" : i >= 1 && i <= 3 ? "bg-red-500" : "bg-primary"
-                  : i < scene
+              className={`h-2 w-16 rounded-full transition-all ${i === scene
+                ? i === 4 ? "bg-green-500" : i >= 1 && i <= 3 ? "bg-red-500" : "bg-primary"
+                : i < scene
                   ? "bg-white/50"
                   : "bg-white/20"
-              }`}
+                }`}
             />
           ))}
+        </div>
+      )}
+
+      {/* Nút Previous/Next điều hướng tay */}
+      {isPlaying && (
+        <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 pointer-events-none">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePrev();
+            }}
+            disabled={scene === 0}
+            className={`h-12 w-12 rounded-full bg-black/20 hover:bg-black/40 text-white border border-white/10 pointer-events-auto transition-all ${scene === 0 ? "opacity-0 invisible" : "opacity-100"
+              }`}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNext();
+            }}
+            className="h-12 w-12 rounded-full bg-black/20 hover:bg-black/40 text-white border border-white/10 pointer-events-auto transition-all"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
         </div>
       )}
     </div>
