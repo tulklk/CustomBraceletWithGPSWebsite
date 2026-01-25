@@ -378,7 +378,7 @@ function UrbanCrowdScene({ isActive }: { isActive: boolean }) {
       })}
 
       {/* Đứa trẻ đang khóc hoảng loạn ở giữa */}
-      <Suspense fallback={<ChildPerson position={[0, 0, 0]} emotion="scared" />}>
+      <Suspense fallback={null}>
         <CryingChild position={[0, 0, 0]} scale={0.4} />
       </Suspense>
 
@@ -430,7 +430,7 @@ function StrangerDangerScene({ isActive }: { isActive: boolean }) {
       <pointLight position={[0, 5, 0]} intensity={0.5} color="#FF0000" />
 
       {/* Đứa trẻ - sợ hãi */}
-      <Suspense fallback={<ChildPerson position={[0, 0, 0]} emotion="crying" />}>
+      <Suspense fallback={null}>
         <TerrifiedChild position={[0, 0, 0]} />
       </Suspense>
 
@@ -545,7 +545,7 @@ function TrafficDangerScene({ isActive }: { isActive: boolean }) {
       <directionalLight position={[10, 10, 5]} intensity={0.8} castShadow />
 
       {/* Đứa trẻ đang băng qua đường */}
-      <Suspense fallback={<ChildPerson position={[0, 0, 8]} emotion="scared" />}>
+      <Suspense fallback={null}>
         <group ref={childRef} position={[0, 0, 8]}>
           <RunningChild />
         </group>
@@ -679,7 +679,7 @@ function WaterDangerScene({ isActive }: { isActive: boolean }) {
 
       {/* Đứa trẻ vùng vẫy dưới nước - drowning effect */}
       <group ref={childRef}>
-        <Suspense fallback={<ChildPerson position={[0, -0.5, -3]} emotion="scared" />}>
+        <Suspense fallback={null}>
           <TreadingWaterChild position={[0, -0.6, -3]} />
         </Suspense>
       </group>
@@ -737,7 +737,7 @@ function RescueScene({ isActive }: { isActive: boolean }) {
       <Sky sunPosition={[100, 20, 100]} />
 
       {/* Đứa trẻ - được tìm thấy - AN TOÀN & VUI MỪNG */}
-      <Suspense fallback={<ChildPerson position={[0, 0, 0]} emotion="happy" withBracelet />}>
+      <Suspense fallback={null}>
         <CheeringChild position={[0, 0, 0]} />
       </Suspense>
 
