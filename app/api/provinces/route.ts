@@ -72,25 +72,25 @@ export async function GET(request: NextRequest) {
     // For districts action, extract districts from province response
     if (action === "districts") {
       let districts: any[] = []
-      
+
       // Response should be an array of all provinces with depth=2
       if (Array.isArray(data)) {
         const provinceCodeNum = parseInt(code || "0")
         const province = data.find((p: any) => {
           const pCode = typeof p.code === 'number' ? p.code : parseInt(p.code || "0")
-          return pCode === provinceCodeNum || 
-                 p.code?.toString() === code ||
-                 parseInt(p.code?.toString() || "0") === provinceCodeNum
+          return pCode === provinceCodeNum ||
+            p.code?.toString() === code ||
+            parseInt(p.code?.toString() || "0") === provinceCodeNum
         })
-        
+
         if (province) {
           console.log(`Found province: ${province.name}, code: ${province.code}`)
           console.log(`Province keys:`, Object.keys(province))
-          
+
           // Try multiple possible property names for districts
           districts = province.districts || province.d || []
           console.log(`Districts from province.districts: ${districts.length}`)
-          
+
           // If no districts, check if we need to fetch them differently
           // Some API versions might require a separate call
           if (districts.length === 0) {
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
               hasWards: !!province.wards,
               wardsCount: province.wards?.length || 0,
             })
-            
+
             // Try fetching districts directly using /p/{code}/d endpoint
             try {
               const districtsUrl = `${PROVINCES_API_BASE}/p/${code}/d`
@@ -111,12 +111,12 @@ export async function GET(request: NextRequest) {
                   "Accept": "application/json",
                 },
               })
-              
+
               if (districtsResponse.ok) {
                 const districtsData = await districtsResponse.json()
                 console.log("Direct districts response type:", Array.isArray(districtsData) ? "array" : "object")
                 console.log("Direct districts response keys:", Array.isArray(districtsData) ? `Array(${districtsData.length})` : Object.keys(districtsData))
-                
+
                 // Handle different response formats
                 if (Array.isArray(districtsData)) {
                   districts = districtsData
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
         districts = data.districts || data.d || []
         console.log(`Districts from single province object: ${districts.length}`)
       }
-      
+
       console.log(`Final extracted districts count: ${districts.length}`)
       return NextResponse.json({
         districts: districts,
