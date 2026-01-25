@@ -1,15 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Loader2, CheckCircle2, XCircle, Package, Clock, Truck, CheckCircle } from "lucide-react"
+import { Search, Loader2, CheckCircle2, XCircle, Package, Clock, Truck, CheckCircle, CreditCard, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ordersApi, OrderStatus } from "@/lib/api/orders"
+import { ordersApi, OrderStatus, GuestOrderStatusResponse } from "@/lib/api/orders"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import dayjs from "dayjs"
+import "dayjs/locale/vi"
+dayjs.locale("vi")
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; icon: React.ReactNode }> = {
   Pending: {
@@ -44,10 +47,30 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; icon: Re
   },
 }
 
+const paymentStatusConfig: Record<string, { label: string; color: string }> = {
+  Pending: {
+    label: "Chờ thanh toán",
+    color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
+  },
+  Paid: {
+    label: "Đã thanh toán",
+    color: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
+  },
+}
+
+const paymentMethodConfig: Record<string, { label: string }> = {
+  COD: {
+    label: "Thanh toán khi nhận hàng",
+  },
+  PayOS: {
+    label: "PayOS",
+  },
+}
+
 export default function OrderLookupPage() {
   const [orderNumber, setOrderNumber] = useState("")
   const [loading, setLoading] = useState(false)
-  const [orderStatus, setOrderStatus] = useState<OrderStatus | null>(null)
+  const [orderData, setOrderData] = useState<GuestOrderStatusResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
@@ -65,14 +88,14 @@ export default function OrderLookupPage() {
 
     setLoading(true)
     setError(null)
-    setOrderStatus(null)
+    setOrderData(null)
 
     try {
       const result = await ordersApi.getGuestOrderStatus(orderNumber.trim())
-      setOrderStatus(result.status)
+      setOrderData(result)
       toast({
         title: "Tra cứu thành công!",
-        description: `Trạng thái đơn hàng: ${statusConfig[result.status]?.label || result.status}`,
+        description: `Trạng thái đơn hàng: ${statusConfig[result.orderStatus]?.label || result.orderStatus}`,
       })
     } catch (error: any) {
       console.error("Order lookup error:", error)
@@ -151,25 +174,102 @@ export default function OrderLookupPage() {
             )}
 
             {/* Order Status Result */}
-            {orderStatus && !error && (
-              <div className="mt-6 p-6 bg-muted/50 dark:bg-muted/30 rounded-lg border">
+            {orderData && !error && (
+              <div className="mt-6 p-6 bg-muted/50 dark:bg-muted/30 rounded-lg border space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Trạng thái đơn hàng</h3>
+                  <h3 className="text-lg font-semibold">Thông tin đơn hàng</h3>
                   <Badge
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-1",
-                      statusConfig[orderStatus]?.color
+                      statusConfig[orderData.orderStatus]?.color
                     )}
                   >
-                    {statusConfig[orderStatus]?.icon}
-                    {statusConfig[orderStatus]?.label || orderStatus}
+                    {statusConfig[orderData.orderStatus]?.icon}
+                    {statusConfig[orderData.orderStatus]?.label || orderData.orderStatus}
                   </Badge>
                 </div>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>
-                    <span className="font-medium">Mã đơn hàng:</span> {orderNumber}
-                  </p>
-                  <p className="text-xs mt-4">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Order Number */}
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Mã đơn hàng</p>
+                    <p className="text-sm font-medium">{orderData.orderNumber}</p>
+                  </div>
+
+                  {/* Order Status */}
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Trạng thái đơn hàng</p>
+                    <Badge
+                      className={cn(
+                        "flex items-center gap-1.5 px-2 py-0.5 w-fit",
+                        statusConfig[orderData.orderStatus]?.color
+                      )}
+                    >
+                      {statusConfig[orderData.orderStatus]?.icon}
+                      {statusConfig[orderData.orderStatus]?.label || orderData.orderStatus}
+                    </Badge>
+                  </div>
+
+                  {/* Payment Status */}
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Trạng thái thanh toán</p>
+                    <Badge
+                      className={cn(
+                        "flex items-center gap-1.5 px-2 py-0.5 w-fit",
+                        paymentStatusConfig[orderData.paymentStatus]?.color || "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
+                      )}
+                    >
+                      <CreditCard className="h-3 w-3" />
+                      {paymentStatusConfig[orderData.paymentStatus]?.label || orderData.paymentStatus}
+                    </Badge>
+                  </div>
+
+                  {/* Payment Method */}
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Phương thức thanh toán</p>
+                    <p className="text-sm font-medium">
+                      {paymentMethodConfig[orderData.paymentMethod]?.label || orderData.paymentMethod}
+                    </p>
+                  </div>
+
+                  {/* Total Amount */}
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Tổng tiền</p>
+                    <p className="text-sm font-semibold text-primary">
+                      {new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(orderData.totalAmount)}
+                    </p>
+                  </div>
+
+                  {/* Created At */}
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Ngày tạo</p>
+                    <div className="flex items-center gap-1.5 text-sm">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="font-medium">
+                        {dayjs(orderData.createdAt).format("DD/MM/YYYY HH:mm")}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Updated At */}
+                  {orderData.updatedAt && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Cập nhật lần cuối</p>
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="font-medium">
+                          {dayjs(orderData.updatedAt).format("DD/MM/YYYY HH:mm")}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t">
+                  <p className="text-xs text-muted-foreground">
                     Nếu bạn cần hỗ trợ thêm, vui lòng liên hệ với chúng tôi qua email hoặc hotline.
                   </p>
                 </div>
