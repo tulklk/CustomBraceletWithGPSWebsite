@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 
-  (process.env.NODE_ENV === 'development' 
-    ? "http://localhost:5037" 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'development'
+    ? "http://localhost:5037"
     : "https://customerbraceletwithgpswebsite-backend.fly.dev")
 
 /**
@@ -10,6 +10,11 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ||
  * This helps bypass CORS issues when accessing from different browsers
  */
 export async function GET(request: NextRequest) {
+  // Allowance for self-signed certificates in development
+  if (process.env.NODE_ENV === 'development') {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  }
+
   try {
     const searchParams = request.nextUrl.searchParams
     const page = searchParams.get("page") || "1"
@@ -38,7 +43,7 @@ export async function GET(request: NextRequest) {
       } catch {
         errorData = { message: errorText || `HTTP error! status: ${response.status}` }
       }
-      
+
       console.error("[Child Abduction News Proxy] Error response:", errorData)
       return NextResponse.json(errorData, { status: response.status })
     }
