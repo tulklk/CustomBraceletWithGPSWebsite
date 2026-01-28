@@ -626,6 +626,32 @@ export default function ProductsPage() {
                 value={formData.model3DUrl}
                 onChange={(url) => setFormData({ ...formData, model3DUrl: url })}
               />
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Hoặc
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="model3DUrl">Nhập URL Model 3D (optional)</Label>
+                <Input
+                  id="model3DUrl"
+                  type="url"
+                  placeholder="https://example.com/model.glb"
+                  value={formData.model3DUrl || ""}
+                  onChange={(e) => {
+                    const url = e.target.value.trim() || null
+                    setFormData({ ...formData, model3DUrl: url })
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Dán link URL của file Model 3D (GLB/GLTF) từ bất kỳ nguồn nào
+                </p>
+              </div>
             </div>
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="space-y-0.5">

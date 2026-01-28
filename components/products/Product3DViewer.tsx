@@ -24,12 +24,12 @@ function getFullModelUrl(modelUrl: string): string {
   if (modelUrl.startsWith('http://') || modelUrl.startsWith('https://')) {
     return modelUrl;
   }
-  
+
   // If relative path starting with /, append to API_BASE_URL
   if (modelUrl.startsWith('/')) {
     return `${API_BASE_URL}${modelUrl}`;
   }
-  
+
   // If relative path without leading /, add it
   return `${API_BASE_URL}/${modelUrl}`;
 }
@@ -37,7 +37,7 @@ function getFullModelUrl(modelUrl: string): string {
 // Export preload function for use in parent component
 export function preload3DModel(modelUrl: string): void {
   if (!modelUrl) return;
-  
+
   try {
     const fullUrl = getFullModelUrl(modelUrl);
     // Preload the model using drei's preload function

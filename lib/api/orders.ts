@@ -129,6 +129,19 @@ export interface PaymentResponse {
   paymentUrl: string // URL để redirect đến PayOS checkout page
 }
 
+// Guest Order Status Response
+export interface GuestOrderStatusResponse {
+  orderId: string
+  orderNumber: string
+  orderStatus: OrderStatus
+  paymentStatus: string
+  paymentMethod: string
+  totalAmount: number
+  createdAt: string
+  updatedAt: string
+  statusDescription?: string
+}
+
 // Orders API Service
 export const ordersApi = {
   /**
@@ -692,10 +705,10 @@ export const ordersApi = {
    * Get guest order status by order number
    * GET /api/guest/orders/status/{orderNumber}
    */
-  async getGuestOrderStatus(orderNumber: string): Promise<{ status: OrderStatus }> {
+  async getGuestOrderStatus(orderNumber: string): Promise<GuestOrderStatusResponse> {
     const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
     
-    return cachedFetch<{ status: OrderStatus }>(
+    return cachedFetch<GuestOrderStatusResponse>(
       `${API_BASE_URL}/api/guest/orders/status/${orderNumber}`,
       {
         method: "GET",

@@ -18,6 +18,27 @@ const nextConfig = {
         hostname: 'platform-lookaside.fbsbx.com',
         pathname: '/**',
       },
+      // Vietnamese news websites
+      {
+        protocol: 'https',
+        hostname: '**.vnecdn.net',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'icdn.dantri.com.vn',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.tuoitre.vn',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.thanhnien.vn',
+        pathname: '/**',
+      },
     ],
   },
 }

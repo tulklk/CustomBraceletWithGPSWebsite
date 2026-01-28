@@ -2,72 +2,94 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { newsApi } from "@/lib/api/news"
-import { NewsDto } from "@/lib/types"
-import Link from "next/link"
+import { ChildAbductionArticle } from "@/lib/types"
 import Image from "next/image"
 import dayjs from "dayjs"
 import "dayjs/locale/vi"
-import { Search, Calendar, Eye, User } from "lucide-react"
+import { Calendar, ExternalLink, AlertTriangle, ChevronLeft, ChevronRight, Search, X } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Input } from "@/components/ui/input"
 dayjs.locale("vi")
 
 export default function NewsPage() {
-  const [news, setNews] = useState<NewsDto[]>([])
+  const [allArticles, setAllArticles] = useState<ChildAbductionArticle[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
   const [page, setPage] = useState(1)
-  const [pageSize] = useState(12)
-  const [category, setCategory] = useState<string>("all")
-  const [search, setSearch] = useState("")
-  const [searchInput, setSearchInput] = useState("")
+  const [pageSize] = useState(6)
+  const [totalCount, setTotalCount] = useState(0)
+  const [sources, setSources] = useState<string[]>([])
 
-  // Get unique categories from news
-  const categories = useMemo(() => {
-    const cats = news.map((item) => item.category).filter(Boolean) as string[]
-    return Array.from(new Set(cats)).sort()
-  }, [news])
-
+  // Load all articles on mount
   useEffect(() => {
-    fetchNews()
-  }, [page, category, search])
+    fetchAllNews()
+  }, [])
 
-  const fetchNews = async () => {
+  // Reset page when search query changes (separate effect to avoid loop)
+  useEffect(() => {
+    if (searchQuery.trim() !== "") {
+      setPage(1)
+    }
+  }, [searchQuery])
+
+  // Use useMemo to filter articles (avoids re-render issues)
+  const filteredArticles = useMemo(() => {
+    if (!allArticles.length) return []
+
+    if (searchQuery.trim() === "") {
+      return allArticles
+    }
+
+    return allArticles.filter((article) =>
+      article.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [allArticles, searchQuery])
+
+  // Paginate filtered articles
+  const articles = useMemo(() => {
+    if (searchQuery.trim() === "") {
+      const startIndex = (page - 1) * pageSize
+      const endIndex = startIndex + pageSize
+      return filteredArticles.slice(startIndex, endIndex)
+    }
+    return filteredArticles
+  }, [filteredArticles, page, pageSize, searchQuery])
+
+  const totalPages = useMemo(() => {
+    if (searchQuery.trim() === "") {
+      return Math.ceil(filteredArticles.length / pageSize)
+    }
+    return 1
+  }, [filteredArticles.length, pageSize, searchQuery])
+
+  const fetchAllNews = async () => {
     try {
       setLoading(true)
-      const data = await newsApi.getAll({
-        page,
-        pageSize,
-        category: category === "all" ? undefined : category,
-        search: search || undefined,
-      })
-      setNews(data)
+      // Load all articles with a large pageSize
+      const data = await newsApi.getChildAbductionNews(1, 100) // Load up to 100 articles
+      setAllArticles(data.articles || [])
+      setTotalCount(data.totalCount || 0)
+      setSources(data.sources || [])
     } catch (error: any) {
-      console.error("Error fetching news:", error)
+      console.error("Error fetching child abduction news:", error)
+      setAllArticles([])
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSearch = () => {
-    setSearch(searchInput)
-    setPage(1) // Reset to first page when searching
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
   }
 
-  const handleCategoryChange = (value: string) => {
-    setCategory(value)
-    setPage(1) // Reset to first page when changing category
+  const clearSearch = () => {
+    setSearchQuery("")
   }
 
-  if (loading && news.length === 0) {
+  if (loading && allArticles.length === 0) {
     return (
       <div className="container py-8 md:py-12 px-4">
         <div className="flex items-center justify-center h-96">
@@ -84,170 +106,144 @@ export default function NewsPage() {
     <div className="container py-8 md:py-12 px-4">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">Tin tức</h1>
+        <div className="flex items-center gap-2 mb-2">
+          <AlertTriangle className="h-8 w-8 text-destructive" />
+          <h1 className="text-3xl md:text-4xl font-bold">Tin tức về An toàn Trẻ em</h1>
+        </div>
         <p className="text-muted-foreground">
-          Cập nhật những tin tức mới nhất về sản phẩm và dịch vụ
+          Cập nhật những tin tức mới nhất về an toàn trẻ em và phòng chống bắt cóc
         </p>
       </div>
 
-      {/* Search and Filter */}
-      <div className="mb-8 space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 flex gap-2">
-            <Input
-              placeholder="Tìm kiếm tin tức..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleSearch()
-                }
-              }}
-              className="flex-1"
-            />
-            <Button onClick={handleSearch}>
-              <Search className="h-4 w-4 mr-2" />
-              Tìm kiếm
+      {/* Info Alert */}
+      <Alert className="mb-8">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Thông tin nguồn tin</AlertTitle>
+        <AlertDescription>
+          Tin tức được tổng hợp từ {sources.length} nguồn uy tín: {sources.join(", ")}.
+          Tổng cộng có <strong>{totalCount}</strong> bài viết liên quan.
+        </AlertDescription>
+      </Alert>
+
+      {/* Search Bar */}
+      <div className="mb-8">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Tìm kiếm theo tiêu đề..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="pl-10 pr-10"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
+              onClick={clearSearch}
+            >
+              <X className="h-4 w-4" />
             </Button>
-          </div>
-          <div className="w-full sm:w-48">
-            <Select value={category} onValueChange={handleCategoryChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tất cả danh mục" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả danh mục</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          )}
         </div>
-        {(search || category !== "all") && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-muted-foreground">Đang lọc:</span>
-            {search && (
-              <Badge variant="secondary" className="gap-1">
-                Tìm kiếm: {search}
-                <button
-                  onClick={() => {
-                    setSearch("")
-                    setSearchInput("")
-                  }}
-                  className="ml-1 hover:text-destructive"
-                >
-                  ×
-                </button>
-              </Badge>
-            )}
-            {category !== "all" && (
-              <Badge variant="secondary" className="gap-1">
-                Danh mục: {category}
-                <button
-                  onClick={() => setCategory("all")}
-                  className="ml-1 hover:text-destructive"
-                >
-                  ×
-                </button>
-              </Badge>
-            )}
-          </div>
+        {searchQuery && (
+          <p className="text-sm text-muted-foreground mt-2">
+            Tìm thấy <strong>{filteredArticles.length}</strong> bài viết phù hợp với &quot;{searchQuery}&quot;
+          </p>
         )}
       </div>
 
       {/* News Grid */}
-      {news.length === 0 ? (
+      {articles.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground text-lg">
-            {search || category !== "all"
-              ? "Không tìm thấy tin tức nào"
-              : "Chưa có tin tức nào"}
+            {searchQuery ? `Không tìm thấy bài viết nào với "${searchQuery}"` : "Không có tin tức nào"}
           </p>
         </div>
       ) : (
         <>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {news.map((item) => (
+            {articles.map((article) => (
               <Card
-                key={item.id}
-                className="overflow-hidden hover:shadow-lg transition-shadow"
+                key={article.id}
+                className="overflow-hidden hover:shadow-lg transition-shadow group"
               >
-                <Link href={`/news/${item.slug}`}>
-                  {item.thumbnailUrl && (
+                <a
+                  href={article.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  {article.imageUrl && (
                     <div className="aspect-video relative overflow-hidden bg-muted">
                       <Image
-                        src={item.thumbnailUrl}
-                        alt={item.title}
+                        src={article.imageUrl}
+                        alt={article.title}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
                   )}
                   <CardContent className="p-4">
-                    {item.category && (
-                      <Badge variant="outline" className="mb-2">
-                        {item.category}
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="outline" className="text-xs">
+                        {article.source}
                       </Badge>
-                    )}
-                    <h3 className="font-semibold text-lg mb-2 line-clamp-2 hover:text-primary transition-colors">
-                      {item.title}
+                      <Badge variant="secondary" className="text-xs">
+                        {article.category}
+                      </Badge>
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                      {article.title}
                     </h3>
-                    {item.summary && (
+                    {article.description && (
                       <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                        {item.summary}
+                        {article.description}
                       </p>
                     )}
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-3">
-                        {item.publishedAt && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>
-                              {dayjs(item.publishedAt).format("DD/MM/YYYY")}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          <span>{item.viewCount || 0}</span>
-                        </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>
+                          {dayjs(article.publishedDate).format("DD/MM/YYYY HH:mm")}
+                        </span>
                       </div>
-                      {item.authorName && (
-                        <div className="flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          <span>{item.authorName}</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1 text-primary">
+                        <span>Xem chi tiết</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </div>
                     </div>
                   </CardContent>
-                </Link>
+                </a>
               </Card>
             ))}
           </div>
 
-          {/* Pagination */}
-          {news.length >= pageSize && (
-            <div className="flex items-center justify-center gap-2">
+          {/* Pagination - Only show if not searching */}
+          {!searchQuery && (
+            <div className="flex items-center justify-center gap-4">
               <Button
                 variant="outline"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
+                disabled={page === 1 || loading}
+                className="gap-2"
               >
-                Trước
+                <ChevronLeft className="h-4 w-4" />
+                Trang trước
               </Button>
-              <span className="text-sm text-muted-foreground">
-                Trang {page}
-              </span>
+              <div className="text-sm text-muted-foreground">
+                Trang <strong>{page}</strong> / <strong>{totalPages}</strong>
+              </div>
               <Button
                 variant="outline"
-                onClick={() => setPage((p) => p + 1)}
-                disabled={news.length < pageSize}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages || loading}
+                className="gap-2"
               >
-                Sau
+                Trang sau
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           )}
@@ -256,4 +252,3 @@ export default function NewsPage() {
     </div>
   )
 }
-
