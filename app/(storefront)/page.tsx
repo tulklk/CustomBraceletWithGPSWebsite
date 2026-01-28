@@ -24,6 +24,7 @@ import {
 import { Product, Template } from "@/lib/types"
 import { productsApi, BackendProduct } from "@/lib/api/products"
 import { categoriesApi, Category } from "@/lib/api/categories"
+import { slugify } from "@/lib/utils"
 
 // Mock data - same as API routes (for templates)
 const MOCK_PRODUCTS: Product[] = [
@@ -1162,8 +1163,8 @@ export default function HomePage() {
               
               // Build category URL
               const categoryUrl = braceletCategory
-                ? `/products?category=${encodeURIComponent(braceletCategory.name)}${braceletCategory.id ? `&categoryId=${braceletCategory.id}` : ''}`
-                : '/products'
+                ? `/products/category/${slugify(braceletCategory.name)}`
+                : "/products"
               
               return (
                 <StaggerItem key={template.id}>
@@ -1271,7 +1272,7 @@ export default function HomePage() {
               className="inline-block"
             >
               <Button asChild size="lg" variant="secondary" className="w-full sm:w-auto text-sm sm:text-base">
-                <Link href={`/products?category=${encodeURIComponent("Vòng tay thông minh")}`}>Khám phá ngay</Link>
+                <Link href={`/products/category/${slugify("Vòng tay thông minh")}`}>Khám phá ngay</Link>
               </Button>
             </motion.div>
           </ScrollAnimation>

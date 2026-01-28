@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Separator } from "@/components/ui/separator"
 import { Logo } from "@/components/Logo"
 import { Mail, Phone, MapPin } from "lucide-react"
+import { slugify } from "@/lib/utils"
 
 export function Footer() {
   return (
@@ -35,17 +36,17 @@ export function Footer() {
             <h3 className="font-semibold mb-4 text-primary">Sản phẩm</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href={`/products?category=${encodeURIComponent("Vòng tay thông minh")}`} className="text-muted-foreground hover:text-primary transition-colors">
+                <Link href={`/products/category/${slugify("Vòng tay thông minh")}`} className="text-muted-foreground hover:text-primary transition-colors">
                   ARTEMIS Vòng tay thông minh
                 </Link>
               </li>
               <li>
-                <Link href={`/products?category=${encodeURIComponent("Dây chuyền")}`} className="text-muted-foreground hover:text-primary transition-colors">
+                <Link href={`/products/category/${slugify("Dây chuyền")}`} className="text-muted-foreground hover:text-primary transition-colors">
                   ARTEMIS Dây chuyền
                 </Link>
               </li>
               <li>
-                <Link href={`/products?category=${encodeURIComponent("Pin kẹp quần áo")}`} className="text-muted-foreground hover:text-primary transition-colors">
+                <Link href={`/products/category/${slugify("Pin kẹp quần áo")}`} className="text-muted-foreground hover:text-primary transition-colors">
                   ARTEMIS Pin kẹp
                 </Link>
               </li>

@@ -26,9 +26,36 @@ import {
 } from "recharts"
 import { useUser } from "@/store/useUser"
 import { adminApi } from "@/lib/api/admin"
-import { AdminOrder, AdminReport } from "@/lib/types"
+import { AdminOrder, AdminReport, ORDER_STATUS_MAP } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { formatCurrency } from "@/lib/utils"
+
+function getAdminOrderCustomerDisplay(order: AdminOrder): string {
+  return (
+    order.customerName ||
+    order.userFullName ||
+    order.guestFullName ||
+    order.customerEmail ||
+    order.userEmail ||
+    order.guestEmail ||
+    "N/A"
+  )
+}
+
+function getAdminOrderCodeDisplay(order: AdminOrder): string {
+  return order.orderCode || order.orderNumber || "N/A"
+}
+
+function getAdminOrderStatusLabel(order: AdminOrder): string {
+  // Prefer numeric status from API
+  if (typeof order.orderStatus === "number") {
+    const match = Object.values(ORDER_STATUS_MAP).find((s) => s.value === order.orderStatus)
+    if (match?.label) return match.label
+  }
+
+  // Fallback to legacy string field
+  return order.status || "N/A"
+}
 
 export default function AdminDashboard() {
   const { user, makeAuthenticatedRequest } = useUser()
@@ -79,12 +106,13 @@ export default function AdminDashboard() {
       key: "orderCode",
       label: "Mã đơn",
       sortable: true,
+      render: (order: AdminOrder) => getAdminOrderCodeDisplay(order),
     },
     {
       key: "customerName",
       label: "Khách hàng",
       sortable: true,
-      render: (order: AdminOrder) => order.customerName || order.customerEmail || "N/A",
+      render: (order: AdminOrder) => getAdminOrderCustomerDisplay(order),
     },
     {
       key: "totalAmount",
@@ -103,10 +131,12 @@ export default function AdminDashboard() {
         const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
           "Đang xử lý": { label: "Đang xử lý", variant: "default" },
           "Đã xác nhận": { label: "Đã xác nhận", variant: "default" },
-          "Đã giao": { label: "Đã giao", variant: "default" },
+          "Đang chuẩn bị": { label: "Đang chuẩn bị", variant: "default" },
+          "Đã giao hàng": { label: "Đã giao hàng", variant: "default" },
+          "Hoàn thành": { label: "Hoàn thành", variant: "default" },
           "Đã hủy": { label: "Đã hủy", variant: "destructive" },
         }
-        const orderStatus = order.status || "N/A"
+        const orderStatus = getAdminOrderStatusLabel(order)
         const status = statusMap[orderStatus] || { label: orderStatus, variant: "secondary" as const }
         return <Badge variant={status.variant}>{status.label}</Badge>
       },

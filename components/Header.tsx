@@ -30,7 +30,7 @@ import { AuthModal } from "./AuthModal"
 import { Logo } from "@/components/Logo"
 import { SearchBar } from "./SearchBar"
 import { categoriesApi, Category } from "@/lib/api/categories"
-import { cn } from "@/lib/utils"
+import { cn, slugify } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
 // Component to handle verified query param (needs Suspense)
@@ -222,7 +222,7 @@ export function Header() {
                         {categories.map((category) => (
                           <Link
                             key={category.id || category.name}
-                            href={`/products?category=${encodeURIComponent(category.name)}${category.id ? `&categoryId=${category.id}` : ''}`}
+                            href={`/products/category/${slugify(category.name)}`}
                             className="block px-8 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                             onClick={() => {
                               setMobileMenuOpen(false)
@@ -318,7 +318,7 @@ export function Header() {
                         {categories.map((category) => (
                           <Link
                             key={category.id || category.name}
-                            href={`/products?category=${encodeURIComponent(category.name)}${category.id ? `&categoryId=${category.id}` : ''}`}
+                            href={`/products/category/${slugify(category.name)}`}
                             className="block px-4 py-2 text-sm hover:bg-accent transition-colors cursor-pointer"
                             onClick={() => setProductsDropdownOpen(false)}
                           >

@@ -34,7 +34,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, slugify } from "@/lib/utils"
 import { Minus, Plus, ChevronRight, Facebook, MessageCircle, X, Upload, Heart } from "lucide-react"
 import { Suspense } from "react"
 import { uploadImageToCloudinary } from "@/lib/cloudinary"
@@ -810,7 +810,7 @@ export default function ProductDetailPage() {
         {productCategory ? (
           <>
             <Link 
-              href={`/products?category=${encodeURIComponent(productCategory.name)}${productCategory.id ? `&categoryId=${productCategory.id}` : ''}`}
+              href={`/products/category/${slugify(productCategory.name)}`}
               className="hover:text-primary whitespace-nowrap"
             >
               {productCategory.name}
