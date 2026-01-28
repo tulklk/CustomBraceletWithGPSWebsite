@@ -192,10 +192,6 @@ export function Header() {
                     </Button>
                   </div>
                 </SheetHeader>
-                {/* Search Bar for Mobile */}
-                <div className="px-4 py-4 border-b">
-                  <SearchBar />
-                </div>
                 <nav className="flex flex-col py-4">
                   <Link
                     href="/"
