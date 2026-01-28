@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { ShoppingCart, Menu, Moon, Sun, User, ChevronDown, Settings, History, Heart, LogOut, Shield, X, Plus, Minus, FileText } from "lucide-react"
+import { ShoppingCart, Menu, Moon, Sun, User, ChevronDown, Settings, History, Heart, LogOut, Shield, X, Plus, Minus, FileText, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/store/useCart"
 import { useUser } from "@/store/useUser"
@@ -85,6 +85,7 @@ export function Header() {
   const [productsDropdownOpen, setProductsDropdownOpen] = useState(false)
   const [cartPopupOpen, setCartPopupOpen] = useState(false)
   const [mobileProductsExpanded, setMobileProductsExpanded] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const productsDropdownRef = useRef<HTMLDivElement>(null)
   const productsNavRef = useRef<HTMLDivElement>(null)
@@ -354,6 +355,17 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
+            {/* Mobile Search Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 md:hidden"
+              onClick={() => setMobileSearchOpen((v) => !v)}
+              aria-label="Tìm kiếm"
+            >
+              <Search className="h-[18px] w-[18px]" />
+            </Button>
+
             <Link 
               href="/order-lookup" 
               className="hidden md:flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors px-2 py-1.5 rounded-md hover:bg-accent"
@@ -505,6 +517,15 @@ export function Header() {
 
           </div>
         </div>
+
+        {/* Mobile Search Dropdown */}
+        {mobileSearchOpen && (
+          <div className="md:hidden border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container px-4 py-3">
+              <SearchBar onAfterNavigate={() => setMobileSearchOpen(false)} />
+            </div>
+          </div>
+        )}
       </header>
 
       <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />

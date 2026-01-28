@@ -8,10 +8,22 @@ import { Search, X, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Product } from "@/lib/types"
 import { productsApi } from "@/lib/api/products"
-import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/utils"
 
-export function SearchBar() {
+function normalizeForSearch(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove diacritics
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+type SearchBarProps = {
+  onAfterNavigate?: () => void
+}
+
+export function SearchBar({ onAfterNavigate }: SearchBarProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [products, setProducts] = useState<Product[]>([])
@@ -48,12 +60,13 @@ export function SearchBar() {
 
     setIsLoading(true)
     const timer = setTimeout(() => {
-      const query = searchQuery.toLowerCase().trim()
+      const query = normalizeForSearch(searchQuery)
       const filtered = products.filter((product) => {
-        const nameMatch = product.name.toLowerCase().includes(query)
-        const descriptionMatch = product.description?.toLowerCase().includes(query)
-        const slugMatch = product.slug.toLowerCase().includes(query)
-        return nameMatch || descriptionMatch || slugMatch
+        const nameMatch = normalizeForSearch(product.name).includes(query)
+        const slugMatch = normalizeForSearch(product.slug).includes(query)
+        // IMPORTANT: Only match by product name/slug to avoid cases where
+        // other product types (e.g. "Dây chuyền") contain "Vòng tay" in description.
+        return nameMatch || slugMatch
       })
       setFilteredProducts(filtered.slice(0, 8)) // Limit to 8 results
       setIsOpen(true)
@@ -85,7 +98,8 @@ export function SearchBar() {
     setIsOpen(false)
     setSearchQuery("")
     router.push(`/products/${slug}`)
-  }, [router])
+    onAfterNavigate?.()
+  }, [router, onAfterNavigate])
 
   // Handle input focus
   const handleInputFocus = () => {
