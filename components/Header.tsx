@@ -28,6 +28,7 @@ import { CartDrawer } from "./CartDrawer"
 import { CartPopup } from "./CartPopup"
 import { AuthModal } from "./AuthModal"
 import { Logo } from "@/components/Logo"
+import { SearchBar } from "./SearchBar"
 import { categoriesApi, Category } from "@/lib/api/categories"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -160,8 +161,8 @@ export function Header() {
         <VerifiedToastHandler />
       </Suspense>
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 md:h-20 items-center justify-between px-4">
-          <div className="flex items-center gap-0 md:gap-6">
+        <div className="container flex h-16 md:h-20 items-center justify-between px-4 gap-2 md:gap-4">
+          <div className="flex items-center gap-0 md:gap-6 flex-shrink-0">
             {/* Burger Menu - Left Side (Mobile Only) */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
@@ -190,6 +191,10 @@ export function Header() {
                     </Button>
                   </div>
                 </SheetHeader>
+                {/* Search Bar for Mobile */}
+                <div className="px-4 py-4 border-b">
+                  <SearchBar />
+                </div>
                 <nav className="flex flex-col py-4">
                   <Link
                     href="/"
@@ -343,7 +348,12 @@ export function Header() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-0.5 md:gap-1">
+          {/* Search Bar - Hidden on mobile, shown on md and up */}
+          <div className="hidden md:flex flex-1 max-w-md mx-2 lg:mx-4 min-w-0">
+            <SearchBar />
+          </div>
+
+          <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
             <Link 
               href="/order-lookup" 
               className="hidden md:flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors px-2 py-1.5 rounded-md hover:bg-accent"
