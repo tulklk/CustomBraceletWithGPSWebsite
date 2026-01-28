@@ -22,9 +22,19 @@ import { useFilterContext } from "@/contexts/FilterContext"
 
 const ITEMS_PER_PAGE = 6
 
-export function ProductsContent() {
+type ProductsContentProps = {
+  /**
+   * Optional override for category param. When provided, ProductsContent will
+   * filter by this value instead of reading from URL search params.
+   *
+   * Accepts either category name or category id (preferred).
+   */
+  categoryParamOverride?: string | null
+}
+
+export function ProductsContent({ categoryParamOverride }: ProductsContentProps) {
   const searchParams = useSearchParams()
-  const categoryParam = searchParams.get("category")
+  const categoryParam = categoryParamOverride ?? searchParams.get("category")
   const filterContext = useFilterContext()
   
   const [products, setProducts] = useState<Product[]>([])

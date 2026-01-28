@@ -210,20 +210,6 @@ export default function OrderLookupPage() {
                     </Badge>
                   </div>
 
-                  {/* Payment Status */}
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Trạng thái thanh toán</p>
-                    <Badge
-                      className={cn(
-                        "flex items-center gap-1.5 px-2 py-0.5 w-fit",
-                        paymentStatusConfig[orderData.paymentStatus]?.color || "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
-                      )}
-                    >
-                      <CreditCard className="h-3 w-3" />
-                      {paymentStatusConfig[orderData.paymentStatus]?.label || orderData.paymentStatus}
-                    </Badge>
-                  </div>
-
                   {/* Payment Method */}
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Phương thức thanh toán</p>
