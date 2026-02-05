@@ -82,22 +82,24 @@ export default function OrdersPage() {
       if (!skipDialogOpen) {
         setDialogOpen(true)
       }
-      
+
       // Fetch product images for all items in the order
       const imageMap: Record<string, string> = {}
       await Promise.all(
         orderDetail.items.map(async (item) => {
           try {
-            const product = await makeAuthenticatedRequest((token) => 
+            const product = await makeAuthenticatedRequest((token) =>
               adminApi.products.getById(token, item.productId)
             )
             // Get first image from images, imageUrls array, or imageUrl field
             // Priority: images[0] > imageUrls[0] > imageUrl
-            const imageUrl = 
+            const imageData =
               (product.images && product.images.length > 0 && product.images[0]) ||
               (product.imageUrls && product.imageUrls.length > 0 && product.imageUrls[0]) ||
               product.imageUrl ||
               ""
+            // Extract string URL from object if needed
+            const imageUrl = typeof imageData === 'string' ? imageData : imageData?.imageUrl || ""
             if (imageUrl) {
               imageMap[item.productId] = imageUrl
             }
@@ -120,7 +122,7 @@ export default function OrdersPage() {
     if (!user?.accessToken || !selectedOrder) return
     try {
       setUpdatingStatus(true)
-      await makeAuthenticatedRequest((token) => 
+      await makeAuthenticatedRequest((token) =>
         adminApi.orders.updateStatus(token, selectedOrder.id, newStatus)
       )
       toast({
@@ -128,7 +130,7 @@ export default function OrdersPage() {
         description: "Đã cập nhật trạng thái đơn hàng",
       })
       // Refresh order detail
-      const refreshedOrder = await makeAuthenticatedRequest((token) => 
+      const refreshedOrder = await makeAuthenticatedRequest((token) =>
         adminApi.orders.getById(token, selectedOrder.id)
       )
       setSelectedOrder(refreshedOrder)
@@ -194,10 +196,10 @@ export default function OrdersPage() {
           )
           if (statusEntry) {
             const statusLabel = ORDER_STATUS_MAP[statusEntry[0] as OrderStatus].label
-            const statusVariant = 
+            const statusVariant =
               order.orderStatus === 5 ? "destructive" : // Canceled
-              order.orderStatus === 4 ? "default" : // Completed
-              "secondary" // Processing, Confirmed, Preparing, Shipped
+                order.orderStatus === 4 ? "default" : // Completed
+                  "secondary" // Processing, Confirmed, Preparing, Shipped
             return <Badge variant={statusVariant}>{statusLabel}</Badge>
           }
         }
@@ -273,12 +275,12 @@ export default function OrdersPage() {
     const orderCode = order.orderNumber || order.orderCode || ""
     const customerName = order.userFullName || order.guestEmail || order.customerName || ""
     const customerEmail = order.userEmail || order.guestEmail || order.customerEmail || ""
-    
+
     const matchesSearch =
       orderCode.toLowerCase().includes(searchLower) ||
       customerName.toLowerCase().includes(searchLower) ||
       customerEmail.toLowerCase().includes(searchLower)
-    
+
     const matchesStatus = statusFilter === "all" || !order.status || order.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -381,8 +383,8 @@ export default function OrdersPage() {
                       ([_, value]) => value.value === selectedOrder.orderStatus
                     )
                     const statusLabel = statusEntry ? ORDER_STATUS_MAP[statusEntry[0] as OrderStatus].label : "N/A"
-                    const statusVariant = selectedOrder.orderStatus === 5 ? "destructive" : 
-                                         selectedOrder.orderStatus === 4 ? "default" : "secondary"
+                    const statusVariant = selectedOrder.orderStatus === 5 ? "destructive" :
+                      selectedOrder.orderStatus === 4 ? "default" : "secondary"
                     return <Badge variant={statusVariant}>{statusLabel}</Badge>
                   })()}
                 </div>
@@ -395,10 +397,10 @@ export default function OrdersPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Phương thức thanh toán</p>
                   <p className="font-medium">
-                    {selectedOrder.paymentMethod === 0 
-                      ? "COD" 
-                      : selectedOrder.paymentMethod === 1 
-                        ? "Chuyển khoản qua Ngân Hàng" 
+                    {selectedOrder.paymentMethod === 0
+                      ? "COD"
+                      : selectedOrder.paymentMethod === 1
+                        ? "Chuyển khoản qua Ngân Hàng"
                         : "N/A"}
                   </p>
                 </div>

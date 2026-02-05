@@ -39,14 +39,14 @@ export function CartPopup({ open, onClose, triggerRef }: CartPopupProps) {
       setLoading(true)
       const productIds = [...new Set(items.map(item => item.design.productId))]
       const productMap: ProductInfo = {}
-      
+
       await Promise.all(
         productIds.map(async (productId) => {
           try {
             // First, get all products to find the slug
             const allProducts = await productsApi.getAll()
             const product = allProducts.find(p => p.id === productId)
-            
+
             if (product && product.slug) {
               // Fetch full product details by slug
               const fullProduct = await productsApi.getBySlug(product.slug)
@@ -66,7 +66,7 @@ export function CartPopup({ open, onClose, triggerRef }: CartPopupProps) {
           }
         })
       )
-      
+
       setProducts(productMap)
       setLoading(false)
     }
@@ -142,7 +142,7 @@ export function CartPopup({ open, onClose, triggerRef }: CartPopupProps) {
               // Use product name from API, fallback to template or product ID
               const productName = product?.name || (item.design.templateId ? `Template: ${item.design.templateId}` : `Sản phẩm ${item.design.productId}`)
               // Prioritize product image from API
-              const productImage = product?.imageUrls?.[0] || product?.images?.[0] || ""
+              const productImage = productsApi.extractImageUrl(product?.imageUrls?.[0] || product?.images?.[0])
               const stockQuantity = product?.stockQuantity ?? 0
               const isInStock = stockQuantity > 0
               // Use product price from API if available, otherwise use design unitPrice

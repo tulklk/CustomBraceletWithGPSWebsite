@@ -27,8 +27,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { formatCurrency } from "@/lib/utils"
-import { 
-  Trash2, ShoppingCart, Edit, LogOut, User, Package, 
+import {
+  Trash2, ShoppingCart, Edit, LogOut, User, Package,
   MapPin, Save, Heart, Settings, Phone, Mail, Home, Lock, ShieldCheck, Upload, Loader2, X,
   ChevronLeft, ChevronRight
 } from "lucide-react"
@@ -87,56 +87,56 @@ const getStatusVariant = (status: OrderStatus): "default" | "secondary" | "destr
 }
 
 // Component to handle search params (needs Suspense boundary)
-function AccountPageContent({ 
-  setActiveTab, 
-  onOrderIdFound 
-}: { 
+function AccountPageContent({
+  setActiveTab,
+  onOrderIdFound
+}: {
   setActiveTab: (tab: string) => void
   onOrderIdFound: (orderId: string) => void
 }) {
   const searchParams = useSearchParams()
   const processedOrderIdRef = useRef<string | null>(null) // Track processed orderId to prevent multiple calls
-  
+
   // Check if we should open orders tab from URL
   useEffect(() => {
     const orderId = searchParams?.get("order")
     const tab = searchParams?.get("tab")
     const openOrder = searchParams?.get("openOrder")
-    
+
     if (tab) {
       setActiveTab(tab)
     } else if (orderId) {
       setActiveTab("orders")
     }
-    
+
     // Auto-open order detail if:
     // 1. openOrder=true is explicitly set (user clicked "Xem đơn hàng" button)
     // 2. OR not from payment flow (to avoid auto-opening when redirected from payment)
     // 3. AND we haven't processed this orderId yet
     if (orderId && orderId !== processedOrderIdRef.current) {
       const referrer = typeof window !== 'undefined' ? document.referrer : ''
-      const isFromPayment = referrer.includes('/payment/') || 
-                           (typeof window !== 'undefined' && window.location.pathname.includes('payment'))
-      
+      const isFromPayment = referrer.includes('/payment/') ||
+        (typeof window !== 'undefined' && window.location.pathname.includes('payment'))
+
       // If openOrder=true, always open regardless of referrer
       // Otherwise, only open if not from payment flow
       if (openOrder === 'true' || !isFromPayment) {
         // Mark this orderId as processed to prevent multiple calls
         processedOrderIdRef.current = orderId
-        
+
         // Small delay to ensure orders are loaded first
         setTimeout(() => {
           onOrderIdFound(orderId)
         }, 300)
       }
     }
-    
+
     // Reset processed orderId if orderId changes or is removed from URL
     if (!orderId) {
       processedOrderIdRef.current = null
     }
   }, [searchParams, setActiveTab, onOrderIdFound])
-  
+
   return null
 }
 
@@ -156,25 +156,25 @@ export default function AccountPage() {
   const [loadingOrderDetail, setLoadingOrderDetail] = useState(false)
   const [productImages, setProductImages] = useState<Record<string, string>>({})
   const fetchingImagesRef = useRef(false) // Prevent multiple image fetch calls
-  
+
   // Wishlist states
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [loadingWishlist, setLoadingWishlist] = useState(false)
   const wishlistScrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  
+
   // User profile hooks
   const { profile, loading: loadingProfile, error: profileError, refetch: refetchProfile } = useUserProfile()
   const { updateProfile, loading: updatingProfile, error: updateError } = useUpdateProfile()
   const { changePassword, loading: changingPassword, error: passwordError } = useChangePassword()
-  
+
   // Edit mode states
   const [editMode, setEditMode] = useState(false)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  
+
   // Address management
   const { addresses, addAddress, updateAddress, deleteAddress, setDefaultAddress } = useAddresses()
   const [showAddressDialog, setShowAddressDialog] = useState(false)
@@ -197,12 +197,12 @@ export default function AccountPage() {
     phoneNumber: "",
     avatar: null,
   })
-  
+
   const [passwordData, setPasswordData] = useState<ChangePasswordRequest>({
     currentPassword: "",
     newPassword: "",
   })
-  
+
   // Initialize form data when profile loads
   useEffect(() => {
     if (profile) {
@@ -226,7 +226,7 @@ export default function AccountPage() {
   useEffect(() => {
     if (profile && user) {
       // Only update if there are actual differences to avoid unnecessary updates
-      const hasChanges = 
+      const hasChanges =
         profile.fullName !== user.fullName ||
         profile.phoneNumber !== user.phoneNumber ||
         profile.avatar !== user.avatar ||
@@ -317,14 +317,14 @@ export default function AccountPage() {
       })
       console.log("Wishlist items received:", items)
       console.log("Wishlist items count:", items?.length)
-      
+
       // If items don't have product data, fetch product details
       const itemsWithProducts = await Promise.all(
         (items || []).map(async (item) => {
           if (item.product) {
             return item
           }
-          
+
           // Fetch product details if missing
           try {
             console.log("Fetching product details for:", item.productId)
@@ -339,7 +339,7 @@ export default function AccountPage() {
           }
         })
       )
-      
+
       // Filter out null items (failed to fetch product)
       const validItems = itemsWithProducts.filter((item): item is WishlistItem => item !== null)
       console.log("Valid wishlist items count:", validItems.length)
@@ -400,8 +400,8 @@ export default function AccountPage() {
 
     const scrollAmount = 400 // Scroll 400px each time
     const currentScroll = container.scrollLeft
-    const newScroll = direction === 'left' 
-      ? currentScroll - scrollAmount 
+    const newScroll = direction === 'left'
+      ? currentScroll - scrollAmount
       : currentScroll + scrollAmount
 
     container.scrollTo({
@@ -463,7 +463,7 @@ export default function AccountPage() {
 
   // Track if we're already processing an order from URL to prevent multiple calls
   const processingOrderIdRef = useRef<string | null>(null)
-  
+
   // Define handleViewOrderDetail first so it can be used in handleOrderIdFromUrl
   const handleViewOrderDetail = async (orderId: string) => {
     if (!user?.accessToken) return
@@ -477,7 +477,7 @@ export default function AccountPage() {
     fetchingImagesRef.current = false // Reset image fetching flag
     setLoadingOrderDetail(true)
     setOrderDetailDialogOpen(true)
-    
+
     try {
       // First, fetch order detail (main data)
       const orderDetail = await makeAuthenticatedRequest(async (token) => {
@@ -490,12 +490,12 @@ export default function AccountPage() {
           }
         )
       })
-      
+
       // Validate orderDetail is not null
       if (!orderDetail) {
         throw new Error("Không tìm thấy thông tin đơn hàng")
       }
-      
+
       // Set order detail first to show content immediately
       setSelectedOrder(orderDetail)
       setLoadingOrderDetail(false)
@@ -505,10 +505,10 @@ export default function AccountPage() {
       // Only fetch if not already fetching
       if (!fetchingImagesRef.current) {
         fetchingImagesRef.current = true
-        
+
         const fetchImagesAsync = async () => {
           const imageMap: Record<string, string> = {}
-          
+
           // First, check for images already in order items
           orderDetail.items.forEach((item) => {
             const itemWithImage = item as any
@@ -516,32 +516,34 @@ export default function AccountPage() {
               imageMap[item.id] = itemWithImage.productImageUrl || itemWithImage.imageUrl
             }
           })
-          
+
           // Update with existing images first
           if (Object.keys(imageMap).length > 0) {
             setProductImages({ ...imageMap })
           }
-          
+
           // Then fetch missing images in batches
           const itemsNeedingFetch = orderDetail.items.filter((item) => {
             const itemWithImage = item as any
             return !itemWithImage.productImageUrl && !itemWithImage.imageUrl
           })
-          
+
           if (itemsNeedingFetch.length > 0) {
             const batchSize = 3
             for (let i = 0; i < itemsNeedingFetch.length; i += batchSize) {
               const batch = itemsNeedingFetch.slice(i, i + batchSize)
-              
+
               await Promise.all(
                 batch.map(async (item) => {
                   try {
                     const product = await productsApi.getBySlug(item.productId)
                     if (product) {
-                      const imageUrl = 
+                      const imageData =
                         (product.images && product.images.length > 0 && product.images[0]) ||
                         (product.imageUrls && product.imageUrls.length > 0 && product.imageUrls[0]) ||
                         ""
+                      // Extract string URL from object if needed
+                      const imageUrl = typeof imageData === 'string' ? imageData : imageData?.imageUrl || ""
                       if (imageUrl) {
                         imageMap[item.id] = imageUrl
                       }
@@ -552,15 +554,15 @@ export default function AccountPage() {
                   }
                 })
               )
-              
+
               // Update images only once per batch to reduce re-renders
               setProductImages(prev => ({ ...prev, ...imageMap }))
             }
           }
-          
+
           fetchingImagesRef.current = false
         }
-        
+
         // Start fetching images in background (don't await)
         fetchImagesAsync().catch(error => {
           console.error("Error fetching product images:", error)
@@ -568,11 +570,11 @@ export default function AccountPage() {
           // Don't show error toast for image loading failures
         })
       }
-      
+
     } catch (error: any) {
       console.error("Error fetching order detail:", error)
       fetchingImagesRef.current = false
-      
+
       // Check if error is related to payment link creation
       const errorMessage = error.message || ""
       if (errorMessage.includes("payment") || errorMessage.includes("Payment") || errorMessage.includes("payment link")) {
@@ -603,17 +605,17 @@ export default function AccountPage() {
       if (processingOrderIdRef.current === orderId) {
         return
       }
-      
+
       // Check if this is from payment flow - if so, don't auto-open
       // Check referrer to see if we came from payment pages
       const referrer = typeof window !== 'undefined' ? document.referrer : ''
-      const isFromPayment = referrer.includes('/payment/') || 
-                           (typeof window !== 'undefined' && window.location.pathname.includes('payment'))
-      
+      const isFromPayment = referrer.includes('/payment/') ||
+        (typeof window !== 'undefined' && window.location.pathname.includes('payment'))
+
       if (!isFromPayment) {
         // Mark as processing
         processingOrderIdRef.current = orderId
-        
+
         // Wait for orders to be loaded, then open order detail
         const tryOpenOrder = () => {
           // Check if orders are loaded (either we have orders or loading is complete)
@@ -628,7 +630,7 @@ export default function AccountPage() {
             setTimeout(tryOpenOrder, 200)
           }
         }
-        
+
         // Start trying after a short delay
         setTimeout(tryOpenOrder, 300)
       }
@@ -688,7 +690,7 @@ export default function AccountPage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const success = await updateProfile(formData)
     if (success) {
       toast({
@@ -696,7 +698,7 @@ export default function AccountPage() {
         description: "Thông tin tài khoản đã được cập nhật",
       })
       setEditMode(false)
-      
+
       // Update user store immediately with formData to reflect changes in navbar
       // This ensures navbar and other components show updated info right away
       updateUser({
@@ -705,7 +707,7 @@ export default function AccountPage() {
         phoneNumber: formData.phoneNumber || user?.phoneNumber || null,
         avatar: formData.avatar || user?.avatar || null,
       })
-      
+
       // Refetch profile to sync with backend
       refetchProfile()
     } else {
@@ -719,7 +721,7 @@ export default function AccountPage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const success = await changePassword(passwordData)
     if (success) {
       toast({
@@ -941,46 +943,46 @@ export default function AccountPage() {
               </Card>
             ) : (
               <>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Package className="h-4 w-4 text-primary" />
-                    Đơn hàng
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Package className="h-4 w-4 text-primary" />
+                        Đơn hàng
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       <div className="text-2xl font-bold">
                         {profile?.stats?.totalOrders ?? orders.length}
                       </div>
-                  <p className="text-xs text-muted-foreground">Tổng số đơn</p>
-                </CardContent>
-              </Card>
+                      <p className="text-xs text-muted-foreground">Tổng số đơn</p>
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <ShoppingCart className="h-4 w-4 text-primary" />
-                    Tổng chi tiêu
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <ShoppingCart className="h-4 w-4 text-primary" />
+                        Tổng chi tiêu
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
                         {formatCurrency(
-                          profile?.stats?.totalSpent ?? 
+                          profile?.stats?.totalSpent ??
                           orders.reduce((sum, order) => sum + order.totalAmount, 0)
                         )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">VNĐ</p>
-                </CardContent>
-              </Card>
-            </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">VNĐ</p>
+                    </CardContent>
+                  </Card>
+                </div>
 
-            {/* Quick Info */}
-            <Card>
+                {/* Quick Info */}
+                <Card>
                   <CardHeader className="pb-4">
                     <CardTitle className="text-xl">Thông tin tài khoản</CardTitle>
-              </CardHeader>
+                  </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Profile Header */}
                     <div className="flex items-start gap-4 pb-6 border-b">
@@ -992,11 +994,11 @@ export default function AccountPage() {
                             fill
                             className="object-cover"
                           />
-                  </div>
+                        </div>
                       ) : (
                         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-3xl font-bold text-primary border-2 border-primary/20 flex-shrink-0">
                           {profile?.fullName?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || "U"}
-                </div>
+                        </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <h3 className="text-2xl font-bold mb-1">
@@ -1010,8 +1012,8 @@ export default function AccountPage() {
                             ✓ Đã xác thực
                           </Badge>
                         )}
-                  </div>
-                </div>
+                      </div>
+                    </div>
 
                     {/* Information Grid */}
                     <div className="grid md:grid-cols-2 gap-4">
@@ -1019,7 +1021,7 @@ export default function AccountPage() {
                       <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
                         <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
                           <Mail className="h-5 w-5 text-primary" />
-                  </div>
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
                             Email
@@ -1091,9 +1093,9 @@ export default function AccountPage() {
                           </div>
                         </div>
                       )}
-                </div>
-              </CardContent>
-            </Card>
+                    </div>
+                  </CardContent>
+                </Card>
               </>
             )}
           </TabsContent>
@@ -1104,9 +1106,9 @@ export default function AccountPage() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Đơn hàng của tôi</CardTitle>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={fetchOrders}
                     disabled={loadingOrders}
                   >
@@ -1134,56 +1136,56 @@ export default function AccountPage() {
                         .filter(order => order.createdAt)
                         .slice((currentPage - 1) * ordersPerPage, currentPage * ordersPerPage)
                         .map((order) => {
-                        const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "N/A"
-                        return (
-                          <Card key={order.id}>
-                            <CardContent className="p-4">
-                              <div className="flex flex-col md:flex-row justify-between gap-4">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-semibold">
-                                      #{order.orderNumber || order.id}
-                                    </span>
-                                    <Badge variant={getStatusVariant(getOrderStatus(order))}>
-                                      {getStatusLabel(getOrderStatus(order))}
-                                    </Badge>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground">
-                                    Ngày đặt: {orderDate}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {order.items.length} sản phẩm
-                                  </p>
-                                  {order.shippingAddress && (
-                                    <p className="text-xs text-muted-foreground">
-                                      Giao đến: {order.shippingAddress.fullName} - {order.shippingAddress.phoneNumber}
+                          const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "N/A"
+                          return (
+                            <Card key={order.id}>
+                              <CardContent className="p-4">
+                                <div className="flex flex-col md:flex-row justify-between gap-4">
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-semibold">
+                                        #{order.orderNumber || order.id}
+                                      </span>
+                                      <Badge variant={getStatusVariant(getOrderStatus(order))}>
+                                        {getStatusLabel(getOrderStatus(order))}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                      Ngày đặt: {orderDate}
                                     </p>
-                                  )}
+                                    <p className="text-sm text-muted-foreground">
+                                      {order.items.length} sản phẩm
+                                    </p>
+                                    {order.shippingAddress && (
+                                      <p className="text-xs text-muted-foreground">
+                                        Giao đến: {order.shippingAddress.fullName} - {order.shippingAddress.phoneNumber}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col justify-between items-end gap-2">
+                                    <p className="font-bold text-lg">{formatCurrency(order.totalAmount)}</p>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleViewOrderDetail(order.id)}
+                                    >
+                                      Xem chi tiết
+                                    </Button>
+                                  </div>
                                 </div>
-                                <div className="flex flex-col justify-between items-end gap-2">
-                                  <p className="font-bold text-lg">{formatCurrency(order.totalAmount)}</p>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => handleViewOrderDetail(order.id)}
-                                  >
-                                    Xem chi tiết
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        )
-                      })}
+                              </CardContent>
+                            </Card>
+                          )
+                        })}
                     </div>
-                    
+
                     {/* Pagination */}
                     {(() => {
                       const filteredOrders = orders.filter(order => order.createdAt)
                       const totalPages = Math.ceil(filteredOrders.length / ordersPerPage)
-                      
+
                       if (totalPages <= 1) return null
-                      
+
                       return (
                         <div className="flex items-center justify-center sm:justify-end mt-4 sm:mt-6 pt-3 sm:pt-4 border-t">
                           <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-hide">
@@ -1266,8 +1268,8 @@ export default function AccountPage() {
                     >
                       Đổi mật khẩu
                     </Button>
-                              )}
-                            </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 {showPasswordForm ? (
@@ -1303,10 +1305,10 @@ export default function AccountPage() {
                         required
                         minLength={6}
                       />
-                              <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         Mật khẩu phải có ít nhất 6 ký tự
-                              </p>
-                          </div>
+                      </p>
+                    </div>
 
                     {passwordError && (
                       <div className="p-3 bg-red-100 text-red-700 rounded text-sm">
@@ -1314,29 +1316,29 @@ export default function AccountPage() {
                       </div>
                     )}
 
-                          <div className="flex gap-2">
-                            <Button
+                    <div className="flex gap-2">
+                      <Button
                         type="submit"
                         disabled={changingPassword}
-                            >
+                      >
                         {changingPassword ? "Đang đổi..." : "Đổi mật khẩu"}
-                            </Button>
-                            <Button
+                      </Button>
+                      <Button
                         type="button"
-                              variant="outline"
+                        variant="outline"
                         onClick={() => {
                           setShowPasswordForm(false)
                           setPasswordData({ currentPassword: "", newPassword: "" })
                         }}
-                            >
+                      >
                         Hủy
-                            </Button>
-                          </div>
+                      </Button>
+                    </div>
                   </form>
                 ) : (
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      Nhấn nút &quot;Đổi mật khẩu&quot; để thay đổi mật khẩu của bạn. 
+                      Nhấn nút &quot;Đổi mật khẩu&quot; để thay đổi mật khẩu của bạn.
                       Mật khẩu mạnh giúp bảo vệ tài khoản của bạn khỏi các mối đe dọa bảo mật.
                     </p>
                     <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -1362,21 +1364,21 @@ export default function AccountPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {addresses.length === 0 ? (
-                <Card className="border-primary">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                  <Card className="border-primary">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
                             <p className="font-semibold">{profile?.fullName || user?.name || "Chưa cập nhật"}</p>
-                          <Badge>Mặc định</Badge>
-                        </div>
+                            <Badge>Mặc định</Badge>
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             {profile?.phoneNumber || user?.phoneNumber || "Chưa cập nhật"}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             Địa chỉ giao hàng sẽ được cập nhật trong quá trình thanh toán
                           </p>
-                      </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -1413,9 +1415,9 @@ export default function AccountPage() {
                                 variant="outline"
                                 onClick={() => handleEditAddress(address)}
                               >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Sửa
-                      </Button>
+                                <Edit className="h-3 w-3 mr-1" />
+                                Sửa
+                              </Button>
                               {!address.isDefault && (
                                 <Button
                                   size="sm"
@@ -1427,9 +1429,9 @@ export default function AccountPage() {
                                 </Button>
                               )}
                             </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                          </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 )}
@@ -1538,8 +1540,8 @@ export default function AccountPage() {
                               !addressForm.city
                                 ? "Chọn tỉnh/thành phố trước"
                                 : loadingWards
-                                ? "Đang tải..."
-                                : "Chọn phường/xã"
+                                  ? "Đang tải..."
+                                  : "Chọn phường/xã"
                             }
                           />
                         </SelectTrigger>
@@ -1629,7 +1631,7 @@ export default function AccountPage() {
                       <ChevronLeft className="h-5 w-5" />
                     </Button>
                   )}
-                  
+
                   {/* Right Arrow */}
                   {canScrollRight && (
                     <Button
@@ -1652,91 +1654,93 @@ export default function AccountPage() {
                     {wishlistItems
                       .filter((item) => item.product) // Filter out items without product
                       .map((item) => {
-                  const product = item.product!
-                  const images = product.imageUrls && product.imageUrls.length > 0 
-                    ? product.imageUrls 
-                    : product.images && product.images.length > 0 
-                    ? product.images 
-                    : []
-                  const discount = product.originalPrice && product.originalPrice > product.price
-                    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-                    : 0
+                        const product = item.product!
+                        const rawImages = product.imageUrls && product.imageUrls.length > 0
+                          ? product.imageUrls
+                          : product.images && product.images.length > 0
+                            ? product.images
+                            : []
+                        // Extract string URLs from images (handle both string and object types)
+                        const images = rawImages.map(img => typeof img === 'string' ? img : img?.imageUrl || '').filter(Boolean)
+                        const discount = product.originalPrice && product.originalPrice > product.price
+                          ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                          : 0
 
-                  return (
-                    <Card key={item.productId} className="overflow-hidden flex-shrink-0 w-80">
-                      <div className="relative">
-                        <Link href={`/products/${product.slug}`}>
-                          <div className="relative aspect-square bg-muted">
-                            {images.length > 0 ? (
-                              <Image
-                                src={images[0]}
-                                alt={product.name}
-                                fill
-                                className="object-cover"
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Package className="h-16 w-16 text-muted-foreground" />
+                        return (
+                          <Card key={item.productId} className="overflow-hidden flex-shrink-0 w-80">
+                            <div className="relative">
+                              <Link href={`/products/${product.slug}`}>
+                                <div className="relative aspect-square bg-muted">
+                                  {images.length > 0 ? (
+                                    <Image
+                                      src={images[0]}
+                                      alt={product.name}
+                                      fill
+                                      className="object-cover"
+                                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <Package className="h-16 w-16 text-muted-foreground" />
+                                    </div>
+                                  )}
+                                </div>
+                              </Link>
+                              {discount > 0 && (
+                                <Badge className="absolute top-2 right-2 bg-red-500">
+                                  -{discount}%
+                                </Badge>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-2 left-2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+                                onClick={() => handleRemoveFromWishlist(item.productId)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                            <CardContent className="p-4">
+                              <Link href={`/products/${product.slug}`}>
+                                <h3 className="font-semibold mb-1 line-clamp-2 hover:text-primary transition-colors">
+                                  {product.name}
+                                </h3>
+                              </Link>
+                              {product.brand && (
+                                <p className="text-sm text-muted-foreground mb-2">{product.brand}</p>
+                              )}
+                              <div className="flex items-center gap-2 mb-3">
+                                <span className="text-lg font-bold text-primary">
+                                  {formatCurrency(product.price)}
+                                </span>
+                                {product.originalPrice && product.originalPrice > product.price && (
+                                  <span className="text-sm text-muted-foreground line-through">
+                                    {formatCurrency(product.originalPrice)}
+                                  </span>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        </Link>
-                        {discount > 0 && (
-                          <Badge className="absolute top-2 right-2 bg-red-500">
-                            -{discount}%
-                          </Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 left-2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
-                          onClick={() => handleRemoveFromWishlist(item.productId)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                      <CardContent className="p-4">
-                        <Link href={`/products/${product.slug}`}>
-                          <h3 className="font-semibold mb-1 line-clamp-2 hover:text-primary transition-colors">
-                            {product.name}
-                          </h3>
-                        </Link>
-                        {product.brand && (
-                          <p className="text-sm text-muted-foreground mb-2">{product.brand}</p>
-                        )}
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-lg font-bold text-primary">
-                            {formatCurrency(product.price)}
-                          </span>
-                          {product.originalPrice && product.originalPrice > product.price && (
-                            <span className="text-sm text-muted-foreground line-through">
-                              {formatCurrency(product.originalPrice)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleAddToCartFromWishlist(item.productId)}
-                          >
-                            <ShoppingCart className="h-4 w-4 mr-2" />
-                            Thêm vào giỏ
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleRemoveFromWishlist(item.productId)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={() => handleAddToCartFromWishlist(item.productId)}
+                                >
+                                  <ShoppingCart className="h-4 w-4 mr-2" />
+                                  Thêm vào giỏ
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleRemoveFromWishlist(item.productId)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
                   </div>
                 </div>
               </div>
@@ -1748,7 +1752,7 @@ export default function AccountPage() {
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                <CardTitle>Thông tin cá nhân</CardTitle>
+                  <CardTitle>Thông tin cá nhân</CardTitle>
                   {!editMode && (
                     <Button
                       variant="outline"
@@ -1784,22 +1788,22 @@ export default function AccountPage() {
                       )}
                     </div>
 
-                <div className="space-y-2">
+                    <div className="space-y-2">
                       <Label htmlFor="settings-fullName">Họ và tên</Label>
-                  <Input
+                      <Input
                         id="settings-fullName"
                         value={formData.fullName}
-                    onChange={(e) =>
+                        onChange={(e) =>
                           setFormData({ ...formData, fullName: e.target.value })
-                    }
+                        }
                         required
-                  />
-                </div>
-                <div className="space-y-2">
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="settings-email">Email</Label>
-                  <Input
+                      <Input
                         id="settings-email"
-                    type="email"
+                        type="email"
                         value={profile?.email || user?.email || ""}
                         disabled
                         className="bg-muted"
@@ -1807,20 +1811,20 @@ export default function AccountPage() {
                       <p className="text-xs text-muted-foreground">
                         Email không thể thay đổi
                       </p>
-                </div>
-                <div className="space-y-2">
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="settings-phone">Số điện thoại</Label>
-                  <Input
+                      <Input
                         id="settings-phone"
                         value={formData.phoneNumber || ""}
-                    onChange={(e) =>
+                        onChange={(e) =>
                           setFormData({ ...formData, phoneNumber: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="settings-avatar">Ảnh đại diện</Label>
-                      
+
                       {/* Avatar Preview */}
                       {formData.avatar ? (
                         <div className="space-y-3">
@@ -1831,8 +1835,8 @@ export default function AccountPage() {
                                 alt="Avatar preview"
                                 fill
                                 className="object-cover"
-                  />
-                </div>
+                              />
+                            </div>
                             <Button
                               type="button"
                               variant="destructive"
@@ -1898,9 +1902,9 @@ export default function AccountPage() {
                         type="submit"
                         disabled={updatingProfile}
                       >
-                  <Save className="h-4 w-4 mr-2" />
+                        <Save className="h-4 w-4 mr-2" />
                         {updatingProfile ? "Đang lưu..." : "Lưu thay đổi"}
-                </Button>
+                      </Button>
                       <Button
                         type="button"
                         variant="outline"
@@ -2116,9 +2120,9 @@ export default function AccountPage() {
                 {selectedOrder.voucherCode && selectedOrder.discountAmount && (
                   <>
                     <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Mã giảm giá ({selectedOrder.voucherCode}):</span>
-                    <span className="text-green-600">-{formatCurrency(selectedOrder.discountAmount)}</span>
-                  </div>
+                      <span className="text-muted-foreground">Mã giảm giá ({selectedOrder.voucherCode}):</span>
+                      <span className="text-green-600">-{formatCurrency(selectedOrder.discountAmount)}</span>
+                    </div>
                   </>
                 )}
                 <div className="flex justify-between text-lg font-bold mt-4">
