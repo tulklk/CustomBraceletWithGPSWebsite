@@ -69,7 +69,7 @@ export default function NewsPage() {
     try {
       setLoading(true)
       // Load all articles with a large pageSize
-      const data = await newsApi.getChildAbductionNews(1, 100) // Load up to 100 articles
+      const data = await newsApi.getChildAbductionNews(1, 100)
       setAllArticles(data.articles || [])
       setTotalCount(data.totalCount || 0)
       setSources(data.sources || [])
