@@ -19,7 +19,7 @@ export function Footer() {
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                 <Mail className="h-4 w-4 flex-shrink-0" />
-                <a href="mailto:contact@artemis.vn">contact@artemis.vn</a>
+                <a href="mailto:contact@artemis.vn">artemissafety2026@gmail.com</a>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                 <Phone className="h-4 w-4 flex-shrink-0" />

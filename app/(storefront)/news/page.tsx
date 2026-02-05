@@ -51,7 +51,6 @@ export default function NewsPage() {
       setSources(abductionData.sources || [])
 
       setInternalNews(internalData || [])
-      console.log("Internal News Data:", internalData)
     } catch (error) {
       console.error("Error fetching news:", error)
     } finally {
