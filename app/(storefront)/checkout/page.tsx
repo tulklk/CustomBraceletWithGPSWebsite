@@ -61,7 +61,7 @@ export default function CheckoutPage() {
   const [discountApplied, setDiscountApplied] = useState(false)
   const [discountAmount, setDiscountAmount] = useState(0)
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false)
-  
+
   // Provinces, Wards state (removed districts)
   const [provinces, setProvinces] = useState<Province[]>([])
   const [wards, setWards] = useState<Ward[]>([])
@@ -76,7 +76,7 @@ export default function CheckoutPage() {
       setLoading(true)
       const productIds = [...new Set(items.map(item => item.design.productId))]
       const productMap: ProductInfo = {}
-      
+
       await Promise.all(
         productIds.map(async (productId) => {
           try {
@@ -94,7 +94,7 @@ export default function CheckoutPage() {
           }
         })
       )
-      
+
       setProducts(productMap)
       setLoading(false)
     }
@@ -147,7 +147,7 @@ export default function CheckoutPage() {
       const fetchedWards = await provincesApi.getWardsByProvince(provinceCode)
       console.log("Fetched wards:", fetchedWards.length)
       setWards(fetchedWards)
-      
+
       if (fetchedWards.length === 0) {
         toast({
           title: "Không tìm thấy phường/xã",
@@ -179,7 +179,7 @@ export default function CheckoutPage() {
     setIsApplyingVoucher(true)
     try {
       let result: ApplyVoucherResponse
-      
+
       // Try to apply voucher with auth if user is logged in, otherwise without auth
       if (user?.accessToken) {
         result = await makeAuthenticatedRequest(async (token: string) => {
@@ -249,7 +249,7 @@ export default function CheckoutPage() {
   }
 
   const shippingFee = 30000 // Phí vận chuyển: 30.000 VNĐ
-  
+
   // Calculate subtotal from actual product prices
   const calculateSubtotal = () => {
     return items.reduce((total, item) => {
@@ -258,7 +258,7 @@ export default function CheckoutPage() {
       return total + (currentPrice * item.qty)
     }, 0)
   }
-  
+
   const subtotal = calculateSubtotal()
   const finalTotal = subtotal - discountAmount + shippingFee
 
@@ -279,13 +279,13 @@ export default function CheckoutPage() {
   useEffect(() => {
     const defaultAddress = getDefaultAddress()
     const currentValues = form.getValues()
-    
+
     if (user) {
       // Always update email from user account if user is logged in
       // Fill address from default address if available, otherwise from user profile
       const newCity = defaultAddress?.city || currentValues.city || ""
       const newWard = defaultAddress?.ward || currentValues.ward || ""
-      
+
       form.reset({
         email: user.email || currentValues.email || "",
         fullName: defaultAddress?.fullName || currentValues.fullName || user.fullName || user.name || "",
@@ -359,7 +359,7 @@ export default function CheckoutPage() {
 
       // Create order using API (with or without auth)
       let order: any
-      
+
       if (user?.accessToken) {
         // User is logged in, sync cart to backend first, then create order
         try {
@@ -439,13 +439,13 @@ export default function CheckoutPage() {
         // COD: Show email confirmation toast and redirect to success page
         toast({
           title: "Đơn hàng đã được tạo thành công! 🎉",
-          description: userEmail 
+          description: userEmail
             ? `Chúng tôi đã gửi email xác nhận đến ${userEmail}. Vui lòng kiểm tra hộp thư của bạn.`
             : `Mã đơn hàng: ${order.orderNumber || order.id}. Chúng tôi sẽ liên hệ qua ${data.phoneNumber}`,
           duration: 7000,
           className: "bg-gradient-to-r from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border-pink-200 dark:border-pink-800",
         })
-        
+
         // Redirect to success page
         if (user?.accessToken) {
           router.push(`/order/success?orderId=${order.id}`)
@@ -461,7 +461,7 @@ export default function CheckoutPage() {
           const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || FRONTEND_BASE_URL
           const returnUrl = `${baseUrl}/payment/success?orderId=${order.id}`
           const cancelUrl = `${baseUrl}/payment/cancel?orderId=${order.id}`
-          
+
           // Debug log
           console.log("[Checkout] Using base URL:", baseUrl)
           console.log("[Checkout] NEXT_PUBLIC_BASE_URL from env:", process.env.NEXT_PUBLIC_BASE_URL)
@@ -486,7 +486,7 @@ export default function CheckoutPage() {
           console.log("===========================================")
 
           let paymentResult: any
-          
+
           if (user?.accessToken) {
             console.log("🔐 Creating payment link WITH authentication")
             paymentResult = await makeAuthenticatedRequest(async (token: string) => {
@@ -527,7 +527,7 @@ export default function CheckoutPage() {
               throw error
             }
           }
-          
+
           // Check if paymentResult is valid
           if (!paymentResult) {
             throw new Error("Không nhận được response từ server")
@@ -536,7 +536,7 @@ export default function CheckoutPage() {
           // Check for paymentUrl in response
           // paymentService already normalizes paymentUrl field
           const paymentUrl = paymentResult.paymentUrl
-          
+
           if (paymentUrl && typeof paymentUrl === "string") {
             // Show email confirmation toast before redirecting to PayOS
             const userEmail = email || user?.email || data.email
@@ -548,7 +548,7 @@ export default function CheckoutPage() {
               duration: 5000,
               className: "bg-gradient-to-r from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border-pink-200 dark:border-pink-800",
             })
-            
+
             console.log("Redirecting to PayOS payment page:", paymentUrl)
             // Redirect to PayOS checkout page (external URL, use window.location.href)
             // This will show the QR code page
@@ -566,11 +566,11 @@ export default function CheckoutPage() {
             statusCode: paymentError.statusCode,
             response: paymentError,
           })
-          
+
           // paymentService already converts errors to user-friendly messages
           // Use the error message directly (it's already user-friendly)
           const errorMessage = paymentError.message || "Không thể tạo link thanh toán. Vui lòng thử lại sau."
-          
+
           toast({
             title: "Lỗi khi tạo link thanh toán",
             description: errorMessage,
@@ -728,13 +728,13 @@ export default function CheckoutPage() {
                     disabled={!form.watch("city") || loadingWards}
                   >
                     <SelectTrigger id="ward">
-                      <SelectValue 
+                      <SelectValue
                         placeholder={
-                          !form.watch("city") 
-                            ? "Vui lòng chọn tỉnh/thành phố trước" 
-                            : loadingWards 
-                            ? "Đang tải..." 
-                            : "Chọn phường/xã"
+                          !form.watch("city")
+                            ? "Vui lòng chọn tỉnh/thành phố trước"
+                            : loadingWards
+                              ? "Đang tải..."
+                              : "Chọn phường/xã"
                         }
                       />
                     </SelectTrigger>
@@ -767,11 +767,10 @@ export default function CheckoutPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    form.watch("paymentMethod") === "COD"
+                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${form.watch("paymentMethod") === "COD"
                       ? "border-primary bg-primary/5"
                       : "hover:bg-accent"
-                  }`}
+                    }`}
                   onClick={() => form.setValue("paymentMethod", "COD")}
                 >
                   <div className="flex items-center gap-3">
@@ -786,11 +785,10 @@ export default function CheckoutPage() {
                 </div>
 
                 <div
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    form.watch("paymentMethod") === "PayOS"
+                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${form.watch("paymentMethod") === "PayOS"
                       ? "border-primary bg-primary/5"
                       : "hover:bg-accent"
-                  }`}
+                    }`}
                   onClick={() => form.setValue("paymentMethod", "PayOS")}
                 >
                   <div className="flex items-center gap-3">
@@ -829,9 +827,9 @@ export default function CheckoutPage() {
                     items.map((item) => {
                       const product = products[item.design.productId]
                       const productName = product?.name || (item.design.templateId ? `Template: ${item.design.templateId}` : `Sản phẩm ${item.design.productId}`)
-                      const productImage = product?.imageUrls?.[0] || product?.images?.[0] || ""
+                      const productImage = productsApi.extractImageUrl(product?.imageUrls?.[0] || product?.images?.[0])
                       const currentPrice = product?.price || item.design.unitPrice || 0
-                      
+
                       return (
                         <div key={item.id} className="flex gap-4">
                           {/* Product Image */}

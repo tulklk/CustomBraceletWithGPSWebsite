@@ -73,18 +73,21 @@ export default function ProductDetailPage() {
   const [reviewPhotoFiles, setReviewPhotoFiles] = useState<File[]>([])
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const reviewPhotoInputRef = useRef<HTMLInputElement>(null)
-  
+
+  // Illustration images dialog
+  const [illustrationDialogOpen, setIllustrationDialogOpen] = useState(false)
+
   // Product detail states
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [previewMode, setPreviewMode] = useState<"2d" | "3d">("2d") // 2D or 3D preview mode
-  
+
   // Reviews state
   const [reviews, setReviews] = useState<ProductReview[]>([])
   const [loadingReviews, setLoadingReviews] = useState(false)
-  
+
   // Check if product has customizer (has templates)
   // Use computed value but ensure consistent initial render
   const hasCustomizer = templates.length > 0
@@ -98,14 +101,14 @@ export default function ProductDetailPage() {
   const { addItem, addItemByProductId } = useCart()
   const { user, saveDesign, makeAuthenticatedRequest } = useUser()
   const { toast } = useToast()
-  
+
   // Wishlist state - default to false, only set to true when explicitly confirmed
   const [isInWishlist, setIsInWishlist] = useState(false)
   const [checkingWishlist, setCheckingWishlist] = useState(false)
-  
+
   // Sold quantity state
   const [soldQuantity, setSoldQuantity] = useState<number>(0)
-  
+
   // Engraving state (for all products)
   const [engravingText, setEngravingText] = useState<string>("")
 
@@ -136,17 +139,17 @@ export default function ProductDetailPage() {
       try {
         // Check if slug is a GUID (ID) or a slug string
         const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug as string)
-        
+
         // Invalidate cache to ensure fresh data (especially for model3DUrl)
         const { invalidateCache } = await import("@/lib/cache")
-        const productUrl = isGuid 
+        const productUrl = isGuid
           ? `${(await import("@/lib/constants")).API_BASE_URL}/api/Products/${slug}`
           : `${(await import("@/lib/constants")).API_BASE_URL}/api/Products/${slug}`
         invalidateCache(productUrl, { method: "GET" }, `product_detail_${slug}`)
-        
+
         // Import cachedFetch and cacheConfigs
         const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
-        
+
         const [foundProduct, templatesData, accessoriesData, categoriesData] = await Promise.all([
           isGuid ? productsApi.getById(slug as string) : productsApi.getBySlug(slug as string),
           cachedFetch<Template[]>("/api/templates", { method: "GET" }, cacheConfigs.templates),
@@ -182,7 +185,7 @@ export default function ProductDetailPage() {
         }
 
         setProduct(foundProduct)
-        
+
         // Fetch sold quantity for this product (with caching)
         try {
           const data = await cachedFetch<{ soldQuantity: number }>(
@@ -198,7 +201,7 @@ export default function ProductDetailPage() {
           console.error("Error fetching sold quantity:", err)
           setSoldQuantity(0)
         }
-        
+
         // Filter templates based on product type (if needed for customizer)
         const productType = getProductType(foundProduct.id)
         const filteredTemplates = templatesData.filter((template: Template) => {
@@ -209,18 +212,18 @@ export default function ProductDetailPage() {
         setTemplates(filteredTemplates)
         setAccessories(accessoriesData)
         setCustomizerProduct(foundProduct.id)
-        
+
         // Set default color and size from variants if available
         if (foundProduct.variants && foundProduct.variants.length > 0) {
           const firstVariant = foundProduct.variants[0]
           if (firstVariant.color) setSelectedColor(firstVariant.color)
           if (firstVariant.size) setSelectedSize(firstVariant.size)
         }
-        
+
         // Fetch similar products (same category)
         try {
           const allProducts = await productsApi.getAll()
-          
+
           // Fetch backend products to get categoryId (already cached by productsApi.getAll)
           // But we need the full BackendProduct[] for categoryId filtering
           // Use cachedFetch for consistency
@@ -233,25 +236,25 @@ export default function ProductDetailPage() {
             },
             cacheConfigs.products
           )
-          
+
           // Get current product's categoryId
           const currentProductCategoryId = foundProduct.categoryId
-          
+
           // Filter products from the same category
           let similar: Product[] = []
-          
+
           if (currentProductCategoryId) {
             // Get product IDs that belong to the same category
             const sameCategoryProductIds = allBackendProducts
               .filter((bp) => bp.categoryId === currentProductCategoryId && bp.id !== foundProduct.id && bp.isActive)
               .map((bp) => bp.id)
-            
+
             // Get products that match those IDs
             similar = allProducts
               .filter((p) => sameCategoryProductIds.includes(p.id))
               .slice(0, 4)
           }
-          
+
           // If not enough products from same category, fill with other products
           if (similar.length < 4) {
             const remaining = allProducts
@@ -259,7 +262,7 @@ export default function ProductDetailPage() {
               .slice(0, 4 - similar.length)
             similar = [...similar, ...remaining]
           }
-          
+
           setSimilarProducts(similar)
         } catch (err) {
           console.error("Error fetching similar products:", err)
@@ -306,7 +309,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     // Reset to false when product or user changes
     setIsInWishlist(false)
-    
+
     const checkWishlist = async () => {
       if (!user?.accessToken || !product?.id) {
         return
@@ -330,7 +333,7 @@ export default function ProductDetailPage() {
           inWishlist = allItems.some(item => item.productId === product.id)
           console.log("Fallback check - product in wishlist:", inWishlist)
         }
-        
+
         // Set based on the result
         setIsInWishlist(Boolean(inWishlist))
       } catch (error) {
@@ -352,7 +355,7 @@ export default function ProductDetailPage() {
   // Helper function to flatten nested comments structure
   const flattenComments = useCallback((comments: ProductComment[]): ProductComment[] => {
     const flattened: ProductComment[] = []
-    
+
     const traverse = (items: ProductComment[]) => {
       for (const item of items) {
         flattened.push(item)
@@ -361,7 +364,7 @@ export default function ProductDetailPage() {
         }
       }
     }
-    
+
     traverse(comments)
     return flattened
   }, [])
@@ -385,7 +388,7 @@ export default function ProductDetailPage() {
   const organizeComments = useCallback((comments: ProductComment[]): ProductComment[] => {
     // First, flatten if comments are already nested
     const allComments = flattenComments(comments)
-    
+
     // Build tree recursively starting from root (parentId = null)
     return buildCommentTree(allComments, null)
   }, [flattenComments, buildCommentTree])
@@ -393,15 +396,15 @@ export default function ProductDetailPage() {
   // Helper function to refresh comments (force fresh fetch)
   const refreshComments = useCallback(async () => {
     if (!product?.slug) return
-    
+
     try {
       // Use fresh fetch to bypass cache and get latest data
       const fetchedComments = await productCommentsApi.getBySlugFresh(product.slug)
       console.log("Fetched comments (raw):", fetchedComments)
-      
+
       const organizedComments = organizeComments(fetchedComments)
       console.log("Organized comments:", organizedComments)
-      
+
       setComments(organizedComments)
     } catch (error) {
       console.error("Error refreshing comments:", error)
@@ -466,7 +469,7 @@ export default function ProductDetailPage() {
   // Refresh reviews after submitting
   const refreshReviews = useCallback(async () => {
     if (!product?.id && !product?.slug) return
-    
+
     try {
       const productIdOrSlug = product.id || product.slug
       const fetchedReviews = await productReviewsApi.getByProductIdOrSlugFresh(productIdOrSlug)
@@ -518,12 +521,12 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = async () => {
     if (!product) return
-    
+
     // For regular products (not customizer) - use API
     if (!hasCustomizer) {
       try {
         // Only send engravingText if product supports it
-        const engravingTextToSend = (product.hasEngraving ?? false) 
+        const engravingTextToSend = (product.hasEngraving ?? false)
           ? (engravingText.trim() || null)
           : null
         await addItemByProductId(product.id, quantity, engravingTextToSend)
@@ -542,7 +545,7 @@ export default function ProductDetailPage() {
       }
       return
     }
-    
+
     // For customizer products - use local storage with design
     // If no template selected, use first template or create default design
     let design
@@ -563,28 +566,28 @@ export default function ProductDetailPage() {
       design = defaultDesign
     } else if (templateId) {
       design = getDesign()
-      } else {
-        // No templates available, use product directly via API
-        try {
-          // Only send engravingText if product supports it
-          const engravingTextToSend = (product.hasEngraving ?? false) 
-            ? (engravingText.trim() || null)
-            : null
-          await addItemByProductId(product.id, quantity, engravingTextToSend)
-          toast({
-            title: "Đã thêm vào giỏ hàng!",
-            description: `${product.name} x${quantity}`,
-          })
-          setEngravingText("")
-        } catch (error: any) {
-          toast({
-            title: "Lỗi",
-            description: error.message || "Không thể thêm sản phẩm vào giỏ hàng",
-            variant: "destructive",
-          })
-        }
-        return
+    } else {
+      // No templates available, use product directly via API
+      try {
+        // Only send engravingText if product supports it
+        const engravingTextToSend = (product.hasEngraving ?? false)
+          ? (engravingText.trim() || null)
+          : null
+        await addItemByProductId(product.id, quantity, engravingTextToSend)
+        toast({
+          title: "Đã thêm vào giỏ hàng!",
+          description: `${product.name} x${quantity}`,
+        })
+        setEngravingText("")
+      } catch (error: any) {
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể thêm sản phẩm vào giỏ hàng",
+          variant: "destructive",
+        })
       }
+      return
+    }
 
     // Add engravingText to design if provided (and not already set via EngraveForm)
     // Only add if product supports engraving
@@ -607,15 +610,15 @@ export default function ProductDetailPage() {
     // Reset engraving text after adding to cart
     setEngravingText("")
   }
-  
+
   const handleBuyNow = async () => {
     if (!product) return
-    
+
     try {
       // For regular products (not customizer) - use API
       if (!hasCustomizer) {
         // Only send engravingText if product supports it
-        const engravingTextToSend = (product.hasEngraving ?? false) 
+        const engravingTextToSend = (product.hasEngraving ?? false)
           ? (engravingText.trim() || null)
           : null
         await addItemByProductId(product.id, quantity, engravingTextToSend)
@@ -648,7 +651,7 @@ export default function ProductDetailPage() {
         } else {
           // No templates available, use product directly via API
           // Only send engravingText if product supports it
-          const engravingTextToSend = (product.hasEngraving ?? false) 
+          const engravingTextToSend = (product.hasEngraving ?? false)
             ? (engravingText.trim() || null)
             : null
           await addItemByProductId(product.id, quantity, engravingTextToSend)
@@ -666,11 +669,11 @@ export default function ProductDetailPage() {
         if (engravingText.trim() && !design.engrave && (product.hasEngraving ?? false)) {
           design = {
             ...design,
-        engrave: {
-          text: engravingText.trim(),
-          font: "Sans" as const,
-          position: "inside" as const,
-        },
+            engrave: {
+              text: engravingText.trim(),
+              font: "Sans" as const,
+              position: "inside" as const,
+            },
           }
         }
 
@@ -681,7 +684,7 @@ export default function ProductDetailPage() {
         })
         setEngravingText("")
       }
-      
+
       // Redirect to checkout after adding to cart
       router.push("/checkout")
     } catch (error: any) {
@@ -693,16 +696,20 @@ export default function ProductDetailPage() {
       })
     }
   }
-  
+
   const getProductImages = () => {
     if (!product) return []
-    return product.imageUrls && product.imageUrls.length > 0 
-      ? product.imageUrls 
-      : product.images && product.images.length > 0 
-      ? product.images 
-      : []
+    const rawImages = product.images && product.images.length > 0
+      ? product.images
+      : product.imageUrls && product.imageUrls.length > 0
+        ? product.imageUrls
+        : []
+
+    return rawImages
+      .filter((img: any) => typeof img === 'string' || img?.type === 0 || img?.type === undefined)
+      .map((img: any) => typeof img === 'string' ? img : (img?.imageUrl || ""))
   }
-  
+
   const getAvailableColors = () => {
     if (!product?.variants) return []
     const colors = new Set<string>()
@@ -711,7 +718,7 @@ export default function ProductDetailPage() {
     })
     return Array.from(colors)
   }
-  
+
   const getAvailableSizes = () => {
     if (!product?.variants) return ["S", "M", "L"] // Default sizes
     const sizes = new Set<string>()
@@ -791,11 +798,11 @@ export default function ProductDetailPage() {
   const colors = getAvailableColors()
   const sizes = getAvailableSizes()
   // Check if product is on sale (only if product exists and has originalPrice > price)
-  const isOnSale = product 
+  const isOnSale = product
     ? (product.originalPrice !== null && product.originalPrice !== undefined && product.originalPrice > product.price)
     : false
   const discount = isOnSale && product && product.originalPrice
-    ? product.originalPrice - product.price 
+    ? product.originalPrice - product.price
     : 0
   const discountPercent = isOnSale && product && product.originalPrice
     ? Math.round((discount / product.originalPrice) * 100)
@@ -809,7 +816,7 @@ export default function ProductDetailPage() {
         <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
         {productCategory ? (
           <>
-            <Link 
+            <Link
               href={`/products/category/${slugify(productCategory.name)}`}
               className="hover:text-primary whitespace-nowrap"
             >
@@ -888,7 +895,7 @@ export default function ProductDetailPage() {
                         variant="outline"
                         size="icon"
                         className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm h-8 w-8 sm:h-10 sm:w-10"
-                        onClick={() => setSelectedImageIndex((prev) => 
+                        onClick={() => setSelectedImageIndex((prev) =>
                           prev > 0 ? prev - 1 : images.length - 1
                         )}
                       >
@@ -898,7 +905,7 @@ export default function ProductDetailPage() {
                         variant="outline"
                         size="icon"
                         className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm h-8 w-8 sm:h-10 sm:w-10"
-                        onClick={() => setSelectedImageIndex((prev) => 
+                        onClick={() => setSelectedImageIndex((prev) =>
                           prev < images.length - 1 ? prev + 1 : 0
                         )}
                       >
@@ -910,7 +917,7 @@ export default function ProductDetailPage() {
                     </>
                   )}
                 </div>
-                
+
                 {/* Thumbnails */}
                 {images.length > 1 && (
                   <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 sm:mx-0 px-4 sm:px-0">
@@ -921,11 +928,10 @@ export default function ProductDetailPage() {
                           setSelectedImageIndex(index)
                           setPreviewMode("2d")
                         }}
-                        className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                          selectedImageIndex === index 
-                            ? "border-primary" 
-                            : "border-transparent hover:border-muted-foreground"
-                        }`}
+                        className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-colors ${selectedImageIndex === index
+                          ? "border-primary"
+                          : "border-transparent hover:border-muted-foreground"
+                          }`}
                       >
                         <Image
                           src={image}
@@ -995,33 +1001,31 @@ export default function ProductDetailPage() {
                 className="flex-shrink-0"
               >
                 <Heart
-                  className={`h-5 w-5 sm:h-6 sm:w-6 ${
-                    isInWishlist
-                      ? "fill-red-500 text-red-500"
-                      : "text-muted-foreground hover:text-red-500"
-                  }`}
+                  className={`h-5 w-5 sm:h-6 sm:w-6 ${isInWishlist
+                    ? "fill-red-500 text-red-500"
+                    : "text-muted-foreground hover:text-red-500"
+                    }`}
                 />
               </Button>
             )}
           </div>
-          
+
           {/* Rating */}
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 md:gap-4">
             <div className="flex items-center gap-0.5 sm:gap-1">
               {[1, 2, 3, 4, 5].map((star) => {
-                const averageRating = reviews.length > 0 
-                  ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+                const averageRating = reviews.length > 0
+                  ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
                   : 0
                 return (
                   <Star
                     key={star}
-                    className={`h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 ${
-                      star <= Math.floor(averageRating)
-                        ? "fill-yellow-400 text-yellow-400"
-                        : star <= averageRating
+                    className={`h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 ${star <= Math.floor(averageRating)
+                      ? "fill-yellow-400 text-yellow-400"
+                      : star <= averageRating
                         ? "fill-yellow-200 text-yellow-200"
                         : "fill-muted text-muted"
-                    }`}
+                      }`}
                   />
                 )
               })}
@@ -1035,7 +1039,7 @@ export default function ProductDetailPage() {
               </span>
             )}
           </div>
-          
+
           {/* Color Selection */}
           {colors.length > 0 && (
             <div>
@@ -1060,7 +1064,7 @@ export default function ProductDetailPage() {
               </div>
             </div>
           )}
-          
+
           {/* Price */}
           <div className="space-y-1 sm:space-y-2">
             {isOnSale ? (
@@ -1094,7 +1098,7 @@ export default function ProductDetailPage() {
               </div>
             )}
           </div>
-          
+
           {/* Additional Benefits */}
           <div>
             <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2">Ưu đãi thêm:</div>
@@ -1117,7 +1121,7 @@ export default function ProductDetailPage() {
               </div>
             </div>
           </div>
-          
+
           {/* Brand */}
           {product.brand && (
             <div className="text-xs sm:text-sm">
@@ -1125,7 +1129,7 @@ export default function ProductDetailPage() {
               <span className="font-medium">{product.brand}</span>
             </div>
           )}
-          
+
           {/* Quantity */}
           <div>
             <div className="text-[10px] sm:text-xs md:text-sm font-medium mb-1.5 sm:mb-2">Số lượng:</div>
@@ -1154,7 +1158,7 @@ export default function ProductDetailPage() {
                 variant="outline"
                 size="icon"
                 className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10"
-                onClick={() => setQuantity((prev) => 
+                onClick={() => setQuantity((prev) =>
                   Math.min(product.stockQuantity, prev + 1)
                 )}
                 disabled={quantity >= product.stockQuantity}
@@ -1163,7 +1167,7 @@ export default function ProductDetailPage() {
               </Button>
             </div>
           </div>
-          
+
           {/* Engraving Section (only for products with hasEngraving === true) */}
           {product && (product.hasEngraving ?? false) && mappedProduct && (
             <div className="pt-2 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -1171,10 +1175,14 @@ export default function ProductDetailPage() {
                 product={mappedProduct}
                 value={engravingText}
                 onChange={setEngravingText}
+                onIllustrationClick={(product.images || product.imageUrls || []).some((img: any) => img.type === 1)
+                  ? () => setIllustrationDialogOpen(true)
+                  : undefined
+                }
               />
             </div>
           )}
-          
+
           {/* Action Buttons */}
           <div className="space-y-2 sm:space-y-0 sm:grid sm:grid-cols-2 gap-2 sm:gap-3 pt-2 sm:pt-4">
             <Button
@@ -1218,10 +1226,10 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Product Images Gallery */}
-      {product.images && product.images.length > 0 && (
+      {images && images.length > 0 && (
         <div className="mb-6 sm:mb-8">
           <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-4 sm:mx-0 px-4 sm:px-0">
-            {product.images.map((image, index) => (
+            {images.map((image, index) => (
               <div key={index} className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border-2 border-border">
                 <Image
                   src={image}
@@ -1248,10 +1256,9 @@ export default function ProductDetailPage() {
               <div className="prose max-w-none">
                 <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold mb-2 sm:mb-3 md:mb-4">1. Giới thiệu {product.name}</h2>
                 <div className="space-y-3 sm:space-y-4">
-                  <div 
-                    className={`text-xs sm:text-sm md:text-base text-muted-foreground whitespace-pre-line leading-relaxed transition-all duration-300 ${
-                      !isDescriptionExpanded ? "line-clamp-4" : ""
-                    }`}
+                  <div
+                    className={`text-xs sm:text-sm md:text-base text-muted-foreground whitespace-pre-line leading-relaxed transition-all duration-300 ${!isDescriptionExpanded ? "line-clamp-4" : ""
+                      }`}
                   >
                     {product.description || "Không có mô tả chi tiết."}
                   </div>
@@ -1278,12 +1285,12 @@ export default function ProductDetailPage() {
                   )}
                 </div>
               </div>
-              
-              {product.images && product.images.length > 0 && (
+
+              {images && images.length > 0 && (
                 <div className="flex justify-center my-6 sm:my-8">
                   <div className="relative w-full max-w-2xl aspect-square">
                     <Image
-                      src={product.images[0]}
+                      src={images[0]}
                       alt={product.name}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 768px"
@@ -1294,7 +1301,7 @@ export default function ProductDetailPage() {
               )}
             </CardContent>
           </Card>
-          
+
           {/* Only show specs/features if product has them (for customizer products) */}
           {(product as any).specs || (product as any).features ? (
             <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mt-4 sm:mt-6 md:mt-8">
@@ -1384,13 +1391,12 @@ export default function ProductDetailPage() {
                           return (
                             <Star
                               key={star}
-                              className={`h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 ${
-                                star <= averageRating
-                                  ? "text-yellow-400 fill-yellow-400"
-                                  : star <= Math.ceil(averageRating)
+                              className={`h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 ${star <= averageRating
+                                ? "text-yellow-400 fill-yellow-400"
+                                : star <= Math.ceil(averageRating)
                                   ? "text-yellow-200 fill-yellow-200"
                                   : "text-muted fill-muted"
-                              }`}
+                                }`}
                             />
                           )
                         })}
@@ -1410,56 +1416,56 @@ export default function ProductDetailPage() {
                   <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">{reviews.length} đánh giá</div>
                 </div>
 
-            {/* Rating Breakdown */}
-            <div className="space-y-1.5 sm:space-y-2 sm:col-span-2 md:col-span-1">
-              {[5, 4, 3, 2, 1].map((rating) => {
-                const count = reviews.filter((r) => r.rating === rating).length
-                const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
-                return (
-                  <div key={rating} className="flex items-center gap-1.5 sm:gap-2">
-                    <span className="w-7 sm:w-8 md:w-10 text-[10px] sm:text-xs md:text-sm flex-shrink-0 flex items-center justify-start">
-                      <span className="text-yellow-400 mr-0.5 sm:mr-1">★</span>
-                      <span>{rating}</span>
-                    </span>
-                    <div className="flex-1 h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden min-w-0">
-                      <div
-                        className="h-full bg-yellow-400"
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground w-16 sm:w-20 md:w-24 text-right flex-shrink-0">
-                      {percentage.toFixed(0)}% | {count}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
+                {/* Rating Breakdown */}
+                <div className="space-y-1.5 sm:space-y-2 sm:col-span-2 md:col-span-1">
+                  {[5, 4, 3, 2, 1].map((rating) => {
+                    const count = reviews.filter((r) => r.rating === rating).length
+                    const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
+                    return (
+                      <div key={rating} className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-7 sm:w-8 md:w-10 text-[10px] sm:text-xs md:text-sm flex-shrink-0 flex items-center justify-start">
+                          <span className="text-yellow-400 mr-0.5 sm:mr-1">★</span>
+                          <span>{rating}</span>
+                        </span>
+                        <div className="flex-1 h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden min-w-0">
+                          <div
+                            className="h-full bg-yellow-400"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground w-16 sm:w-20 md:w-24 text-right flex-shrink-0">
+                          {percentage.toFixed(0)}% | {count}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
 
-            {/* Rate Button */}
-            <div className="flex items-center justify-center sm:col-span-2 md:col-span-1">
-              <Button 
-                onClick={() => {
-                  // Load user info if logged in, otherwise load saved info from localStorage
-                  if (user) {
-                    setReviewFullName(user.fullName || user.name || "")
-                    setReviewEmail(user.email || "")
-                    setReviewPhoneNumber(user.phoneNumber || "")
-                  } else if (typeof window !== "undefined") {
-                    const savedName = localStorage.getItem("reviewFullName")
-                    const savedEmail = localStorage.getItem("reviewEmail")
-                    if (savedName) setReviewFullName(savedName)
-                    if (savedEmail) setReviewEmail(savedEmail)
-                  }
-                  setReviewDialogOpen(true)
-                }}
-                className="bg-primary hover:bg-primary/90 w-full sm:w-auto text-[10px] sm:text-xs md:text-sm h-8 sm:h-9 md:h-10"
-              >
-                ĐÁNH GIÁ NGAY
-              </Button>
-            </div>
-          </div>
+                {/* Rate Button */}
+                <div className="flex items-center justify-center sm:col-span-2 md:col-span-1">
+                  <Button
+                    onClick={() => {
+                      // Load user info if logged in, otherwise load saved info from localStorage
+                      if (user) {
+                        setReviewFullName(user.fullName || user.name || "")
+                        setReviewEmail(user.email || "")
+                        setReviewPhoneNumber(user.phoneNumber || "")
+                      } else if (typeof window !== "undefined") {
+                        const savedName = localStorage.getItem("reviewFullName")
+                        const savedEmail = localStorage.getItem("reviewEmail")
+                        if (savedName) setReviewFullName(savedName)
+                        if (savedEmail) setReviewEmail(savedEmail)
+                      }
+                      setReviewDialogOpen(true)
+                    }}
+                    className="bg-primary hover:bg-primary/90 w-full sm:w-auto text-[10px] sm:text-xs md:text-sm h-8 sm:h-9 md:h-10"
+                  >
+                    ĐÁNH GIÁ NGAY
+                  </Button>
+                </div>
+              </div>
 
-          {/* Reviews List */}
+              {/* Reviews List */}
               {reviews.length === 0 ? (
                 <div className="text-center py-8 sm:py-12 text-sm sm:text-base text-muted-foreground">
                   Chưa có đánh giá nào cho sản phẩm này.
@@ -1497,25 +1503,25 @@ export default function ProductDetailPage() {
                     // Get avatar URL - handle Cloudinary URLs
                     const getAvatarUrl = () => {
                       if (!reviewAvatar) return null
-                      
+
                       // If it's already a full URL (http/https), return as is
                       if (reviewAvatar.startsWith('http://') || reviewAvatar.startsWith('https://')) {
                         return reviewAvatar
                       }
-                      
+
                       // If it's already a Cloudinary URL (contains res.cloudinary.com), return as is
                       if (reviewAvatar.includes('res.cloudinary.com')) {
                         return reviewAvatar
                       }
-                      
+
                       // If it's a Cloudinary public_id or path, construct the URL
                       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'your-cloud-name'
-                      
+
                       // If it starts with /, it's a path - prepend Cloudinary base URL
                       if (reviewAvatar.startsWith('/')) {
                         return `https://res.cloudinary.com/${cloudName}/image/upload${reviewAvatar}`
                       }
-                      
+
                       // Otherwise, assume it's a public_id and construct URL
                       const publicId = reviewAvatar.replace(/^\/+/, '')
                       return `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}`
@@ -1564,11 +1570,10 @@ export default function ProductDetailPage() {
                                     {[1, 2, 3, 4, 5].map((star) => (
                                       <Star
                                         key={star}
-                                        className={`h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 ${
-                                          star <= review.rating
-                                            ? "text-yellow-400 fill-yellow-400"
-                                            : "text-gray-300 fill-gray-300"
-                                        }`}
+                                        className={`h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 ${star <= review.rating
+                                          ? "text-yellow-400 fill-yellow-400"
+                                          : "text-gray-300 fill-gray-300"
+                                          }`}
                                       />
                                     ))}
                                     <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground ml-1 sm:ml-2">
@@ -1640,7 +1645,7 @@ export default function ProductDetailPage() {
       {/* Comments Section */}
       <div className="mt-6 sm:mt-12 md:mt-16">
         <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6">Bình luận</h2>
-        
+
         {/* Comment Form */}
         <div className="mb-3 sm:mb-4 md:mb-6">
           <div className="pt-3 sm:pt-4 md:pt-6 px-0">
@@ -1663,7 +1668,7 @@ export default function ProductDetailPage() {
                     return
                   }
                   if (!commentText.trim() || !product?.slug) return
-                  
+
                   try {
                     const newComment = await makeAuthenticatedRequest(async (token) => {
                       return await productCommentsApi.create(token, product.slug, {
@@ -1673,7 +1678,7 @@ export default function ProductDetailPage() {
 
                     // Refresh comments
                     await refreshComments()
-                    
+
                     setCommentText("")
                     toast({
                       title: "Đã gửi bình luận",
@@ -1734,7 +1739,7 @@ export default function ProductDetailPage() {
                 }}
                 onDelete={async (id) => {
                   if (!user?.accessToken || !product?.slug) return
-                  
+
                   try {
                     await makeAuthenticatedRequest(async (token) => {
                       await productCommentsApi.delete(token, product.slug, id)
@@ -1742,7 +1747,7 @@ export default function ProductDetailPage() {
 
                     // Refresh comments
                     await refreshComments()
-                    
+
                     toast({
                       title: "Đã xóa bình luận",
                       description: "Bình luận đã được xóa thành công",
@@ -1758,7 +1763,7 @@ export default function ProductDetailPage() {
                 }}
                 onReplySubmit={async (parentId: string, replyContent: string) => {
                   if (!user?.accessToken || !product?.slug) return
-                  
+
                   try {
                     await makeAuthenticatedRequest(async (token) => {
                       await productCommentsApi.reply(token, product.slug, parentId, {
@@ -1768,7 +1773,7 @@ export default function ProductDetailPage() {
 
                     // Refresh comments
                     await refreshComments()
-                    
+
                     setReplyingTo(null)
                     setReplyText("")
                     toast({
@@ -1844,7 +1849,7 @@ export default function ProductDetailPage() {
               Đánh giá {product?.name}
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-6 py-4">
             {/* Star Rating */}
             <div className="space-y-3">
@@ -1861,11 +1866,10 @@ export default function ProductDetailPage() {
                       className="focus:outline-none transition-transform hover:scale-110"
                     >
                       <Star
-                        className={`h-10 w-10 sm:h-12 sm:w-12 ${
-                          star <= reviewRating
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "fill-none text-gray-300"
-                        }`}
+                        className={`h-10 w-10 sm:h-12 sm:w-12 ${star <= reviewRating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "fill-none text-gray-300"
+                          }`}
                       />
                     </button>
                   ))}
@@ -2150,13 +2154,13 @@ export default function ProductDetailPage() {
                   })
                   return
                 }
-                
+
                 // If sendPhoto is checked but there are files not uploaded yet, try to upload them
                 let finalPhotoUrls = [...reviewPhotoUrls]
                 if (reviewSendPhoto && reviewPhotoFiles.length > reviewPhotoUrls.length) {
                   setUploadingPhoto(true)
                   const filesToUpload = reviewPhotoFiles.slice(reviewPhotoUrls.length)
-                  
+
                   try {
                     for (const file of filesToUpload) {
                       try {
@@ -2176,7 +2180,7 @@ export default function ProductDetailPage() {
                     setUploadingPhoto(false)
                   }
                 }
-                
+
                 // Save to localStorage if user wants
                 if (reviewSaveInfo) {
                   if (typeof window !== "undefined") {
@@ -2197,7 +2201,7 @@ export default function ProductDetailPage() {
                   }
 
                   const productIdOrSlug = product.id || product.slug
-                  
+
                   // Submit review to API
                   await productReviewsApi.create(productIdOrSlug, {
                     fullName: reviewFullName,
@@ -2254,6 +2258,40 @@ export default function ProductDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Illustration Images Dialog */}
+      <Dialog open={illustrationDialogOpen} onOpenChange={setIllustrationDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Hình ảnh minh họa</DialogTitle>
+            <DialogDescription>
+              Các ví dụ minh họa cho sản phẩm {product.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            {(product.images || product.imageUrls || [])
+              .filter((img: any) => img.type === 1)
+              .map((img: any, idx: number) => (
+                <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-muted border">
+                  <Image
+                    src={typeof img === 'string' ? img : img.imageUrl}
+                    alt={`${product.name} illustration ${idx + 1}`}
+                    fill
+                    className="object-contain"
+                    unoptimized
+                  />
+                </div>
+              ))}
+          </div>
+
+          <DialogFooter className="sm:justify-start">
+            <Button type="button" variant="secondary" onClick={() => setIllustrationDialogOpen(false)}>
+              Đóng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -2289,27 +2327,27 @@ function CommentItem({
     const year = date.getFullYear()
     const hours = date.getHours()
     const minutes = date.getMinutes()
-    
+
     return `lúc ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${day} tháng ${month}, ${year}`
   }
 
   // Check if this comment belongs to the current user
   const isCurrentUserComment = user && comment.userId === user.id
-  
+
   // Get user name from various possible API response formats
   // If it's the current user's comment, prioritize user store data (latest info)
   // Otherwise, use comment data from API
   const authorName = isCurrentUserComment && user.fullName
     ? user.fullName
-    : comment.userName || 
-      comment.userFullName || 
-      comment.fullName || 
-      comment.user?.fullName || 
-      comment.userEmail || 
-      comment.email || 
-      comment.user?.email || 
-      "Người dùng"
-  
+    : comment.userName ||
+    comment.userFullName ||
+    comment.fullName ||
+    comment.user?.fullName ||
+    comment.userEmail ||
+    comment.email ||
+    comment.user?.email ||
+    "Người dùng"
+
   // Get avatar - prioritize user store for current user's comments
   const authorAvatar = isCurrentUserComment && user.avatar
     ? user.avatar

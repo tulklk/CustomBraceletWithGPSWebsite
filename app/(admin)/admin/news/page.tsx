@@ -63,6 +63,7 @@ export default function NewsPage() {
     thumbnailUrl: "",
     category: "",
     tags: "",
+    newsUrl: "",
     isPublished: false,
   })
   const [previewSlug, setPreviewSlug] = useState("")
@@ -98,11 +99,11 @@ export default function NewsPage() {
           variant: "destructive",
         })
       } else {
-      toast({
-        title: "Lỗi",
-        description: error.message || "Không thể tải dữ liệu",
-        variant: "destructive",
-      })
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể tải dữ liệu",
+          variant: "destructive",
+        })
       }
     } finally {
       setLoading(false)
@@ -119,6 +120,7 @@ export default function NewsPage() {
         thumbnailUrl: newsItem.thumbnailUrl || "",
         category: newsItem.category || "",
         tags: newsItem.tags || "",
+        newsUrl: newsItem.newsUrl || "",
         isPublished: newsItem.isPublished || false,
       })
       setPreviewSlug(newsItem.slug || "")
@@ -131,6 +133,7 @@ export default function NewsPage() {
         thumbnailUrl: "",
         category: "",
         tags: "",
+        newsUrl: "",
         isPublished: false,
       })
       setPreviewSlug("")
@@ -148,6 +151,7 @@ export default function NewsPage() {
       thumbnailUrl: "",
       category: "",
       tags: "",
+      newsUrl: "",
       isPublished: false,
     })
     setPreviewSlug("")
@@ -172,6 +176,7 @@ export default function NewsPage() {
         thumbnailUrl: formData.thumbnailUrl?.trim() || null,
         category: formData.category?.trim() || null,
         tags: formData.tags?.trim() || null,
+        newsUrl: formData.newsUrl?.trim() || null,
         isPublished: formData.isPublished,
       }
 
@@ -199,11 +204,11 @@ export default function NewsPage() {
           variant: "destructive",
         })
       } else {
-      toast({
-        title: "Lỗi",
-        description: error.message || "Không thể lưu tin tức",
-        variant: "destructive",
-      })
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể lưu tin tức",
+          variant: "destructive",
+        })
       }
     }
   }
@@ -228,13 +233,13 @@ export default function NewsPage() {
           variant: "destructive",
         })
       } else {
-      toast({
-        title: "Lỗi",
-        description: error.message || "Không thể xóa tin tức",
-        variant: "destructive",
-      })
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể xóa tin tức",
+          variant: "destructive",
+        })
+      }
     }
-  }
   }
 
   const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -382,13 +387,13 @@ export default function NewsPage() {
           <CardTitle>Danh sách tin tức ({filteredNews.length})</CardTitle>
         </CardHeader>
         <CardContent>
-        {filteredNews.length === 0 ? (
+          {filteredNews.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-            {searchQuery || categoryFilter !== "all" || statusFilter !== "all"
-              ? "Không tìm thấy tin tức nào"
-              : "Chưa có tin tức nào"}
-          </div>
-        ) : (
+              {searchQuery || categoryFilter !== "all" || statusFilter !== "all"
+                ? "Không tìm thấy tin tức nào"
+                : "Chưa có tin tức nào"}
+            </div>
+          ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -413,7 +418,7 @@ export default function NewsPage() {
                           <Badge variant="outline">{item.category}</Badge>
                         ) : (
                           <span className="text-muted-foreground">-</span>
-              )}
+                        )}
                       </TableCell>
                       <TableCell>
                         {item.authorName || (
@@ -423,13 +428,13 @@ export default function NewsPage() {
                       <TableCell>
                         <Badge variant={item.isPublished ? "default" : "secondary"}>
                           {item.isPublished ? "Đã publish" : "Chưa publish"}
-                  </Badge>
+                        </Badge>
                       </TableCell>
                       <TableCell>{item.viewCount || 0}</TableCell>
                       <TableCell>
-                    {item.createdAt
+                        {item.createdAt
                           ? dayjs(item.createdAt).format("DD/MM/YYYY")
-                      : "N/A"}
+                          : "N/A"}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -442,23 +447,23 @@ export default function NewsPage() {
                               <Link href={`/news/${item.slug}`} target="_blank">
                                 <Eye className="h-4 w-4" />
                               </Link>
-                  </Button>
+                            </Button>
                           )}
-                  <Button
+                          <Button
                             variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpenDialog(item)}
-                  >
+                            size="sm"
+                            onClick={() => handleOpenDialog(item)}
+                          >
                             <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
+                          </Button>
+                          <Button
                             variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(item.id)}
-                  >
+                            size="sm"
+                            onClick={() => handleDelete(item.id)}
+                          >
                             <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -466,8 +471,8 @@ export default function NewsPage() {
               </Table>
             </div>
           )}
-              </CardContent>
-            </Card>
+        </CardContent>
+      </Card>
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -492,7 +497,7 @@ export default function NewsPage() {
                 placeholder="Nhập tiêu đề"
               />
             </div>
-            
+
             {/* Slug Preview */}
             {previewSlug && (
               <div className="space-y-2">
@@ -520,6 +525,16 @@ export default function NewsPage() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="newsUrl">Link bài viết (newsUrl)</Label>
+              <Input
+                id="newsUrl"
+                value={formData.newsUrl || ""}
+                onChange={(e) => setFormData({ ...formData, newsUrl: e.target.value })}
+                placeholder="Ví dụ: https://example.com/..."
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="content">Nội dung *</Label>
               <RichTextEditor
                 value={formData.content}
@@ -530,7 +545,7 @@ export default function NewsPage() {
 
             <div className="space-y-2">
               <Label htmlFor="thumbnailUrl">Hình ảnh thumbnail</Label>
-              
+
               {/* Upload Button */}
               <div className="flex gap-2">
                 <Button
@@ -558,9 +573,9 @@ export default function NewsPage() {
                   accept="image/*"
                   onChange={handleThumbnailUpload}
                   className="hidden"
-              />
-            </div>
-              
+                />
+              </div>
+
               {/* Preview */}
               {formData.thumbnailUrl && (
                 <div className="relative w-full max-w-md aspect-video rounded-lg overflow-hidden bg-muted border-2 border-border">
@@ -582,7 +597,7 @@ export default function NewsPage() {
                   </Button>
                 </div>
               )}
-              
+
               <p className="text-xs text-muted-foreground">
                 Kích thước tối đa: 5MB. Khuyến nghị: ảnh ngang (16:9) để hiển thị đẹp nhất.
               </p>
