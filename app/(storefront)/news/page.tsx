@@ -172,7 +172,12 @@ export default function NewsPage() {
                           alt={title || "News"}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
-                          unoptimized
+                          onError={(e) => {
+                            // Hide image container if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            const parent = target.parentElement;
+                            if (parent) parent.style.display = 'none';
+                          }}
                         />
                       </div>
                     )}
@@ -274,7 +279,12 @@ export default function NewsPage() {
                             alt={article.title}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            unoptimized
+                            onError={(e) => {
+                              // Hide image container if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              const parent = target.parentElement;
+                              if (parent) parent.style.display = 'none';
+                            }}
                           />
                         </div>
                       )}
