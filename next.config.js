@@ -18,7 +18,7 @@ const nextConfig = {
         hostname: 'platform-lookaside.fbsbx.com',
         pathname: '/**',
       },
-      // Vietnamese news websites
+      // Vietnamese news websites - VnExpress
       {
         protocol: 'https',
         hostname: '**.vnecdn.net',
@@ -26,9 +26,26 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'vnexpress.net',
+        pathname: '/**',
+      },
+      // Dân Trí
+      {
+        protocol: 'https',
         hostname: 'icdn.dantri.com.vn',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'dantri.com.vn',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.dantri.com.vn',
+        pathname: '/**',
+      },
+      // Tuổi Trẻ
       {
         protocol: 'https',
         hostname: 'cdn.tuoitre.vn',
@@ -36,7 +53,28 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'tuoitre.vn',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.tuoitre.vn',
+        pathname: '/**',
+      },
+      // Thanh Niên
+      {
+        protocol: 'https',
         hostname: 'cdn.thanhnien.vn',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'thanhnien.vn',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.thanhnien.vn',
         pathname: '/**',
       },
     ],
