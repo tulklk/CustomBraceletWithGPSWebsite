@@ -55,7 +55,7 @@ export default function ProductsPage() {
     stockQuantity: "0",
     brand: "",
     categoryId: "none",
-    imageUrls: [] as string[],
+    imageUrls: [] as Array<{ imageUrl: string; type: number }>,
     model3DUrl: null as string | null,
     isActive: true,
     hasVariants: false,
@@ -102,6 +102,16 @@ export default function ProductsPage() {
   const handleOpenDialog = (product?: AdminProduct) => {
     if (product) {
       setEditingProduct(product)
+
+      // Properly map images from backend to the expected ImageUpload format
+      const rawImages = (product.images && product.images.length > 0) ? product.images :
+        (product.imageUrls && product.imageUrls.length > 0) ? product.imageUrls : [];
+
+      const mappedImages = rawImages.map((img: any) => {
+        if (typeof img === 'string') return { imageUrl: img, type: 0 };
+        return { imageUrl: img.imageUrl || "", type: img.type || 0 };
+      });
+
       setFormData({
         name: product.name || "",
         description: product.description || "",
@@ -110,7 +120,7 @@ export default function ProductsPage() {
         stockQuantity: (product.stockQuantity ?? product.stock)?.toString() || "0",
         brand: product.brand || "",
         categoryId: product.categoryId || "none",
-        imageUrls: product.imageUrls || product.images || (product.imageUrl ? [product.imageUrl] : []),
+        imageUrls: mappedImages,
         model3DUrl: (product as any).model3DUrl || null,
         isActive: (product as any).isActive ?? true,
         hasVariants: (product as any).hasVariants ?? false,
@@ -185,13 +195,10 @@ export default function ProductsPage() {
       // Generate slug from name
       // If editing and product has slug, keep it; otherwise generate new one
       const slug = editingProduct?.slug || slugify(formData.name)
-      
-      // Ensure imageUrls are valid strings
-      const imageUrls = formData.imageUrls.filter((url) => url && typeof url === "string" && url.trim() !== "")
-      
-      console.log("Form data imageUrls:", formData.imageUrls)
-      console.log("Filtered imageUrls:", imageUrls)
-      
+
+      // Map to the new images structure { imageUrl, type }
+      const imagesPayload = formData.imageUrls.filter(item => item.imageUrl && item.imageUrl.trim() !== "")
+
       const productData: any = {
         name: formData.name,
         slug: slug,
@@ -203,18 +210,13 @@ export default function ProductsPage() {
         brand: formData.brand && formData.brand !== "none" ? formData.brand : null,
         isActive: formData.isActive,
         hasEngraving: formData.hasEngraving,
-        defaultEngravingText: formData.hasEngraving && formData.defaultEngravingText.trim() 
-          ? formData.defaultEngravingText.trim() 
+        defaultEngravingText: formData.hasEngraving && formData.defaultEngravingText.trim()
+          ? formData.defaultEngravingText.trim()
           : null,
         model3DUrl: formData.model3DUrl || null,
-        imageUrls: imageUrls,
+        images: imagesPayload,
       }
-      
-      // Also send as 'images' for backward compatibility (backend might expect this)
-      if (imageUrls.length > 0) {
-        productData.images = imageUrls
-      }
-      
+
       console.log("Product data to send:", productData)
 
       if (formData.hasVariants && formData.variants.length > 0) {
@@ -230,7 +232,7 @@ export default function ProductsPage() {
       }
 
       if (editingProduct) {
-        const updatedProduct = await makeAuthenticatedRequest((token) => 
+        const updatedProduct = await makeAuthenticatedRequest((token) =>
           adminApi.products.update(token, editingProduct.id, productData)
         )
         toast({
@@ -244,7 +246,7 @@ export default function ProductsPage() {
           prevProducts.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
         )
       } else {
-        await makeAuthenticatedRequest((token) => 
+        await makeAuthenticatedRequest((token) =>
           adminApi.products.create(token, productData)
         )
         toast({
@@ -326,16 +328,18 @@ export default function ProductsPage() {
       label: "Hình ảnh",
       render: (product: AdminProduct) => {
         // Get image URL from images array, imageUrls array, or imageUrl field
-        const imageUrl = 
+        const rawImage =
           (product.images && product.images.length > 0) ? product.images[0] :
-          (product.imageUrls && product.imageUrls.length > 0) ? product.imageUrls[0] :
-          product.imageUrl || null
-        
+            (product.imageUrls && product.imageUrls.length > 0) ? product.imageUrls[0] :
+              product.imageUrl || null
+
+        const imageUrl = typeof rawImage === 'string' ? rawImage : (rawImage?.imageUrl || null)
+
         // Add cache-busting query param to force refresh when image is updated
-        const imageUrlWithCacheBust = imageUrl 
+        const imageUrlWithCacheBust = imageUrl
           ? `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}t=${product.updatedAt || product.id || Date.now()}`
           : null
-        
+
         return (
           <div className="w-12 h-12 rounded overflow-hidden bg-muted flex items-center justify-center border relative">
             {imageUrlWithCacheBust ? (
@@ -403,7 +407,7 @@ export default function ProductsPage() {
         // Generate product URL from slug or id
         const productSlug = product.slug || slugify(product.name)
         const productUrl = `/products/${productSlug}`
-        
+
         return (
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" title="Xem" asChild>
@@ -556,8 +560,8 @@ export default function ProductsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="brand">Thương hiệu</Label>
-              <Select 
-                value={formData.brand || "none"} 
+              <Select
+                value={formData.brand || "none"}
                 onValueChange={(value) => setFormData({ ...formData, brand: value === "none" ? "" : value })}
                 disabled={formData.categoryId === "none"}
               >

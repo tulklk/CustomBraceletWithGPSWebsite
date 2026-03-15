@@ -179,6 +179,7 @@ export type NewsDto = {
   authorName: string | null
   category: string | null
   tags: string | null
+  newsUrl: string | null
   publishedAt: string | null // ISO DateTime
   viewCount: number
   createdAt: string // ISO DateTime
@@ -198,6 +199,7 @@ export type CreateNewsRequest = {
   thumbnailUrl?: string | null
   category?: string | null
   tags?: string | null
+  newsUrl?: string | null
   isPublished: boolean // Required
 }
 
@@ -355,8 +357,8 @@ export type AdminProduct = {
   brand?: string | null
   categoryId?: string | null
   imageUrl?: string | null
-  images?: string[]
-  imageUrls?: string[] // Backend field name
+  images?: { imageUrl: string; type: number }[]
+  imageUrls?: { imageUrl: string; type: number }[] // Backend field name
   model3DUrl?: string | null // 3D Model URL (GLB file)
   isActive?: boolean
   hasVariants?: boolean

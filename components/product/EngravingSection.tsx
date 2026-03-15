@@ -17,6 +17,7 @@ interface EngravingSectionProps {
   className?: string
   error?: string | null // Error được truyền từ parent component
   onValidationChange?: (isValid: boolean, errorMessage: string | null) => void // Callback khi validation thay đổi
+  onIllustrationClick?: () => void // Callback when illustration button is clicked
 }
 
 export default function EngravingSection({
@@ -26,13 +27,14 @@ export default function EngravingSection({
   className = "",
   error: externalError = null,
   onValidationChange,
+  onIllustrationClick,
 }: EngravingSectionProps) {
   const [engravingInfo, setEngravingInfo] = useState<EngravingInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isValidating, setIsValidating] = useState(false)
   const [internalError, setInternalError] = useState<string | null>(null)
   const { toast } = useToast()
-  
+
   // Use internal error if provided, otherwise use external error
   const displayError = internalError || externalError
 
@@ -69,7 +71,7 @@ export default function EngravingSection({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let newValue = e.target.value.toUpperCase() // Auto uppercase
-    
+
     // Limit to max length
     const maxLength = engravingInfo?.maxLength || 12
     if (newValue.length > maxLength) {
@@ -78,7 +80,7 @@ export default function EngravingSection({
 
     // Update value immediately (synchronous) - this is critical for input to work
     onChange(newValue)
-    
+
     // Clear internal error when user starts typing
     if (internalError) {
       setInternalError(null)
@@ -91,7 +93,7 @@ export default function EngravingSection({
   const handleSave = async () => {
     // Clear previous errors
     setInternalError(null)
-    
+
     // If empty, just clear error and return success
     if (!value.trim()) {
       toast({
@@ -107,7 +109,7 @@ export default function EngravingSection({
     setIsValidating(true)
     try {
       const result = await validateEngravingText(value.trim())
-      
+
       if (!result.isValid) {
         const errorMessage = result.errorMessage || "Nội dung khắc không hợp lệ"
         setInternalError(errorMessage)
@@ -159,6 +161,20 @@ export default function EngravingSection({
             Miễn phí
           </Badge>
         </div>
+        {onIllustrationClick && (
+          <div className="mt-1 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onIllustrationClick}
+              className="bg-pink-500/10 hover:bg-pink-500/20 text-pink-500 px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium flex items-center gap-1 transition-colors"
+            >
+              hình ảnh minh họa
+            </button>
+            <span className="text-[10px] sm:text-xs text-muted-foreground animate-pulse">
+              {"<-- bấm vào để xem ảnh"}
+            </span>
+          </div>
+        )}
         <div className="space-y-2">
           <Label htmlFor="engraving-text" className="text-sm font-medium">
             Nội dung khắc ({value.length}/{displayInfo.maxLength})
@@ -185,11 +201,26 @@ export default function EngravingSection({
         )}
       </div>
 
+      {onIllustrationClick && (
+        <div className="mt-[-8px] flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onIllustrationClick}
+            className="bg-pink-500 hover:bg-pink-600 text-white px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium flex items-center gap-1 transition-colors shadow-sm"
+          >
+            hình ảnh minh họa
+          </button>
+          <span className="text-[10px] sm:text-xs text-muted-foreground animate-pulse">
+            {"<-- bấm vào để xem ảnh"}
+          </span>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="engraving-text" className="text-sm font-medium">
           Nội dung khắc ({value.length}/{displayInfo.maxLength})
         </Label>
-        
+
         <div className="flex gap-2">
           <Input
             id="engraving-text"

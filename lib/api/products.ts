@@ -14,8 +14,8 @@ export interface BackendProduct {
   stockQuantity: number
   brand: string | null
   isActive: boolean
-  images?: string[]
-  imageUrls?: string[]
+  images?: { imageUrl: string; type: number }[]
+  imageUrls?: { imageUrl: string; type: number }[]
   model3DUrl?: string | null // 3D Model URL (GLB file)
   hasVariants?: boolean
   variants?: any[]
@@ -42,7 +42,7 @@ export const productsApi = {
       },
       cacheConfigs.products
     )
-    
+
     // Map backend products to frontend Product type
     return backendProducts
       .filter((p) => p.isActive) // Only show active products
@@ -117,15 +117,28 @@ export const productsApi = {
   },
 
   /**
+   * Helper to extract image URL from string or object
+   */
+  extractImageUrl(image: any): string {
+    if (!image) return ""
+    if (typeof image === "string") return image
+    return image.imageUrl || ""
+  },
+
+  /**
    * Map backend product to frontend Product type
    */
   mapToProduct(backendProduct: BackendProduct): Product {
     // Get images from images array or imageUrls array
-    const images = backendProduct.images && backendProduct.images.length > 0
+    const rawImages = (backendProduct.images && backendProduct.images.length > 0
       ? backendProduct.images
       : backendProduct.imageUrls && backendProduct.imageUrls.length > 0
-      ? backendProduct.imageUrls
-      : []
+        ? backendProduct.imageUrls
+        : [])
+
+    const images = rawImages
+      .filter((img: any) => typeof img === 'string' || img?.type === 0 || img?.type === undefined)
+      .map((img: any) => this.extractImageUrl(img))
 
     // Extract specs from description or use defaults
     // You may need to adjust this based on your backend structure
@@ -140,11 +153,11 @@ export const productsApi = {
     // Extract features from description or use defaults
     const features = backendProduct.description
       ? [
-          "Định vị GPS/LBS chính xác",
-          "Thiết kế độc quyền",
-          "Chống nước IP67",
-          "Pin lâu dài",
-        ]
+        "Định vị GPS/LBS chính xác",
+        "Thiết kế độc quyền",
+        "Chống nước IP67",
+        "Pin lâu dài",
+      ]
       : []
 
     return {

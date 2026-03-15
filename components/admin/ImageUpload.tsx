@@ -7,9 +7,14 @@ import { X, Upload, Loader2 } from "lucide-react"
 import { uploadImageToCloudinary, uploadMultipleImages } from "@/lib/cloudinary"
 import { useToast } from "@/hooks/use-toast"
 
+interface ImageUploadItem {
+  imageUrl: string
+  type: number // 0 = Product, 1 = Illustration
+}
+
 interface ImageUploadProps {
-  value: string[]
-  onChange: (urls: string[]) => void
+  value: ImageUploadItem[]
+  onChange: (items: ImageUploadItem[]) => void
   maxImages?: number
   multiple?: boolean
 }
@@ -38,7 +43,7 @@ export function ImageUpload({ value = [], onChange, maxImages = 5, multiple = tr
     const validFiles: File[] = []
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
-      
+
       if (file.size > 5 * 1024 * 1024) {
         toast({
           title: "Lỗi",
@@ -65,13 +70,18 @@ export function ImageUpload({ value = [], onChange, maxImages = 5, multiple = tr
     // Upload files
     setUploading(true)
     try {
-      const urls = multiple 
+      const urls = multiple
         ? await uploadMultipleImages(validFiles)
         : [await uploadImageToCloudinary(validFiles[0]).then(r => r.secure_url)]
-      
-      const newUrls = multiple ? [...value, ...urls] : urls
-      onChange(newUrls.slice(0, maxImages))
-      
+
+      const newItems: ImageUploadItem[] = urls.map(url => ({
+        imageUrl: url,
+        type: 0 // Default to Product
+      }))
+
+      const updatedValue = multiple ? [...value, ...newItems] : newItems
+      onChange(updatedValue.slice(0, maxImages))
+
       toast({
         title: "Thành công",
         description: `Đã upload ${urls.length} ảnh thành công`,
@@ -92,8 +102,17 @@ export function ImageUpload({ value = [], onChange, maxImages = 5, multiple = tr
   }
 
   const handleRemove = (index: number) => {
-    const newUrls = value.filter((_, i) => i !== index)
-    onChange(newUrls)
+    const newValue = value.filter((_, i) => i !== index)
+    onChange(newValue)
+  }
+
+  const toggleType = (index: number) => {
+    const newValue = [...value]
+    newValue[index] = {
+      ...newValue[index],
+      type: newValue[index].type === 0 ? 1 : 0
+    }
+    onChange(newValue)
   }
 
   return (
@@ -127,24 +146,36 @@ export function ImageUpload({ value = [], onChange, maxImages = 5, multiple = tr
           className="hidden"
         />
         <p className="text-sm text-muted-foreground mt-2">
-          Có thể chọn nhiều ảnh cùng lúc. Tối đa 5MB mỗi ảnh (khuyến nghị &lt; 2MB để upload nhanh hơn).
+          Có thể chọn nhiều ảnh cùng lúc. Tối đa 5MB mỗi ảnh. Click vào ảnh để đổi loại (Hiển thị/Minh họa).
           {value.length > 0 && ` Đã chọn: ${value.length}/${maxImages} ảnh.`}
         </p>
       </div>
 
       {value.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {value.map((url, index) => (
+          {value.map((item, index) => (
             <div key={index} className="relative group">
-              <div className="relative aspect-square rounded-lg overflow-hidden bg-muted border-2 border-border">
+              <div
+                className={`relative aspect-square rounded-lg overflow-hidden bg-muted border-2 cursor-pointer transition-colors ${item.type === 0 ? "border-primary" : "border-amber-400"
+                  }`}
+                onClick={() => toggleType(index)}
+                title="Click để đổi loại (Product/Illustration)"
+              >
                 <Image
-                  src={url}
+                  src={item.imageUrl}
                   alt={`Preview ${index + 1}`}
                   fill
                   className="object-cover"
                   unoptimized
                 />
+
+                {/* Type Badge */}
+                <div className={`absolute bottom-0 left-0 right-0 px-2 py-1 text-[10px] font-bold text-white text-center ${item.type === 0 ? "bg-primary/80" : "bg-amber-500/80"
+                  }`}>
+                  {item.type === 0 ? "SẢN PHẨM" : "MINH HỌA"}
+                </div>
               </div>
+
               <Button
                 type="button"
                 variant="destructive"

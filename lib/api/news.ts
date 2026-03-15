@@ -22,7 +22,7 @@ export const newsApi = {
       { method: "GET" },
       {
         ...cacheConfigs.products,
-        storageKey: `news_list_${searchParams.toString()}`,
+        storageKey: `news_list_v2_${searchParams.toString()}`,
       }
     )
 
@@ -62,7 +62,7 @@ export const newsApi = {
           { method: "GET" },
           {
             ...cacheConfigs.products,
-            storageKey: `news_${idOrSlug}`,
+            storageKey: `news_v2_${idOrSlug}`,
           }
         )
         return response

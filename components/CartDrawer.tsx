@@ -49,7 +49,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
     const fetchProducts = async () => {
       const productIds = [...new Set(items.map(item => item.design.productId))]
       const productMap: ProductInfo = {}
-      
+
       await Promise.all(
         productIds.map(async (productId) => {
           try {
@@ -67,7 +67,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
           }
         })
       )
-      
+
       setProducts(productMap)
       setLoading(false)
     }
@@ -104,14 +104,14 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 items.map((item) => {
                   const product = products[item.design.productId]
                   const productName = product?.name || (item.design.templateId ? `Template: ${item.design.templateId}` : `Sản phẩm ${item.design.productId}`)
-                  const productImage = product?.imageUrls?.[0] || product?.images?.[0] || ""
+                  const productImage = productsApi.extractImageUrl(product?.imageUrls?.[0] || product?.images?.[0])
                   const stockQuantity = product?.stockQuantity ?? 0
                   const isInStock = stockQuantity > 0
                   // Use same logic as cart page: prioritize product.price, fallback to unitPrice
                   const currentPrice = product?.price || item.design.unitPrice || 0
                   const originalPrice = product?.originalPrice ?? null
                   const hasDiscount = originalPrice && originalPrice > currentPrice
-                  const discountPercent = hasDiscount 
+                  const discountPercent = hasDiscount
                     ? Math.round(((originalPrice! - currentPrice) / originalPrice!) * 100)
                     : 0
 
