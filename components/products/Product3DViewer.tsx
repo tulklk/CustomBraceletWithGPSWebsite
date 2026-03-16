@@ -50,15 +50,11 @@ export function preload3DModel(modelUrl: string): void {
 export function Product3DViewer({ modelUrl, className }: Product3DViewerProps) {
   // Construct full URL from modelUrl (relative path from backend)
   // Backend returns: "/uploads/models3d/{guid}.glb"
-  // We need: "https://customerbraceletwithgpswebsite-backend.fly.dev/uploads/models3d/{guid}.glb"
+  // We need: "{NEXT_PUBLIC_API_URL}/uploads/models3d/{guid}.glb"
   const fullUrl = useMemo(() => {
     if (!modelUrl) return null;
     return getFullModelUrl(modelUrl);
   }, [modelUrl]);
-
-  // Log for debugging
-  console.log('Product3DViewer - modelUrl:', modelUrl);
-  console.log('Product3DViewer - fullUrl:', fullUrl);
 
   if (!modelUrl || !fullUrl) {
     return (

@@ -165,6 +165,7 @@ export function ImageUpload({ value = [], onChange, maxImages = 5, multiple = tr
                   src={item.imageUrl}
                   alt={`Preview ${index + 1}`}
                   fill
+                  sizes="200px"
                   className="object-cover"
                   unoptimized
                 />

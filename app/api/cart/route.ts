@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://customerbraceletwithgpswebsite-backend.fly.dev"
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || ""
 
 /**
  * Proxy GET request to backend /api/Cart (get cart)
@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log("[Cart GET] Fetching cart from backend...")
     const response = await fetch(`${BACKEND_URL}/api/Cart`, {
       method: "GET",
       headers: {
@@ -27,8 +26,6 @@ export async function GET(request: NextRequest) {
         "accept": "application/json",
       },
     })
-
-    console.log("[Cart GET] Response status:", response.status)
 
     // Read response body once
     const responseText = await response.text()
@@ -48,7 +45,6 @@ export async function GET(request: NextRequest) {
     // Parse successful response
     try {
       responseData = JSON.parse(responseText)
-      console.log("[Cart GET] Success, cart items count:", responseData?.items?.length || 0)
       return NextResponse.json(responseData, { status: response.status })
     } catch (parseError) {
       console.error("[Cart GET] Failed to parse JSON:", parseError)
@@ -80,7 +76,6 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    console.log("[Cart DELETE] Clearing cart from backend...")
     const response = await fetch(`${BACKEND_URL}/api/Cart`, {
       method: "DELETE",
       headers: {
@@ -89,8 +84,6 @@ export async function DELETE(request: NextRequest) {
         "accept": "application/json",
       },
     })
-
-    console.log("[Cart DELETE] Response status:", response.status)
 
     // Read response body once
     const responseText = await response.text()
@@ -109,7 +102,6 @@ export async function DELETE(request: NextRequest) {
 
     // DELETE might return empty body (204 No Content or 200 OK)
     if (response.status === 204 || response.status === 200) {
-      console.log("[Cart DELETE] Cart cleared successfully")
       return new NextResponse(null, { status: response.status })
     }
 

@@ -101,8 +101,6 @@ export default function ContactPage() {
       // Simulate API call - replace with actual API endpoint
       await new Promise(resolve => setTimeout(resolve, 1500))
       
-      console.log("Contact form data:", data)
-      
       // TODO: Replace with actual API call
       // await contactApi.submit(data)
       

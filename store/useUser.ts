@@ -14,7 +14,10 @@ interface UserStore {
   removeDesign: (index: number) => void
   refreshAccessToken: () => Promise<void>
   updateUser: (updates: Partial<User>) => void
-  makeAuthenticatedRequest: <T>(apiCall: (token: string) => Promise<T>) => Promise<T>
+  makeAuthenticatedRequest: <T>(
+    apiCall: (token: string) => Promise<T>,
+    options?: { skipLogoutOnRefreshFail?: boolean }
+  ) => Promise<T>
 }
 
 export const useUser = create<UserStore>()(
@@ -126,9 +129,9 @@ export const useUser = create<UserStore>()(
         })
       },
 
-      // Helper to make authenticated API calls with auto token refresh
       async makeAuthenticatedRequest<T>(
-        apiCall: (token: string) => Promise<T>
+        apiCall: (token: string) => Promise<T>,
+        options?: { skipLogoutOnRefreshFail?: boolean }
       ): Promise<T> {
         const user = get().user
         if (!user?.accessToken) {
@@ -138,7 +141,6 @@ export const useUser = create<UserStore>()(
         try {
           return await apiCall(user.accessToken)
         } catch (error: any) {
-          // If 401 and we have refresh token, try to refresh and retry
           if (error?.statusCode === 401 && user.refreshToken) {
             try {
               await get().refreshAccessToken()
@@ -147,8 +149,9 @@ export const useUser = create<UserStore>()(
                 return await apiCall(newUser.accessToken)
               }
             } catch (refreshError) {
-              // If refresh fails, logout user
-              await get().logout()
+              if (!options?.skipLogoutOnRefreshFail) {
+                await get().logout()
+              }
               throw new Error("Session expired. Please login again.")
             }
           }

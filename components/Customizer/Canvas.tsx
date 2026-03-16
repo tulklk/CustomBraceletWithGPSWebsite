@@ -52,6 +52,7 @@ export function Canvas({ accessories }: CanvasProps) {
             src={getImagePath(templateId)}
             alt="Bunny Bracelet"
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="object-contain drop-shadow-xl"
             priority
           />

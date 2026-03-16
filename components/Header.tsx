@@ -432,6 +432,7 @@ export function Header() {
                                 src={avatarUrl}
                                 alt={getUserDisplayName()}
                                 fill
+                                sizes="36px"
                                 className="object-cover"
                                 onError={() => setAvatarError(true)}
                                 unoptimized

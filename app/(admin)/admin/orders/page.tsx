@@ -480,6 +480,7 @@ export default function OrdersPage() {
                                       src={productImage}
                                       alt={item.productNameSnapshot}
                                       fill
+                                      sizes="64px"
                                       className="object-cover"
                                       unoptimized
                                     />

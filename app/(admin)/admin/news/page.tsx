@@ -583,6 +583,7 @@ export default function NewsPage() {
                     src={formData.thumbnailUrl}
                     alt="Thumbnail preview"
                     fill
+                    sizes="200px"
                     className="object-cover"
                     unoptimized
                   />

@@ -315,8 +315,6 @@ export default function AccountPage() {
       const items = await makeAuthenticatedRequest(async (token) => {
         return await wishlistApi.getAll(token)
       })
-      console.log("Wishlist items received:", items)
-      console.log("Wishlist items count:", items?.length)
 
       // If items don't have product data, fetch product details
       const itemsWithProducts = await Promise.all(
@@ -327,7 +325,6 @@ export default function AccountPage() {
 
           // Fetch product details if missing
           try {
-            console.log("Fetching product details for:", item.productId)
             const product = await productsApi.getById(item.productId)
             return {
               ...item,
@@ -342,7 +339,6 @@ export default function AccountPage() {
 
       // Filter out null items (failed to fetch product)
       const validItems = itemsWithProducts.filter((item): item is WishlistItem => item !== null)
-      console.log("Valid wishlist items count:", validItems.length)
       setWishlistItems(validItems)
     } catch (error: any) {
       console.error("Error fetching wishlist:", error)
@@ -992,6 +988,7 @@ export default function AccountPage() {
                             src={profile.avatar}
                             alt="Avatar"
                             fill
+                            sizes="96px"
                             className="object-cover"
                           />
                         </div>
@@ -1775,6 +1772,7 @@ export default function AccountPage() {
                             src={formData.avatar}
                             alt="Avatar"
                             fill
+                            sizes="96px"
                             className="object-cover"
                             onError={(e) => {
                               e.currentTarget.style.display = "none"
@@ -1834,6 +1832,7 @@ export default function AccountPage() {
                                 src={formData.avatar}
                                 alt="Avatar preview"
                                 fill
+                                sizes="96px"
                                 className="object-cover"
                               />
                             </div>
@@ -1932,6 +1931,7 @@ export default function AccountPage() {
                             src={profile.avatar}
                             alt="Avatar"
                             fill
+                            sizes="96px"
                             className="object-cover"
                           />
                         </div>

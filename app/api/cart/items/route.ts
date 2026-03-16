@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://customerbraceletwithgpswebsite-backend.fly.dev"
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || ""
 
 /**
  * Proxy POST request to backend /api/Cart/items (add item to cart)
@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    console.log("[Cart POST] Adding item to cart:", body)
 
     const response = await fetch(`${BACKEND_URL}/api/Cart/items`, {
       method: "POST",
@@ -29,8 +28,6 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify(body),
     })
-
-    console.log("[Cart POST] Response status:", response.status)
 
     // Read response body once
     const responseText = await response.text()
@@ -50,7 +47,6 @@ export async function POST(request: NextRequest) {
     // Parse successful response
     try {
       responseData = JSON.parse(responseText)
-      console.log("[Cart POST] Item added successfully:", responseData.id)
       return NextResponse.json(responseData, { status: response.status })
     } catch (parseError) {
       console.error("[Cart POST] Failed to parse JSON:", parseError)

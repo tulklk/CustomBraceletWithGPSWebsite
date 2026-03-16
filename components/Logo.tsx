@@ -15,6 +15,7 @@ export function Logo({ className = "", showText = true }: LogoProps) {
           src="/logo ARTEMIS trắng.png"
           alt="ARTEMIS Guardian Angel Logo"
           fill
+          sizes="50px"
           className="object-contain"
           style={{
             filter: 'brightness(0) saturate(100%) invert(47%) sepia(95%) saturate(4786%) hue-rotate(308deg) brightness(97%) contrast(91%)'

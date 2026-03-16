@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://customerbraceletwithgpswebsite-backend.fly.dev"
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || ""
 
 /**
  * Proxy PUT request to backend /api/Cart/items/{id} (update cart item)
@@ -22,7 +22,6 @@ export async function PUT(
     }
 
     const body = await request.json()
-    console.log("[Cart PUT] Updating cart item:", params.id, body)
 
     const response = await fetch(`${BACKEND_URL}/api/Cart/items/${params.id}`, {
       method: "PUT",
@@ -33,8 +32,6 @@ export async function PUT(
       },
       body: JSON.stringify(body),
     })
-
-    console.log("[Cart PUT] Response status:", response.status)
 
     // Read response body once
     const responseText = await response.text()
@@ -54,7 +51,6 @@ export async function PUT(
     // Parse successful response
     try {
       responseData = JSON.parse(responseText)
-      console.log("[Cart PUT] Item updated successfully")
       return NextResponse.json(responseData, { status: response.status })
     } catch (parseError) {
       console.error("[Cart PUT] Failed to parse JSON:", parseError)
@@ -89,8 +85,6 @@ export async function DELETE(
       )
     }
 
-    console.log("[Cart DELETE Item] Removing cart item:", params.id)
-
     const response = await fetch(`${BACKEND_URL}/api/Cart/items/${params.id}`, {
       method: "DELETE",
       headers: {
@@ -99,8 +93,6 @@ export async function DELETE(
         "accept": "application/json",
       },
     })
-
-    console.log("[Cart DELETE Item] Response status:", response.status)
 
     // Read response body once
     const responseText = await response.text()
@@ -119,7 +111,6 @@ export async function DELETE(
 
     // DELETE might return empty body (204 No Content or 200 OK)
     if (response.status === 204 || response.status === 200) {
-      console.log("[Cart DELETE Item] Item removed successfully")
       return new NextResponse(null, { status: response.status })
     }
 

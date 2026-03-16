@@ -108,7 +108,6 @@ export default function CheckoutPage() {
       setLoadingProvinces(true)
       try {
         const fetchedProvinces = await provincesApi.getProvinces()
-        console.log("Fetched provinces:", fetchedProvinces.length, fetchedProvinces)
         setProvinces(fetchedProvinces)
         if (fetchedProvinces.length === 0) {
           toast({
@@ -134,7 +133,6 @@ export default function CheckoutPage() {
 
   // Handle province change - load wards directly
   const handleProvinceChange = async (provinceCode: string) => {
-    console.log("Province selected:", provinceCode)
     form.setValue("city", provinceCode)
     form.setValue("ward", "") // Reset ward
     setWards([])
@@ -145,7 +143,6 @@ export default function CheckoutPage() {
     try {
       // Get wards directly from province
       const fetchedWards = await provincesApi.getWardsByProvince(provinceCode)
-      console.log("Fetched wards:", fetchedWards.length)
       setWards(fetchedWards)
 
       if (fetchedWards.length === 0) {
@@ -372,7 +369,6 @@ export default function CheckoutPage() {
               })
             } catch (error: any) {
               // Cart might not exist yet, that's okay
-              console.log("Cart not found or already empty, will add items:", error)
             }
 
             // Add all local cart items to backend cart
@@ -462,35 +458,10 @@ export default function CheckoutPage() {
           const returnUrl = `${baseUrl}/payment/success?orderId=${order.id}`
           const cancelUrl = `${baseUrl}/payment/cancel?orderId=${order.id}`
 
-          // Debug log
-          console.log("[Checkout] Using base URL:", baseUrl)
-          console.log("[Checkout] NEXT_PUBLIC_BASE_URL from env:", process.env.NEXT_PUBLIC_BASE_URL)
-
-          // ========== LOG PAYMENT REQUEST DETAILS ==========
-          console.log("========== PAYOS PAYMENT REQUEST ==========")
-          console.log("📦 Order Information:")
-          console.log("  - Order ID:", order.id)
-          console.log("  - Order Number:", order.orderNumber || "N/A")
-          console.log("  - Order Total Amount:", order.totalAmount || "N/A")
-          console.log("")
-          console.log("🔗 Payment URLs:")
-          console.log("  - Return URL:", returnUrl)
-          console.log("  - Cancel URL:", cancelUrl)
-          console.log("")
-          console.log("👤 User Information:")
-          console.log("  - Is Authenticated:", !!user?.accessToken)
-          console.log("  - User ID:", user?.id || "N/A")
-          console.log("  - User Email:", user?.email || "N/A")
-          console.log("")
-          console.log("📤 Using paymentService.createPayment")
-          console.log("===========================================")
-
           let paymentResult: any
 
           if (user?.accessToken) {
-            console.log("🔐 Creating payment link WITH authentication")
             paymentResult = await makeAuthenticatedRequest(async (token: string) => {
-              console.log("🔑 Using access token (length):", token?.length || 0)
               try {
                 const result = await paymentService.createPayment(
                   order.id,
@@ -502,7 +473,6 @@ export default function CheckoutPage() {
                     // Token refresh handled by makeAuthenticatedRequest
                   }
                 )
-                console.log("✅ Payment link response (authenticated):", result)
                 return result
               } catch (error: any) {
                 console.error("❌ Payment service error (authenticated):", error)
@@ -512,14 +482,12 @@ export default function CheckoutPage() {
               }
             })
           } else {
-            console.log("👻 Creating payment link WITHOUT authentication (Guest)")
             try {
               paymentResult = await paymentService.createPayment(
                 order.id,
                 returnUrl,
                 cancelUrl
               )
-              console.log("✅ Payment link response (guest):", paymentResult)
             } catch (error: any) {
               console.error("❌ Payment service error (guest):", error)
               console.error("Error message:", error.message)
@@ -549,7 +517,6 @@ export default function CheckoutPage() {
               className: "bg-gradient-to-r from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border-pink-200 dark:border-pink-800",
             })
 
-            console.log("Redirecting to PayOS payment page:", paymentUrl)
             // Redirect to PayOS checkout page (external URL, use window.location.href)
             // This will show the QR code page
             window.location.href = paymentUrl
@@ -692,7 +659,7 @@ export default function CheckoutPage() {
                 <div className="space-y-2">
                   <Label htmlFor="city">Tỉnh/Thành phố *</Label>
                   <Select
-                    value={form.watch("city") || undefined}
+                    value={form.watch("city") || ""}
                     onValueChange={handleProvinceChange}
                     disabled={loadingProvinces}
                   >
@@ -723,7 +690,7 @@ export default function CheckoutPage() {
                 <div className="space-y-2">
                   <Label htmlFor="ward">Phường/Xã *</Label>
                   <Select
-                    value={form.watch("ward") || undefined}
+                    value={form.watch("ward") || ""}
                     onValueChange={(value) => form.setValue("ward", value)}
                     disabled={!form.watch("city") || loadingWards}
                   >
