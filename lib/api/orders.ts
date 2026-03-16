@@ -97,12 +97,14 @@ export interface Order {
 // Apply Voucher Request (for authenticated users)
 export interface ApplyVoucherRequest {
   code: string
+  orderAmount: number
 }
 
 // Apply Voucher Request (for guest users)
 export interface ApplyGuestVoucherRequest {
   email: string
   code: string
+  orderAmount: number
   items: Array<{
     productId: string
     productVariantId: string | null

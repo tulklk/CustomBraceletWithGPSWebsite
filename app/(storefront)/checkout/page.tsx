@@ -181,7 +181,7 @@ export default function CheckoutPage() {
       if (user?.accessToken) {
         result = await makeAuthenticatedRequest(async (token: string) => {
           return await ordersApi.applyVoucher(
-            { code: discountCode.trim() },
+            { code: discountCode.trim(), orderAmount: subtotal },
             token,
             user.refreshToken,
             (newToken: string) => {
@@ -212,6 +212,7 @@ export default function CheckoutPage() {
         result = await ordersApi.applyVoucherWithoutAuth({
           email: email,
           code: discountCode.trim(),
+          orderAmount: subtotal,
           items: orderItems,
         })
       }
