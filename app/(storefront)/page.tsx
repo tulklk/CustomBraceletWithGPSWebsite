@@ -506,7 +506,7 @@ export default function HomePage() {
         
         // Define category order: Vòng tay thông minh -> Dây chuyền -> Pin kẹp
         // Use case-insensitive matching to handle variations in category names
-        const categoryOrder = ['Vòng tay thông minh', 'Dây chuyền', 'Pin kẹp', 'Pin Kẹp']
+        const categoryOrder = ['Vòng tay thông minh', 'Dây chuyền', 'Pin kẹp']
         
         // Create a normalized map for category matching (case-insensitive)
         const categoryNameMap = new Map<string, Category>()
@@ -571,7 +571,13 @@ export default function HomePage() {
           }
         })
         
-        setProducts(orderedProducts)
+        const seen = new Set<string>()
+        const uniqueProducts = orderedProducts.filter(p => {
+          if (seen.has(p.id)) return false
+          seen.add(p.id)
+          return true
+        })
+        setProducts(uniqueProducts)
       } catch (error) {
         console.error("Error fetching products:", error)
         setProducts([])
@@ -1101,7 +1107,7 @@ export default function HomePage() {
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
               >
-                {featuredProducts.map((product: Product) => (
+                {featuredProducts.map((product: Product, index: number) => (
                   <div
                     key={product.id}
                     className="product-card flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]"
@@ -1109,6 +1115,7 @@ export default function HomePage() {
                     <ProductCard
                       product={product}
                       featured={true}
+                      priority={index < 4}
                     />
                   </div>
                 ))}

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === 'development'
-    ? "http://localhost:5037"
-    : "https://customerbraceletwithgpswebsite-backend.fly.dev")
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || ""
 
 /**
  * Proxy GET request to backend /api/News/child-abduction
@@ -22,8 +19,6 @@ export async function GET(request: NextRequest) {
 
     const url = `${BACKEND_URL}/api/News/child-abduction?page=${page}&pageSize=${pageSize}`
 
-    console.log("[Child Abduction News Proxy] Fetching from:", url)
-
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -31,8 +26,6 @@ export async function GET(request: NextRequest) {
         "accept": "application/json",
       },
     })
-
-    console.log("[Child Abduction News Proxy] Response status:", response.status)
 
     // Check if response is ok
     if (!response.ok) {
@@ -52,7 +45,6 @@ export async function GET(request: NextRequest) {
     const contentType = response.headers.get("content-type")
     if (contentType && contentType.includes("application/json")) {
       const jsonData = await response.json()
-      console.log("[Child Abduction News Proxy] Success, articles count:", jsonData?.articles?.length || 0)
       return NextResponse.json(jsonData, { status: response.status })
     } else {
       const textData = await response.text()

@@ -217,8 +217,6 @@ export default function ProductsPage() {
         images: imagesPayload,
       }
 
-      console.log("Product data to send:", productData)
-
       if (formData.hasVariants && formData.variants.length > 0) {
         productData.variants = formData.variants.map((variant) => ({
           color: variant.color || null,

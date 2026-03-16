@@ -13,9 +13,10 @@ import { Product } from "@/lib/types"
 interface ProductCardProps {
   product: Product
   featured?: boolean
+  priority?: boolean
 }
 
-export function ProductCard({ product, featured }: ProductCardProps) {
+export function ProductCard({ product, featured, priority }: ProductCardProps) {
   const [averageRating, setAverageRating] = useState<number>(0)
   const [reviewCount, setReviewCount] = useState<number>(0)
   const [loadingRating, setLoadingRating] = useState(true)
@@ -120,7 +121,9 @@ export function ProductCard({ product, featured }: ProductCardProps) {
               src={product.images[0]} 
               alt={product.name}
               fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-contain p-2 sm:p-3 md:p-4"
+              priority={priority}
             />
             {/* Discount badge - top left corner */}
             {product.originalPrice !== null && product.originalPrice > product.priceFrom && (

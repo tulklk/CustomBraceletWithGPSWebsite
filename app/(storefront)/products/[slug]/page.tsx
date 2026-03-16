@@ -170,17 +170,7 @@ export default function ProductDetailPage() {
           }
         }
 
-        // Debug: Log model3DUrl
-        console.log("Product data:", foundProduct)
-        console.log("model3DUrlmodel3DUrl:", foundProduct.model3DUrl)
-        console.log("model3DUrl type:", typeof foundProduct.model3DUrl)
-        console.log("model3DUrl value check:", foundProduct.model3DUrl ? "HAS VALUE" : "NO VALUE")
-        console.log("Full product object:", JSON.stringify(foundProduct, null, 2))
-
-        // Ensure model3DUrl is preserved
-        if (foundProduct.model3DUrl) {
-          console.log("✅ Product has model3DUrl:", foundProduct.model3DUrl)
-        } else {
+        if (!foundProduct.model3DUrl) {
           console.warn("⚠️ Product does NOT have model3DUrl")
         }
 
@@ -298,7 +288,6 @@ export default function ProductDetailPage() {
     if (product?.model3DUrl) {
       try {
         preload3DModel(product.model3DUrl)
-        console.log("✅ Preloading 3D model:", product.model3DUrl)
       } catch (error) {
         console.error("Error preloading 3D model:", error)
       }
@@ -323,7 +312,6 @@ export default function ProductDetailPage() {
           inWishlist = await makeAuthenticatedRequest(async (token) => {
             return await wishlistApi.check(token, product.id)
           })
-          console.log("Wishlist check result for product", product.id, ":", inWishlist, "type:", typeof inWishlist)
         } catch (checkError) {
           console.warn("Check endpoint failed, trying to fetch all wishlist items:", checkError)
           // Fallback: fetch all wishlist items and check if productId exists
@@ -331,7 +319,6 @@ export default function ProductDetailPage() {
             return await wishlistApi.getAll(token)
           })
           inWishlist = allItems.some(item => item.productId === product.id)
-          console.log("Fallback check - product in wishlist:", inWishlist)
         }
 
         // Set based on the result
@@ -400,10 +387,8 @@ export default function ProductDetailPage() {
     try {
       // Use fresh fetch to bypass cache and get latest data
       const fetchedComments = await productCommentsApi.getBySlugFresh(product.slug)
-      console.log("Fetched comments (raw):", fetchedComments)
 
       const organizedComments = organizeComments(fetchedComments)
-      console.log("Organized comments:", organizedComments)
 
       setComments(organizedComments)
     } catch (error) {
@@ -973,6 +958,7 @@ export default function ProductDetailPage() {
                       src={images[selectedImageIndex]}
                       alt={product.name}
                       fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       className="object-contain"
                       priority
                     />
@@ -2031,6 +2017,7 @@ export default function ProductDetailPage() {
                           src={url}
                           alt={`Review photo ${index + 1}`}
                           fill
+                          sizes="80px"
                           className="object-cover"
                         />
                         <Button
@@ -2278,6 +2265,7 @@ export default function ProductDetailPage() {
                     src={typeof img === 'string' ? img : img.imageUrl}
                     alt={`${product.name} illustration ${idx + 1}`}
                     fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
                     className="object-contain"
                     unoptimized
                   />

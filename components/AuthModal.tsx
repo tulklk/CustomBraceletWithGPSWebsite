@@ -319,7 +319,6 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
         })
         
         setGoogleScriptLoaded(true)
-        console.log("Google Sign-In initialized successfully")
       } catch (error) {
         console.error("Error initializing Google Sign-In:", error)
         setGoogleScriptLoaded(false)
@@ -578,7 +577,10 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[480px] mx-2 sm:mx-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-[480px] mx-2 sm:mx-auto" aria-describedby={undefined}>
+        <DialogHeader className="sr-only">
+          <DialogTitle>Đăng nhập / Đăng ký</DialogTitle>
+        </DialogHeader>
         <div className="p-3 sm:p-6">
           {/* Hidden div for Google Sign-In button */}
           <div ref={googleSignInButtonRef} style={{ position: 'fixed', left: '-9999px', opacity: 0, pointerEvents: 'none' }} />
@@ -652,6 +654,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                       id="login-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      autoComplete="current-password"
                       className="pl-8 sm:pl-10 pr-8 sm:pr-10 h-9 sm:h-10 text-xs sm:text-sm"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -748,6 +751,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                       id="register-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      autoComplete="new-password"
                       className="pl-8 sm:pl-10 pr-8 sm:pr-10 h-9 sm:h-10 text-xs sm:text-sm"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -774,6 +778,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                       id="register-confirm-password"
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      autoComplete="new-password"
                       className="pl-8 sm:pl-10 pr-8 sm:pr-10 h-9 sm:h-10 text-xs sm:text-sm"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}

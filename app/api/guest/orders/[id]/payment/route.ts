@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://customerbraceletwithgpswebsite-backend.fly.dev"
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || ""
 
 /**
  * Proxy POST request to backend /api/guest/orders/{id}/payment
@@ -13,28 +13,6 @@ export async function POST(
     const orderId = params.id
     const body = await request.json()
 
-    // ========== LOG PROXY REQUEST TO BACKEND ==========
-    console.log("========== [API Route] PROXY PAYMENT REQUEST ==========")
-    console.log("📍 Backend URL:", `${BACKEND_URL}/api/guest/orders/${orderId}/payment`)
-    console.log("🔧 HTTP Method: POST")
-    console.log("")
-    console.log("📦 Request Details:")
-    console.log("  - Order ID:", orderId)
-    console.log("  - Provider:", body.provider)
-    console.log("  - Return URL:", body.returnUrl)
-    console.log("  - Cancel URL:", body.cancelUrl)
-    console.log("")
-    console.log("📤 Request Headers:")
-    console.log("  - Content-Type: application/json")
-    console.log("  - accept: application/json")
-    console.log("")
-    console.log("📋 Request Body (Full):")
-    console.log(JSON.stringify(body, null, 2))
-    console.log("")
-    console.log("📋 Request Body (Stringified for fetch):")
-    console.log(JSON.stringify(body))
-    console.log("========================================================")
-
     const response = await fetch(`${BACKEND_URL}/api/guest/orders/${orderId}/payment`, {
       method: "POST",
       headers: {
@@ -43,9 +21,6 @@ export async function POST(
       },
       body: JSON.stringify(body),
     })
-
-    console.log("📥 [API Route] Backend response status:", response.status)
-    console.log("📥 [API Route] Backend response headers:", Object.fromEntries(response.headers.entries()))
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -67,9 +42,6 @@ export async function POST(
     const contentType = response.headers.get("content-type")
     if (contentType && contentType.includes("application/json")) {
       const jsonData = await response.json()
-      console.log("✅ [API Route] Backend success response:")
-      console.log(JSON.stringify(jsonData, null, 2))
-      console.log("  - Payment URL:", jsonData.paymentUrl || jsonData.payment_url || jsonData.url || "NOT FOUND")
       return NextResponse.json(jsonData, { status: response.status })
     } else {
       const textData = await response.text()

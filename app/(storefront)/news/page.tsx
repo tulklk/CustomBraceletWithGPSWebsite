@@ -171,6 +171,7 @@ export default function NewsPage() {
                           src={thumbnailUrl}
                           alt={title || "News"}
                           fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
                             // Hide image container if image fails to load
@@ -278,6 +279,7 @@ export default function NewsPage() {
                             src={article.imageUrl}
                             alt={article.title}
                             fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                             onError={(e) => {
                               // Hide image container if image fails to load
