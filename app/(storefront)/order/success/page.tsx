@@ -76,7 +76,7 @@ function OrderSuccessContent() {
   }
 
   const orderEmail = order ? getOrderEmail() : ""
-  const isBankTransfer = order?.paymentMethod === 1 // 1: PayOS / chuyển khoản
+  const isBankTransfer = order?.paymentMethod === 1
 
   return (
     <div className="container py-12">

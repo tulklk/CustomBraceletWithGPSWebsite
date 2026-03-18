@@ -39,6 +39,10 @@ export default function NewsDetailPage() {
         router.push("/news")
         return
       }
+      if (newsData.newsUrl) {
+        window.location.href = newsData.newsUrl
+        return
+      }
       setNews(newsData)
 
       // Fetch related news (same category, exclude current)

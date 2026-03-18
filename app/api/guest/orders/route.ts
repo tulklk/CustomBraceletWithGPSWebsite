@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://customerbraceletwithgpswebsite-backend.fly.dev"
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || ""
 
 /**
  * Proxy POST request to backend /api/guest/orders

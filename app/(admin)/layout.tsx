@@ -190,6 +190,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         src={avatarUrl}
                         alt={user?.fullName || user?.name || "Admin"}
                         fill
+                        sizes="40px"
                         className="object-cover"
                         onError={() => setAvatarError(true)}
                         unoptimized

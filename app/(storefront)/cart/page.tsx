@@ -26,7 +26,7 @@ export default function CartPage() {
     const fetchProducts = async () => {
       const productIds = [...new Set(items.map(item => item.design.productId))]
       const productMap: ProductInfo = {}
-      
+
       await Promise.all(
         productIds.map(async (productId) => {
           try {
@@ -46,7 +46,7 @@ export default function CartPage() {
           }
         })
       )
-      
+
       setProducts(productMap)
       setLoading(false)
     }
@@ -92,13 +92,14 @@ export default function CartPage() {
             items.map((item) => {
               const product = products[item.design.productId]
               const productName = product?.name || `Sản phẩm ${item.design.productId}`
-              const productImage = product?.imageUrls?.[0] || product?.images?.[0] || ""
+              const imageData = product?.imageUrls?.[0] || product?.images?.[0] || ""
+              const productImage = typeof imageData === 'string' ? imageData : imageData?.imageUrl || ""
               const stockQuantity = product?.stockQuantity ?? 0
               const isInStock = stockQuantity > 0
               const currentPrice = item.design.unitPrice || product?.price || 0
               const originalPrice = product?.originalPrice || null
               const hasDiscount = originalPrice && originalPrice > currentPrice
-              const discountPercent = hasDiscount 
+              const discountPercent = hasDiscount
                 ? Math.round(((originalPrice! - currentPrice) / originalPrice!) * 100)
                 : 0
 

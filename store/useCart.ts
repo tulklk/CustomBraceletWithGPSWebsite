@@ -392,18 +392,21 @@ export const useCart = create<CartStore>()(
 
         try {
           set({ isLoading: true })
-          const cart = await userStore.makeAuthenticatedRequest(async (token) => {
-            return await cartApi.getCart(
-              token,
-              user.refreshToken,
-              (newToken) => {
-                userStore.setAuth({
-                  ...user,
-                  accessToken: newToken,
-                } as any)
-              }
-            )
-          })
+          const cart = await userStore.makeAuthenticatedRequest(
+            async (token) => {
+              return await cartApi.getCart(
+                token,
+                user.refreshToken,
+                (newToken) => {
+                  userStore.setAuth({
+                    ...user,
+                    accessToken: newToken,
+                  } as any)
+                }
+              )
+            },
+            { skipLogoutOnRefreshFail: true }
+          )
 
           // Map backend cart items to frontend format
           const mappedItems = cart.items.map(mapBackendCartItem)

@@ -236,8 +236,7 @@ export default function AboutPage() {
                     animate={inView2 ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 0.5, duration: 0.5 }}
                   >
-                    Trở thành thương hiệu hàng đầu về thiết bị theo dõi trẻ em tại Việt Nam, 
-                    được tin dùng bởi hàng triệu gia đình nhờ chất lượng sản phẩm và dịch vụ xuất sắc.
+                    Trở thành thương hiệu được tin dùng bởi nhiều gia đình nhờ chất lượng sản phẩm và dịch vụ thiết bị theo dõi trẻ em tại Việt Nam
                   </motion.p>
                 </CardContent>
               </Card>
@@ -261,11 +260,11 @@ export default function AboutPage() {
               animate={inView3 ? "visible" : "hidden"}
             >
               {[
-                { icon: MapPin, title: "Định vị GPS/LBS", desc: "Theo dõi vị trí chính xác trong thời gian thực, giúp phụ huynh luôn biết con đang ở đâu" },
+                { icon: MapPin, title: "Định vị GPS", desc: "Theo dõi vị trí chính xác trong thời gian thực, giúp phụ huynh luôn biết con đang ở đâu" },
                 { icon: Droplet, title: "Chống nước IP67", desc: "Bé có thể đeo vòng tay khi tắm, rửa tay mà không lo hỏng hóc" },
-                { icon: Battery, title: "Pin lâu dài", desc: "Pin 400mAh, sử dụng liên tục 3-5 ngày, không cần sạc thường xuyên" },
-                { icon: Sparkles, title: "Tùy biến độc đáo", desc: "Chọn màu sắc, thêm phụ kiện, khắc tên theo sở thích của bé" },
-                { icon: Shield, title: "An toàn tuyệt đối", desc: "Vật liệu an toàn, không chứa chất độc hại, phù hợp cho trẻ em" },
+                { icon: Battery, title: "Pin lâu", desc: "Pin 400mAh, sử dụng liên tục 3-5 ngày, không cần sạc thường xuyên" },
+                { icon: Sparkles, title: "Sản phẩm đa dạng", desc: "Chọn màu sắc, thêm phụ kiện, khắc tên theo sở thích của bé" },
+                { icon: Shield, title: "An toàn", desc: "Vật liệu an toàn, không chứa chất độc hại, phù hợp cho trẻ em" },
                 { icon: Heart, title: "Thiết kế đáng yêu", desc: "Họa tiết Bunny dễ thương, màu sắc tươi sáng, bé sẽ rất thích đeo" },
               ].map((feature, index) => {
                 const Icon = feature.icon
@@ -346,7 +345,7 @@ export default function AboutPage() {
                           <Award className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                         </motion.div>
                         <div>
-                          <h4 className="font-semibold mb-1">Chất lượng hàng đầu</h4>
+                          <h4 className="font-semibold mb-1">Chất lượng tốt</h4>
                           <p className="text-sm text-muted-foreground">
                             Sản phẩm được sản xuất theo tiêu chuẩn quốc tế, đảm bảo độ bền và độ chính xác cao
                           </p>
@@ -365,7 +364,7 @@ export default function AboutPage() {
                           <Users className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                         </motion.div>
                         <div>
-                          <h4 className="font-semibold mb-1">Đội ngũ hỗ trợ chuyên nghiệp</h4>
+                          <h4 className="font-semibold mb-1">Đội ngũ hỗ trợ nhanh</h4>
                           <p className="text-sm text-muted-foreground">
                             Luôn sẵn sàng hỗ trợ khách hàng 24/7, giải đáp mọi thắc mắc nhanh chóng
                           </p>
@@ -386,7 +385,7 @@ export default function AboutPage() {
                           <Shield className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                         </motion.div>
                         <div>
-                          <h4 className="font-semibold mb-1">Bảo hành chính hãng</h4>
+                          <h4 className="font-semibold mb-1">Chính sách bảo hành</h4>
                           <p className="text-sm text-muted-foreground">
                             Chính sách bảo hành rõ ràng, đổi trả dễ dàng nếu sản phẩm có lỗi
                           </p>

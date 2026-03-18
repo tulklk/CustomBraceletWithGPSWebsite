@@ -97,12 +97,14 @@ export interface Order {
 // Apply Voucher Request (for authenticated users)
 export interface ApplyVoucherRequest {
   code: string
+  orderAmount: number
 }
 
 // Apply Voucher Request (for guest users)
 export interface ApplyGuestVoucherRequest {
   email: string
   code: string
+  orderAmount: number
   items: Array<{
     productId: string
     productVariantId: string | null
@@ -127,6 +129,19 @@ export interface PaymentRequest {
 // Payment Response
 export interface PaymentResponse {
   paymentUrl: string // URL để redirect đến PayOS checkout page
+}
+
+// Guest Order Status Response
+export interface GuestOrderStatusResponse {
+  orderId: string
+  orderNumber: string
+  orderStatus: OrderStatus
+  paymentStatus: string
+  paymentMethod: string
+  totalAmount: number
+  createdAt: string
+  updatedAt: string
+  statusDescription?: string
 }
 
 // Orders API Service
@@ -163,8 +178,6 @@ export const ordersApi = {
    */
   async createOrderWithoutAuth(data: CreateGuestOrderRequest): Promise<Order> {
     try {
-      console.log("Creating guest order with data:", JSON.stringify(data, null, 2))
-      
       // Use Next.js API route as proxy to bypass HTTP/2 protocol errors
       const response = await fetch("/api/guest/orders", {
         method: "POST",
@@ -174,9 +187,6 @@ export const ordersApi = {
         },
         body: JSON.stringify(data),
       })
-
-      console.log("Response status:", response.status, response.statusText)
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()))
 
       // Check if response is ok before trying to parse
       if (!response.ok) {
@@ -200,7 +210,6 @@ export const ordersApi = {
 
       // Try to parse JSON response
       const contentType = response.headers.get("content-type")
-      console.log("Content-Type:", contentType)
       
       // Check if response is ok
       if (!response.ok) {
@@ -218,7 +227,6 @@ export const ordersApi = {
 
       // Parse JSON response (proxy route ensures valid JSON)
       const jsonData = await response.json()
-      console.log("Order created successfully:", jsonData)
       return jsonData as Order
     } catch (error: any) {
       console.error("Order creation exception:", error)
@@ -455,29 +463,6 @@ export const ordersApi = {
     refreshToken?: string,
     onTokenRefresh?: (newToken: string) => void
   ): Promise<PaymentResponse> {
-    // ========== LOG AUTHENTICATED PAYMENT REQUEST ==========
-    console.log("========== [ordersApi] AUTHENTICATED PAYMENT REQUEST ==========")
-    console.log("📍 API Endpoint:", `${API_BASE_URL}/api/Orders/${orderId}/payment`)
-    console.log("🔧 HTTP Method: POST")
-    console.log("")
-    console.log("📦 Request Details:")
-    console.log("  - Order ID:", orderId)
-    console.log("  - Provider:", data.provider)
-    console.log("  - Return URL:", data.returnUrl)
-    console.log("  - Cancel URL:", data.cancelUrl)
-    console.log("")
-    console.log("🔐 Authentication:")
-    console.log("  - Access Token (length):", accessToken?.length || 0)
-    console.log("  - Has Refresh Token:", !!refreshToken)
-    console.log("")
-    console.log("📤 Request Headers:")
-    console.log("  - Content-Type: application/json")
-    console.log("  - Authorization: Bearer [TOKEN]")
-    console.log("")
-    console.log("📋 Request Body:")
-    console.log(JSON.stringify(data, null, 2))
-    console.log("=============================================================")
-    
     const response = await fetchWithAuth(`${API_BASE_URL}/api/Orders/${orderId}/payment`, {
       method: "POST",
       headers: {
@@ -489,12 +474,7 @@ export const ordersApi = {
       onTokenRefresh,
     })
 
-    console.log("📥 Response Status:", response.status)
-    console.log("📥 Response Headers:", Object.fromEntries(response.headers.entries()))
-
     const result = await handleResponse<PaymentResponse>(response)
-    console.log("✅ [ordersApi] Authenticated payment link creation success:")
-    console.log(JSON.stringify(result, null, 2))
     
     // Validate response structure
     // Normalize paymentUrl field (handle different response formats)
@@ -524,27 +504,6 @@ export const ordersApi = {
     orderId: string,
     data: PaymentRequest
   ): Promise<PaymentResponse> {
-    // ========== LOG GUEST PAYMENT REQUEST ==========
-    console.log("========== [ordersApi] GUEST PAYMENT REQUEST ==========")
-    console.log("📍 API Endpoint:", `/api/guest/orders/${orderId}/payment`)
-    console.log("🔧 HTTP Method: POST")
-    console.log("")
-    console.log("📦 Request Details:")
-    console.log("  - Order ID:", orderId)
-    console.log("  - Provider:", data.provider)
-    console.log("  - Return URL:", data.returnUrl)
-    console.log("  - Cancel URL:", data.cancelUrl)
-    console.log("")
-    console.log("🔐 Authentication: NONE (Guest)")
-    console.log("")
-    console.log("📤 Request Headers:")
-    console.log("  - Content-Type: application/json")
-    console.log("  - accept: application/json")
-    console.log("")
-    console.log("📋 Request Body:")
-    console.log(JSON.stringify(data, null, 2))
-    console.log("=====================================================")
-    
     // Use Next.js API route as proxy to bypass HTTP/2 protocol errors
     const response = await fetch(`/api/guest/orders/${orderId}/payment`, {
       method: "POST",
@@ -554,9 +513,6 @@ export const ordersApi = {
       },
       body: JSON.stringify(data),
     })
-
-    console.log("📥 [ordersApi] Payment link API response status:", response.status)
-    console.log("📥 [ordersApi] Payment link API response headers:", Object.fromEntries(response.headers.entries()))
 
     if (!response.ok) {
       let errorData: any
@@ -582,8 +538,6 @@ export const ordersApi = {
     const contentType = response.headers.get("content-type")
     if (contentType && contentType.includes("application/json")) {
       const result = await response.json()
-      console.log("✅ [ordersApi] Payment link creation success:")
-      console.log(JSON.stringify(result, null, 2))
       
       // Validate response structure
       // Normalize paymentUrl field (handle different response formats)
@@ -692,10 +646,10 @@ export const ordersApi = {
    * Get guest order status by order number
    * GET /api/guest/orders/status/{orderNumber}
    */
-  async getGuestOrderStatus(orderNumber: string): Promise<{ status: OrderStatus }> {
+  async getGuestOrderStatus(orderNumber: string): Promise<GuestOrderStatusResponse> {
     const { cachedFetch, cacheConfigs } = await import("@/lib/cache")
     
-    return cachedFetch<{ status: OrderStatus }>(
+    return cachedFetch<GuestOrderStatusResponse>(
       `${API_BASE_URL}/api/guest/orders/status/${orderNumber}`,
       {
         method: "GET",

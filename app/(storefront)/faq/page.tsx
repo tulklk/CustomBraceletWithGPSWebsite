@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Accordion,
   AccordionContent,
@@ -5,6 +7,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Card, CardContent } from "@/components/ui/card"
+import { ScrollAnimation, StaggerContainer, StaggerItem } from "@/components/ScrollAnimation"
 
 export default function FAQPage() {
   const faqs = [
@@ -53,38 +56,43 @@ export default function FAQPage() {
   return (
     <div className="container py-12">
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-12">
+        <ScrollAnimation direction="fade" className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Câu hỏi thường gặp</h1>
           <p className="text-muted-foreground text-lg">
             Tìm câu trả lời nhanh chóng cho các thắc mắc phổ biến
           </p>
-        </div>
+        </ScrollAnimation>
 
         <Accordion type="single" collapsible className="space-y-4">
-          {faqs.map((faq, index) => (
-            <AccordionItem
-              key={index}
-              value={`item-${index}`}
-              className="border rounded-lg px-6"
-            >
-              <AccordionTrigger className="text-left hover:no-underline">
-                <span className="font-semibold">{faq.question}</span>
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {faq.answer}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
+          <StaggerContainer>
+            {faqs.map((faq, index) => (
+              <StaggerItem key={index}>
+                <AccordionItem
+                  value={`item-${index}`}
+                  className="border rounded-lg px-6"
+                >
+                  <AccordionTrigger className="text-left hover:no-underline">
+                    <span className="font-semibold">{faq.question}</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
         </Accordion>
 
-        <Card className="mt-12">
-          <CardContent className="p-6 text-center space-y-3">
-            <h2 className="text-xl font-semibold">Chưa tìm thấy câu trả lời?</h2>
-            <p className="text-muted-foreground">
-              Hãy liên hệ với chúng tôi qua chat hoặc email support@kidtrack.vn
-            </p>
-          </CardContent>
-        </Card>
+        <ScrollAnimation delay={0.1} direction="up">
+          <Card className="mt-12">
+            <CardContent className="p-6 text-center space-y-3">
+              <h2 className="text-xl font-semibold">Chưa tìm thấy câu trả lời?</h2>
+              <p className="text-muted-foreground">
+                Hãy liên hệ với chúng tôi qua chat hoặc email support@kidtrack.vn
+              </p>
+            </CardContent>
+          </Card>
+        </ScrollAnimation>
       </div>
     </div>
   )

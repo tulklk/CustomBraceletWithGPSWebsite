@@ -24,6 +24,7 @@ import {
 import { Product, Template } from "@/lib/types"
 import { productsApi, BackendProduct } from "@/lib/api/products"
 import { categoriesApi, Category } from "@/lib/api/categories"
+import { slugify } from "@/lib/utils"
 
 // Mock data - same as API routes (for templates)
 const MOCK_PRODUCTS: Product[] = [
@@ -505,7 +506,7 @@ export default function HomePage() {
         
         // Define category order: Vòng tay thông minh -> Dây chuyền -> Pin kẹp
         // Use case-insensitive matching to handle variations in category names
-        const categoryOrder = ['Vòng tay thông minh', 'Dây chuyền', 'Pin kẹp', 'Pin Kẹp']
+        const categoryOrder = ['Vòng tay thông minh', 'Dây chuyền', 'Pin kẹp']
         
         // Create a normalized map for category matching (case-insensitive)
         const categoryNameMap = new Map<string, Category>()
@@ -570,7 +571,13 @@ export default function HomePage() {
           }
         })
         
-        setProducts(orderedProducts)
+        const seen = new Set<string>()
+        const uniqueProducts = orderedProducts.filter(p => {
+          if (seen.has(p.id)) return false
+          seen.add(p.id)
+          return true
+        })
+        setProducts(uniqueProducts)
       } catch (error) {
         console.error("Error fetching products:", error)
         setProducts([])
@@ -726,8 +733,8 @@ export default function HomePage() {
               />
               <ScrollAnimation direction="up" delay={0.2}>
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed">
-                  Thiết kế vòng tay GPS độc nhất cho bé với hàng trăm tùy chọn màu sắc,
-                  khắc tên. Công nghệ định vị hiện đại, an toàn tuyệt đối.
+                  Thiết kế vòng tay GPS cho bé với nhiều mẫu mã,
+                  khắc tên them sở thích. Công nghệ định vị hiện đại, an toàn.
                 </p>
               </ScrollAnimation>
               <ScrollAnimation direction="up" delay={0.3}>
@@ -911,10 +918,6 @@ export default function HomePage() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
-                      <span>Con bấm SOS, ba mẹ nhận cảnh báo ngay</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
                       <span>An tâm, yên tâm, hạnh phúc mỗi ngày</span>
                     </li>
                   </ul>
@@ -977,7 +980,7 @@ export default function HomePage() {
                     >
                       <Droplet className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                     </motion.div>
-                    <h3 className="font-bold text-base sm:text-lg">Chống nước IP67/IP68</h3>
+                    <h3 className="font-bold text-base sm:text-lg">Chống nước IP67</h3>
                     <p className="text-muted-foreground text-sm sm:text-base">
                       Thoải mái rửa tay, đi mưa, thậm chí bơi lội (IP68)
                     </p>
@@ -1023,9 +1026,9 @@ export default function HomePage() {
                     >
                       <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                     </motion.div>
-                    <h3 className="font-bold text-base sm:text-lg">Tùy biến không giới hạn</h3>
+                    <h3 className="font-bold text-base sm:text-lg">Mẫu mã đa dạng</h3>
                     <p className="text-muted-foreground text-sm sm:text-base">
-                      Hàng trăm tùy chọn màu, khắc tên theo sở thích
+                      Nhiều mẫu mã, có thể khắc tên theo sở thích
                     </p>
                   </CardContent>
                 </Card>
@@ -1104,7 +1107,7 @@ export default function HomePage() {
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
               >
-                {featuredProducts.map((product: Product) => (
+                {featuredProducts.map((product: Product, index: number) => (
                   <div
                     key={product.id}
                     className="product-card flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]"
@@ -1112,6 +1115,7 @@ export default function HomePage() {
                     <ProductCard
                       product={product}
                       featured={true}
+                      priority={index < 4}
                     />
                   </div>
                 ))}
@@ -1144,7 +1148,7 @@ export default function HomePage() {
           <ScrollAnimation direction="fade">
             <div className="text-center mb-6 sm:mb-8 md:mb-12">
               <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 text-pink-500 px-2">
-                Mẫu thiết kế nổi bật
+                Thiết kế nổi bật
               </h2>
               <p className="text-muted-foreground text-sm sm:text-base md:text-lg px-2">
                 Cảm hứng từ cộng đồng ARTEMIS
@@ -1162,8 +1166,8 @@ export default function HomePage() {
               
               // Build category URL
               const categoryUrl = braceletCategory
-                ? `/products?category=${encodeURIComponent(braceletCategory.name)}${braceletCategory.id ? `&categoryId=${braceletCategory.id}` : ''}`
-                : '/products'
+                ? `/products/category/${slugify(braceletCategory.name)}`
+                : "/products"
               
               return (
                 <StaggerItem key={template.id}>
@@ -1271,7 +1275,7 @@ export default function HomePage() {
               className="inline-block"
             >
               <Button asChild size="lg" variant="secondary" className="w-full sm:w-auto text-sm sm:text-base">
-                <Link href={`/products?category=${encodeURIComponent("Vòng tay thông minh")}`}>Khám phá ngay</Link>
+                <Link href={`/products/category/${slugify("Vòng tay thông minh")}`}>Khám phá ngay</Link>
               </Button>
             </motion.div>
           </ScrollAnimation>

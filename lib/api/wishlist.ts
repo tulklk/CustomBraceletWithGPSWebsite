@@ -119,11 +119,8 @@ export const wishlistApi = {
         },
       })
 
-      console.log("Wishlist check response status:", response.status, "for productId:", productId)
-
       if (!response.ok) {
         // If 404 or any error, product is not in wishlist
-        console.log("Wishlist check failed - response not ok")
         return false
       }
 
@@ -142,8 +139,6 @@ export const wishlistApi = {
           result = text.toLowerCase().trim() === "true"
         }
       }
-
-      console.log("Wishlist check raw result:", result, "type:", typeof result)
 
       // Handle different response formats
       let finalResult = false

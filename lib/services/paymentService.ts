@@ -69,15 +69,6 @@ class PaymentService {
       cancelUrl: cancelUrl || (typeof window !== 'undefined' ? `${window.location.origin}/payment/cancel` : undefined),
     }
 
-    // Log request for debugging
-    console.log("[paymentService] Creating payment request:", {
-      orderId,
-      provider: request.provider,
-      returnUrl: request.returnUrl,
-      cancelUrl: request.cancelUrl,
-      hasToken: !!accessToken,
-    })
-
     try {
       // Use authenticated endpoint if token is provided
       if (accessToken) {
@@ -94,9 +85,6 @@ class PaymentService {
             onTokenRefresh,
           }
         )
-
-        // Log response status
-        console.log("[paymentService] Response status:", response.status)
 
         const result = await handleResponse<PaymentResponse>(response)
         
@@ -131,9 +119,6 @@ class PaymentService {
           body: JSON.stringify(request),
         })
 
-        // Log response status
-        console.log("[paymentService] Guest response status:", response.status)
-
         if (!response.ok) {
           const errorData = await response.json()
           console.error("[paymentService] Guest payment error:", errorData)
@@ -162,7 +147,6 @@ class PaymentService {
       // Log error for debugging (especially signature errors)
       if (isSignatureError(error)) {
         console.error("[paymentService] Signature error detected (Code: 201):", error)
-        console.log("[paymentService] Note: This error has been fixed in backend. If you still see it, please check backend deployment.")
       } else {
         console.error("[paymentService] Payment error:", error)
       }

@@ -27,9 +27,9 @@ export const QUICK_CHAT_CHIPS = [
 ]
 
 // API Configuration
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://customerbraceletwithgpswebsite-backend.fly.dev"
+// Prefer environment variable, otherwise always fall back to deployed backend.
+// This avoids local HTTPS/port issues with https://localhost:7285 when running frontend only.
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
 
 // Frontend Base URL for PayOS return/cancel URLs
 // Use environment variable or fallback to production URL
@@ -37,9 +37,4 @@ export const FRONTEND_BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ||
   "https://custom-bracelet-with-gps-website.vercel.app"
 
-// Log for debugging (only in development)
-if (process.env.NODE_ENV === 'development') {
-  console.log('[Constants] FRONTEND_BASE_URL:', FRONTEND_BASE_URL)
-  console.log('[Constants] NEXT_PUBLIC_BASE_URL from env:', process.env.NEXT_PUBLIC_BASE_URL)
-}
 
