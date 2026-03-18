@@ -8,6 +8,7 @@ import { FacebookSDKProvider } from "@/components/providers/facebook-sdk-provide
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ScrollToTop } from "@/components/ScrollToTop"
+import { UserHydrationProvider } from "@/components/providers/user-hydration-provider"
 
 const inter = Inter({ subsets: ["latin", "vietnamese"] })
 const akina = localFont({
@@ -34,22 +35,24 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${inter.className} ${akina.variable}`}>
-        <GoogleOAuthProviderWrapper>
-          <FacebookSDKProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="light"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <TooltipProvider>
-                {children}
-              </TooltipProvider>
-              <Toaster />
-              <ScrollToTop />
-            </ThemeProvider>
-          </FacebookSDKProvider>
-        </GoogleOAuthProviderWrapper>
+        <UserHydrationProvider>
+          <GoogleOAuthProviderWrapper>
+            <FacebookSDKProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="light"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <TooltipProvider>
+                  {children}
+                </TooltipProvider>
+                <Toaster />
+                <ScrollToTop />
+              </ThemeProvider>
+            </FacebookSDKProvider>
+          </GoogleOAuthProviderWrapper>
+        </UserHydrationProvider>
       </body>
     </html>
   )

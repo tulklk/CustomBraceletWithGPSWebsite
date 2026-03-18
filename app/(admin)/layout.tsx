@@ -69,8 +69,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [avatarError, setAvatarError] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { user, logout } = useUser()
   const router = useRouter()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Reset avatar error when user changes
   useEffect(() => {
@@ -88,48 +93,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Get avatar URL - handle Cloudinary URLs
   const getAvatarUrl = () => {
     if (!user?.avatar) return null
-    
+
     // If it's already a full URL (http/https), return as is
     if (user.avatar.startsWith('http://') || user.avatar.startsWith('https://')) {
       return user.avatar
     }
-    
+
     // If it's already a Cloudinary URL (contains res.cloudinary.com), return as is
     if (user.avatar.includes('res.cloudinary.com')) {
       return user.avatar
     }
-    
+
     // If it's a Cloudinary public_id or path, construct the URL
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'your-cloud-name'
-    
+
     // If it starts with /, it's a path - prepend Cloudinary base URL
     if (user.avatar.startsWith('/')) {
       return `https://res.cloudinary.com/${cloudName}/image/upload${user.avatar}`
     }
-    
+
     // Otherwise, assume it's a public_id and construct URL
     // Remove any leading slashes
-    const publicId = user.avatar.replace(/^\/+/, '')
+    const publicId = user?.avatar?.replace(/^\/+/, '')
     return `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}`
   }
 
-  // Role check - only allow admin (role === 1 theo backend)
-  useEffect(() => {
-    if (!user) {
-      router.push("/")
-      return
-    }
-    
-    // Backend hiện trả về role = 1 cho admin, role = 0 cho customer
-    if (user.role !== 1) {
-      router.push("/")
-    }
-  }, [user, router])
-
-  // Show loading or nothing while checking
-  if (!user || user.role !== 1) {
-    return null
-  }
+  // No user checking - allow direct access
 
   return (
     <div className="min-h-screen bg-background">
@@ -218,7 +207,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 })()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user?.fullName || user?.name || "Admin"}</p>
+                <p className="text-sm font-medium truncate">{mounted && user ? (user.fullName || user.name || "Admin") : "Admin"}</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
               </div>
             </div>

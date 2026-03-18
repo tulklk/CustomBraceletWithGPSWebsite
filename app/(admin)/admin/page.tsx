@@ -58,25 +58,35 @@ function getAdminOrderStatusLabel(order: AdminOrder): string {
 }
 
 export default function AdminDashboard() {
-  const { user, makeAuthenticatedRequest } = useUser()
+  const { user } = useUser()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<AdminReport | null>(null)
   const [recentOrders, setRecentOrders] = useState<AdminOrder[]>([])
 
   useEffect(() => {
-    if (!user?.accessToken) return
-
     const fetchData = async () => {
       try {
         setLoading(true)
+
+        // Read auth from localStorage directly to avoid state loops
+        const authRaw = typeof window !== 'undefined' ? localStorage.getItem('artemis-user') : null
+        const authData = authRaw ? JSON.parse(authRaw) : {}
+        const token = authData.accessToken
+
+        if (!token) {
+          console.warn("[AdminDashboard] Access token missing in localStorage")
+          setLoading(false)
+          return
+        }
+
         const [reportData, ordersData] = await Promise.all([
-          makeAuthenticatedRequest((token) => adminApi.reports.getStats(token)),
-          makeAuthenticatedRequest((token) => adminApi.orders.getAll(token)),
+          adminApi.reports.getStats(token),
+          adminApi.orders.getAll(token),
         ])
 
         setStats(reportData)
-        // Get recent 5 orders
+
         const sortedOrders = ordersData
           .filter((order): order is AdminOrder & { createdAt: string } => !!order.createdAt)
           .sort((a, b) => {
@@ -87,10 +97,10 @@ export default function AdminDashboard() {
           .slice(0, 5)
         setRecentOrders(sortedOrders)
       } catch (error: any) {
-        console.error("Error fetching dashboard data:", error)
+        console.error("[AdminDashboard] Fetch error:", error)
         toast({
-          title: "Lỗi",
-          description: error.message || "Không thể tải dữ liệu dashboard",
+          title: "Lỗi dữ liệu",
+          description: "Không thể lấy thông tin từ hệ thống. Thử đăng nhập lại.",
           variant: "destructive",
         })
       } finally {
@@ -99,7 +109,7 @@ export default function AdminDashboard() {
     }
 
     fetchData()
-  }, [user?.accessToken, makeAuthenticatedRequest, toast])
+  }, [])
 
   const orderColumns = [
     {
@@ -153,13 +163,35 @@ export default function AdminDashboard() {
     },
   ]
 
+  // Check auth for UI indicators
+  const authRaw = typeof window !== 'undefined' ? localStorage.getItem('artemis-user') : null
+  const authData = authRaw ? JSON.parse(authRaw) : {}
+  const hasToken = !!authData.accessToken
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Đang tải dữ liệu...</p>
+          {!hasToken && (
+            <p className="text-xs text-red-400 mt-4">Cảnh báo: Không tìm thấy Access Token</p>
+          )}
         </div>
+      </div>
+    )
+  }
+
+  if (!stats) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 space-y-4">
+        <p className="text-muted-foreground text-center">
+          Không có dữ liệu hiển thị. <br />
+          {hasToken ? "Vui lòng kiểm tra lại quyền truy cập của tài khoản." : "Vui lòng đăng nhập lại."}
+        </p>
+        <Button onClick={() => window.location.reload()}>
+          Tải lại trang
+        </Button>
       </div>
     )
   }
@@ -172,8 +204,8 @@ export default function AdminDashboard() {
         <p className="text-muted-foreground mt-2">
           Xin chào, {user?.fullName || user?.name || "Admin"}
         </p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Theo dõi nhanh doanh thu, đơn hàng và trạng thái tồn kho để đảm bảo mọi thứ vận hành mượt mà.
+        <p className="text-sm text-yellow-500/80 mt-1">
+          {hasToken ? "Đã kết nối với hệ thống" : "Chưa đăng nhập"}
         </p>
       </div>
 
@@ -191,33 +223,32 @@ export default function AdminDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Doanh thu toàn thời gian"
-          value={stats ? formatCurrency(stats.totalRevenue) : "0 ₫"}
-          description={stats ? `${stats.totalOrders} đơn trong hệ thống` : "Đang tải..."}
+          value={formatCurrency(stats.totalRevenue)}
+          description={`${stats.totalOrders} đơn trong hệ thống`}
           icon={DollarSign}
-          trend={stats && stats.totalOrders > 0 ? { value: 18, isPositive: true } : undefined}
         />
         <StatsCard
           title="Đơn hàng đang xử lý"
-          value={stats ? stats.totalOrders.toString() : "0"}
-          description={stats ? `${stats.totalOrders} đơn trong hệ thống` : "Đang tải..."}
+          value={stats.totalOrders.toString()}
+          description={`${stats.totalOrders} đơn trong hệ thống`}
           icon={ShoppingCart}
         />
         <StatsCard
           title="Sản phẩm đang kinh doanh"
-          value={stats ? stats.totalProducts.toString() : "0"}
-          description={stats ? `${stats.totalProducts} sản phẩm` : "Đang tải..."}
+          value={stats.totalProducts.toString()}
+          description={`${stats.totalProducts} sản phẩm`}
           icon={Package}
         />
         <StatsCard
           title="Danh mục"
-          value={stats ? stats.totalCategories.toString() : "0"}
+          value={stats.totalCategories.toString()}
           description="Tạo thêm danh mục để tổ chức sản phẩm"
           icon={Tags}
         />
       </div>
 
       {/* Revenue Chart */}
-      {stats && stats.dailyRevenue && stats.dailyRevenue.length > 0 && (
+      {stats.dailyRevenue && stats.dailyRevenue.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Biểu đồ doanh thu</CardTitle>
@@ -235,8 +266,8 @@ export default function AdminDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={stats.dailyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="date" 
+                  <XAxis
+                    dataKey="date"
                     className="text-xs"
                     tick={{ fill: 'currentColor' }}
                     tickFormatter={(value) => {
@@ -244,12 +275,12 @@ export default function AdminDashboard() {
                       return date.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric" })
                     }}
                   />
-                  <YAxis 
+                  <YAxis
                     className="text-xs"
                     tick={{ fill: 'currentColor' }}
                     tickFormatter={(value: any) => `${(value / 1000000).toFixed(0)}M`}
                   />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value: any) => [
                       formatCurrency(Number(value)),
                       'Doanh thu'
@@ -264,52 +295,15 @@ export default function AdminDashboard() {
                       return date.toLocaleDateString("vi-VN")
                     }}
                   />
-                  <Line 
+                  <Line
                     type="monotone"
-                    dataKey="revenue" 
-                    stroke="hsl(var(--primary))" 
+                    dataKey="revenue"
+                    stroke="hsl(var(--primary))"
                     strokeWidth={2}
                     dot={{ fill: 'hsl(var(--primary))', r: 4 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Top Products */}
-      {stats && stats.topProducts && stats.topProducts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Top sản phẩm mang lại doanh thu cao nhất</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {stats.topProducts.map((product, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Package className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">{product.productName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatCurrency(product.revenue)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 text-green-600">
-                    <ArrowUpRight className="w-3 h-3" />
-                    <span className="text-xs font-medium">
-                      {stats.totalRevenue > 0 
-                        ? `${((product.revenue / stats.totalRevenue) * 100).toFixed(1)}%`
-                        : "0%"
-                      }
-                    </span>
-                  </div>
-                </div>
-              ))}
             </div>
           </CardContent>
         </Card>
