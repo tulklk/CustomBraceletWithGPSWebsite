@@ -70,7 +70,7 @@ export default function AdminDashboard() {
         setLoading(true)
 
         // Read auth from localStorage directly to avoid state loops
-        const authRaw = typeof window !== 'undefined' ? localStorage.getItem('artemis_admin_auth') : null
+        const authRaw = typeof window !== 'undefined' ? localStorage.getItem('artemis-user') : null
         const authData = authRaw ? JSON.parse(authRaw) : {}
         const token = authData.accessToken
 
@@ -164,7 +164,7 @@ export default function AdminDashboard() {
   ]
 
   // Check auth for UI indicators
-  const authRaw = typeof window !== 'undefined' ? localStorage.getItem('artemis_admin_auth') : null
+  const authRaw = typeof window !== 'undefined' ? localStorage.getItem('artemis-user') : null
   const authData = authRaw ? JSON.parse(authRaw) : {}
   const hasToken = !!authData.accessToken
 
