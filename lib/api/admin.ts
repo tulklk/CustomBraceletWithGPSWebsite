@@ -449,10 +449,22 @@ export const adminApi = {
         headers: createAuthHeaders(accessToken),
       })
       const orders = await handleResponse<AdminOrder[]>(response)
+
+      // Filter orders by date range (backend may not support startDate/endDate)
+      let filteredOrders = orders
+      if (startDate || endDate) {
+        filteredOrders = orders.filter((order): order is AdminOrder & { createdAt: string } => {
+          if (!order.createdAt) return false
+          const date = order.createdAt.split("T")[0]
+          if (startDate && date < startDate) return false
+          if (endDate && date > endDate) return false
+          return true
+        })
+      }
       
       // Calculate stats from orders
-      const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
-      const totalOrders = orders.length
+      const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
+      const totalOrders = filteredOrders.length
       
       // Get products count (would need separate API call in real scenario)
       const productsResponse = await fetch(`${API_BASE_URL}/api/admin/AdminProducts`, {
@@ -472,10 +484,10 @@ export const adminApi = {
       
       // Calculate daily revenue
       const dailyRevenueMap = new Map<string, number>()
-      orders
+      filteredOrders
         .filter((order): order is AdminOrder & { createdAt: string } => !!order.createdAt)
         .forEach(order => {
-          const date = order.createdAt.split('T')[0]
+          const date = order.createdAt.split("T")[0]
           dailyRevenueMap.set(date, (dailyRevenueMap.get(date) || 0) + (order.totalAmount || 0))
         })
       const dailyRevenue = Array.from(dailyRevenueMap.entries())
