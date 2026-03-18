@@ -453,12 +453,26 @@ export const adminApi = {
       // Filter orders by date range (backend may not support startDate/endDate)
       let filteredOrders = orders
       if (startDate || endDate) {
+        const beforeCount = orders.length
+        let missingCreatedAt = 0
+
         filteredOrders = orders.filter((order): order is AdminOrder & { createdAt: string } => {
-          if (!order.createdAt) return false
+          if (!order.createdAt) {
+            missingCreatedAt += 1
+            return false
+          }
           const date = order.createdAt.split("T")[0]
           if (startDate && date < startDate) return false
           if (endDate && date > endDate) return false
           return true
+        })
+
+        console.log("[adminApi.reports.getStats] date filter", {
+          startDate,
+          endDate,
+          beforeCount,
+          afterCount: filteredOrders.length,
+          missingCreatedAt,
         })
       }
       
