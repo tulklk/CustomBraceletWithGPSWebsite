@@ -72,7 +72,7 @@ export default function AdminDashboard() {
         // Read auth from localStorage directly to avoid state loops
         const authRaw = typeof window !== 'undefined' ? localStorage.getItem('artemis-user') : null
         const authData = authRaw ? JSON.parse(authRaw) : {}
-        const token = authData.accessToken
+        const token = authData?.state?.user?.accessToken || authData?.state?.accessToken || authData?.user?.accessToken || authData?.accessToken
 
         if (!token) {
           console.warn("[AdminDashboard] Access token missing in localStorage")
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
   // Check auth for UI indicators
   const authRaw = typeof window !== 'undefined' ? localStorage.getItem('artemis-user') : null
   const authData = authRaw ? JSON.parse(authRaw) : {}
-  const hasToken = !!authData.accessToken
+  const hasToken = !!(authData?.state?.user?.accessToken || authData?.state?.accessToken || authData?.user?.accessToken || authData?.accessToken)
 
   if (loading) {
     return (
