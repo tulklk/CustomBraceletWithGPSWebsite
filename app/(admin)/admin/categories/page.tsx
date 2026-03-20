@@ -126,7 +126,7 @@ export default function CategoriesPage() {
   const handleSubmit = async () => {
     if (!user?.accessToken) return
     const accessToken = user.accessToken
-    
+
     if (!formData.name.trim()) {
       toast({
         title: "Lỗi",
@@ -197,10 +197,10 @@ export default function CategoriesPage() {
           description: `Đã tạo danh mục cha${subcategoryCount > 0 ? ` và ${subcategoryCount} danh mục con` : ""}`,
         })
       }
-      
+
       // Close dialog first with smooth transition
       handleCloseDialog()
-      
+
       // Then refresh categories list
       await fetchCategories()
     } catch (error: any) {
@@ -310,11 +310,11 @@ export default function CategoriesPage() {
               <TableBody>
                 {parentCategories.map((category) => {
                   const subcategoryCount = getSubcategoryCount(category.id)
-                  const displayName = subcategoryCount > 0 
+                  const displayName = subcategoryCount > 0
                     ? `> ${category.name} (${subcategoryCount} danh mục)`
                     : category.name
                   const displayDescription = category.description?.trim() || "Không có mô tả"
-                  
+
                   return (
                     <TableRow key={category.id}>
                       <TableCell className="font-medium">{displayName}</TableCell>
@@ -352,7 +352,7 @@ export default function CategoriesPage() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(open) => !isSubmitting && setDialogOpen(open)}>
-        <DialogContent 
+        <DialogContent
           className="max-w-2xl max-h-[90vh] overflow-y-auto"
           style={{
             position: 'fixed',
@@ -385,7 +385,7 @@ export default function CategoriesPage() {
             {/* Parent Category Section */}
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">Thông tin danh mục cha & danh mục con</h3>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="name">Tên danh mục cha *</Label>
                 <Input
@@ -482,14 +482,14 @@ export default function CategoriesPage() {
             )}
           </div>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleCloseDialog}
               disabled={isSubmitting}
             >
               Hủy
             </Button>
-            <Button 
+            <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
