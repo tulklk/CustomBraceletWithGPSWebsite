@@ -166,7 +166,7 @@ function PaymentStatusContent() {
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Mã đơn hàng:</p>
                   <p className="text-lg font-semibold">#{displayedOrderCode}</p>
-                  {order.totalAmount && (
+                  {order?.totalAmount && (
                     <>
                       <p className="text-sm text-muted-foreground mt-4">Tổng tiền:</p>
                       <p className="text-lg font-semibold text-primary">
