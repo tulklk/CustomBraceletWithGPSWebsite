@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Search, Loader2, CheckCircle2, XCircle, Package, Clock, Truck, CheckCircle, CreditCard, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -68,11 +70,19 @@ const paymentMethodConfig: Record<string, { label: string }> = {
 }
 
 export default function OrderLookupPage() {
+  const searchParams = useSearchParams()
   const [orderNumber, setOrderNumber] = useState("")
   const [loading, setLoading] = useState(false)
   const [orderData, setOrderData] = useState<GuestOrderStatusResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
+
+  useEffect(() => {
+    const orderNumberFromQuery = searchParams.get("orderNumber")
+    if (orderNumberFromQuery) {
+      setOrderNumber(orderNumberFromQuery)
+    }
+  }, [searchParams])
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault()

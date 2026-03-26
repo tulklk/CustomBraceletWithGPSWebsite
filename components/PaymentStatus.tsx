@@ -1,26 +1,44 @@
 "use client"
 
 import { usePayOsCallback } from "@/hooks/usePayOsCallback"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useEffect, useState, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle2, XCircle, Loader2, AlertCircle, Mail } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, AlertCircle } from "lucide-react"
 import { useUser } from "@/store/useUser"
 import { ordersApi } from "@/lib/api/orders"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 
 function PaymentStatusContent() {
-  const { isProcessing, isSuccess, isCanceled, error, orderCode, callbackParams } = usePayOsCallback()
+  const { isProcessing, isSuccess, isCanceled, error, callbackParams } = usePayOsCallback()
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { user, makeAuthenticatedRequest } = useUser()
   const { toast } = useToast()
-  const orderId = searchParams.get("orderId")
+  const orderId = callbackParams.orderId || callbackParams.id
+  const orderNumber = callbackParams.orderNumber
   const [order, setOrder] = useState<any>(null)
   const [loadingOrder, setLoadingOrder] = useState(false)
   const [emailNotificationShown, setEmailNotificationShown] = useState(false)
+  const displayedOrderCode = order?.orderNumber || orderNumber || order?.id || orderId
+  const canViewOrder = Boolean(orderId || orderNumber)
+  const shouldShowMissingDataSupport = Boolean(error && !orderId && !orderNumber)
+
+  const handleViewOrder = () => {
+    if (user?.accessToken && orderId) {
+      router.push(`/account?order=${orderId}&tab=orders&openOrder=true`, { scroll: false })
+      return
+    }
+
+    const lookupNumber = order?.orderNumber || orderNumber
+    if (lookupNumber) {
+      router.push(`/order-lookup?orderNumber=${encodeURIComponent(String(lookupNumber))}`, { scroll: false })
+      return
+    }
+
+    router.push("/order-lookup", { scroll: false })
+  }
 
   // Show email notification immediately when payment is successful
   useEffect(() => {
@@ -144,10 +162,10 @@ function PaymentStatusContent() {
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
-              ) : order ? (
+              ) : displayedOrderCode ? (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Mã đơn hàng:</p>
-                  <p className="text-lg font-semibold">#{order.orderNumber || order.id}</p>
+                  <p className="text-lg font-semibold">#{displayedOrderCode}</p>
                   {order.totalAmount && (
                     <>
                       <p className="text-sm text-muted-foreground mt-4">Tổng tiền:</p>
@@ -160,27 +178,11 @@ function PaymentStatusContent() {
                     </>
                   )}
                 </div>
-              ) : orderId ? (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Mã đơn hàng:</p>
-                  <p className="text-lg font-semibold">#{orderId}</p>
-                </div>
               ) : null}
 
               <div className="flex gap-4 pt-4">
-                {orderId && (
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      // Smooth navigation to account page with orderId
-                      // Add openOrder=true to signal that user wants to view order details
-                      if (user?.accessToken) {
-                        router.push(`/account?order=${orderId}&tab=orders&openOrder=true`, { scroll: false })
-                      } else {
-                        router.push(`/?order=${orderId}`, { scroll: false })
-                      }
-                    }}
-                  >
+                {canViewOrder && (
+                  <Button variant="outline" onClick={handleViewOrder}>
                     Xem đơn hàng
                   </Button>
                 )}
@@ -217,32 +219,16 @@ function PaymentStatusContent() {
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
-              ) : order ? (
+              ) : displayedOrderCode ? (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Mã đơn hàng:</p>
-                  <p className="text-lg font-semibold">#{order.orderNumber || order.id}</p>
-                </div>
-              ) : orderId ? (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Mã đơn hàng:</p>
-                  <p className="text-lg font-semibold">#{orderId}</p>
+                  <p className="text-lg font-semibold">#{displayedOrderCode}</p>
                 </div>
               ) : null}
 
               <div className="flex gap-4 pt-4">
-                {orderId && (
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      // Smooth navigation to account page with orderId
-                      // Add openOrder=true to signal that user wants to view order details
-                      if (user?.accessToken) {
-                        router.push(`/account?order=${orderId}&tab=orders&openOrder=true`, { scroll: false })
-                      } else {
-                        router.push(`/?order=${orderId}`, { scroll: false })
-                      }
-                    }}
-                  >
+                {canViewOrder && (
+                  <Button variant="outline" onClick={handleViewOrder}>
                     Xem đơn hàng
                   </Button>
                 )}
@@ -280,36 +266,33 @@ function PaymentStatusContent() {
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
-              ) : order ? (
+              ) : displayedOrderCode ? (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Mã đơn hàng:</p>
-                  <p className="text-lg font-semibold">#{order.orderNumber || order.id}</p>
+                  <p className="text-lg font-semibold">#{displayedOrderCode}</p>
                   <p className="text-sm text-muted-foreground mt-2">
                     Đơn hàng của bạn vẫn được lưu. Bạn có thể thanh toán lại sau.
                   </p>
                 </div>
-              ) : orderId ? (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Mã đơn hàng:</p>
-                  <p className="text-lg font-semibold">#{orderId}</p>
-                </div>
               ) : null}
 
+              {shouldShowMissingDataSupport && (
+                <div className="bg-muted border rounded-lg p-4">
+                  <p className="text-sm text-muted-foreground">
+                    Hệ thống chưa nhận đủ thông tin từ cổng thanh toán. Bạn có thể quay về trang chủ hoặc tra cứu đơn hàng sau ít phút.
+                  </p>
+                </div>
+              )}
+
               <div className="flex gap-4 pt-4">
-                {orderId && (
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      // Smooth navigation to account page with orderId
-                      // Add openOrder=true to signal that user wants to view order details
-                      if (user?.accessToken) {
-                        router.push(`/account?order=${orderId}&tab=orders&openOrder=true`, { scroll: false })
-                      } else {
-                        router.push(`/?order=${orderId}`, { scroll: false })
-                      }
-                    }}
-                  >
+                {canViewOrder && (
+                  <Button variant="outline" onClick={handleViewOrder}>
                     Xem đơn hàng
+                  </Button>
+                )}
+                {shouldShowMissingDataSupport && (
+                  <Button asChild variant="outline">
+                    <Link href="/">Về trang chủ</Link>
                   </Button>
                 )}
                 <Button asChild>

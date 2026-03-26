@@ -37,10 +37,13 @@ export interface ApiError {
 
 // PayOS callback query params (from return URL)
 export interface PayOsCallbackParams {
+  provider?: string;
   code?: string;
   id?: string;
   cancel?: string;
   status?: string;
+  orderId?: string;
+  orderNumber?: string;
   orderCode?: string | number;
 }
 
