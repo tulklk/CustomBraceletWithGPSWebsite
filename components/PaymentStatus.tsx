@@ -154,7 +154,7 @@ function PaymentStatusContent() {
             <CardContent className="space-y-6">
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                 <p className="text-green-800 dark:text-green-200">
-                  Đơn hàng của bạn đã được xử lý thành công. Chúng tôi sẽ gửi thông báo qua email hoặc SMS khi đơn hàng được giao.
+                  Đơn hàng của bạn đã được xử lý thành công. Chúng tôi sẽ gửi thông báo qua email khi đơn hàng được giao.
                 </p>
               </div>
 
@@ -165,7 +165,7 @@ function PaymentStatusContent() {
               ) : displayedOrderCode ? (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Mã đơn hàng:</p>
-                  <p className="text-lg font-semibold">#{displayedOrderCode}</p>
+                  <p className="text-lg font-semibold">{displayedOrderCode}</p>
                   {order?.totalAmount && (
                     <>
                       <p className="text-sm text-muted-foreground mt-4">Tổng tiền:</p>
@@ -222,7 +222,7 @@ function PaymentStatusContent() {
               ) : displayedOrderCode ? (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Mã đơn hàng:</p>
-                  <p className="text-lg font-semibold">#{displayedOrderCode}</p>
+                  <p className="text-lg font-semibold">{displayedOrderCode}</p>
                 </div>
               ) : null}
 
@@ -232,11 +232,8 @@ function PaymentStatusContent() {
                     Xem đơn hàng
                   </Button>
                 )}
-                <Button asChild>
-                  <Link href="/checkout">Thử lại thanh toán</Link>
-                </Button>
                 <Button asChild variant="ghost">
-                  <Link href="/products">Tiếp tục mua sắm</Link>
+                  <Link href="/">Tiếp tục mua sắm</Link>
                 </Button>
               </div>
             </CardContent>
@@ -269,7 +266,7 @@ function PaymentStatusContent() {
               ) : displayedOrderCode ? (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Mã đơn hàng:</p>
-                  <p className="text-lg font-semibold">#{displayedOrderCode}</p>
+                  <p className="text-lg font-semibold">{displayedOrderCode}</p>
                   <p className="text-sm text-muted-foreground mt-2">
                     Đơn hàng của bạn vẫn được lưu. Bạn có thể thanh toán lại sau.
                   </p>
